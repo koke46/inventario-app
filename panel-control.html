@@ -456,18 +456,18 @@ async function eliminar(licenciaId,cliente){
 function abrirModalNuevo(){
   document.getElementById('modal-titulo').textContent='Nuevo cliente';
   document.getElementById('m-id').value='';
+  document.getElementById('m-cliente').value='';
+  document.getElementById('m-notas').value='';
   document.getElementById('m-tipo').value='bar';
   const mLicId=document.getElementById('m-licencia-id');
   mLicId.value='';mLicId.readOnly=false;mLicId.style.opacity='1';
   document.getElementById('m-usuario').value='admin';
   document.getElementById('m-contrasena').value=genPass();
+  window._clienteVal=undefined;
   _modalActiva=true;
   actualizarToggleModal();
   generarId();
   document.getElementById('modal-overlay').classList.remove('hidden');
-  window._clienteVal='';
-  document.getElementById('m-cliente').value='';
-  document.getElementById('m-notas').value='';
   setTimeout(()=>document.getElementById('m-cliente').focus(),50);
 }
 function abrirModalEditar(licenciaId){
