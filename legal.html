@@ -1,0 +1,295 @@
+<title>Aviso Legal y Privacidad</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --navy:    #1B2645;
+  --amber:   #F59E0B;
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E4E3DF;
+  --text:    #1C1B18;
+  --muted:   #6B6A65;
+  --display: 'Bricolage Grotesque', Georgia, serif;
+  --body:    'Plus Jakarta Sans', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:      #0F1520;
+    --surface: #1A2235;
+    --border:  #263047;
+    --text:    #EDECE9;
+    --muted:   #8A8F9E;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:      #0F1520;
+  --surface: #1A2235;
+  --border:  #263047;
+  --text:    #EDECE9;
+  --muted:   #8A8F9E;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--navy);
+  padding: 0 6vw;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-logo {
+  font-family: var(--display);
+  font-size: 16px; font-weight: 800;
+  color: #fff;
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none;
+}
+.topbar-logo span { color: var(--amber); }
+.topbar-back {
+  font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,.55);
+  text-decoration: none;
+  transition: color .15s;
+}
+.topbar-back:hover { color: #fff; }
+
+/* ── HEADER ── */
+.doc-header {
+  background: var(--navy);
+  color: #fff;
+  padding: 48px 6vw 40px;
+  border-bottom: 3px solid var(--amber);
+}
+.doc-header-inner { max-width: 720px; margin: 0 auto; }
+.doc-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--amber);
+  margin-bottom: 10px;
+}
+.doc-header h1 {
+  font-family: var(--display);
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 800; line-height: 1.1;
+  margin-bottom: 10px;
+}
+.doc-header-meta {
+  font-size: 13px; color: rgba(255,255,255,.45);
+}
+
+/* ── NAV ── */
+.doc-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 6vw;
+  display: flex; gap: 24px; flex-wrap: wrap;
+}
+.doc-nav a {
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); text-decoration: none;
+  transition: color .15s;
+}
+.doc-nav a:hover { color: var(--amber); }
+
+/* ── CONTENIDO ── */
+.doc-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 6vw 96px;
+}
+.doc-section { margin-bottom: 56px; }
+.doc-section:last-child { margin-bottom: 0; }
+.doc-section h2 {
+  font-family: var(--display);
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 800; line-height: 1.1;
+  color: var(--text);
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--amber);
+  margin-bottom: 24px;
+  scroll-margin-top: 72px;
+}
+.doc-section h3 {
+  font-family: var(--display);
+  font-size: 16px; font-weight: 700;
+  color: var(--text);
+  margin: 24px 0 8px;
+}
+.doc-section p {
+  font-size: 15px; color: var(--text);
+  margin-bottom: 14px;
+}
+.doc-section ul {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 14px;
+}
+.doc-section ul li {
+  font-size: 15px; color: var(--text);
+  padding-left: 20px; position: relative;
+}
+.doc-section ul li::before {
+  content: '·';
+  position: absolute; left: 4px;
+  color: var(--amber); font-weight: 800; font-size: 18px; line-height: 1;
+  top: 2px;
+}
+.doc-section a { color: var(--amber); }
+.info-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.info-box p { margin-bottom: 4px; font-size: 14px; }
+.info-box p:last-child { margin-bottom: 0; }
+.info-box strong { color: var(--text); }
+
+/* ── FOOTER ── */
+footer {
+  background: #0F1520;
+  color: rgba(255,255,255,.35);
+  padding: 28px 6vw;
+  text-align: center;
+  font-size: 13px;
+}
+footer strong { color: rgba(255,255,255,.55); }
+</style>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <a class="topbar-logo" href="index.html">🥦 Inventario<span>Fresco</span></a>
+  <a class="topbar-back" href="index.html">← Volver</a>
+</nav>
+
+<!-- HEADER -->
+<header class="doc-header">
+  <div class="doc-header-inner">
+    <div class="doc-label">Documentación legal</div>
+    <h1>Aviso Legal y Política de Privacidad</h1>
+    <div class="doc-header-meta">Última actualización: agosto de 2026 · Aplicable a koke46.github.io/inventario-app</div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="doc-nav">
+  <a href="#aviso-legal">Aviso legal</a>
+  <a href="#privacidad">Política de privacidad</a>
+  <a href="#cookies">Cookies</a>
+  <a href="#derechos">Tus derechos</a>
+  <a href="#contacto">Contacto</a>
+</nav>
+
+<!-- CUERPO -->
+<main class="doc-body">
+
+  <!-- AVISO LEGAL -->
+  <section class="doc-section" id="aviso-legal">
+    <h2>1. Aviso Legal</h2>
+    <p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y del Comercio Electrónico (LSSICE), se informa de los datos identificativos del titular de este sitio web:</p>
+
+    <div class="info-box">
+      <p><strong>Titular:</strong> Jorge Linero Chamorro</p>
+      <p><strong>NIF:</strong> 28645258T</p>
+      <p><strong>Domicilio:</strong> Plaza La Caña, Sevilla</p>
+      <p><strong>Teléfono:</strong> 699 279 994</p>
+      <p><strong>Email:</strong> <a href="mailto:jorgelinerochamorro@gmail.com">jorgelinerochamorro@gmail.com</a></p>
+      <p><strong>Web:</strong> koke46.github.io/inventario-app</p>
+    </div>
+
+    <h3>Objeto y condiciones de uso</h3>
+    <p>Inventario Fresco es un servicio de software de gestión para bares y tiendas de alimentación, ofrecido a través de la URL indicada. El acceso y uso de esta web está sujeto a las presentes condiciones. El titular se reserva el derecho a modificarlas en cualquier momento.</p>
+
+    <h3>Propiedad intelectual</h3>
+    <p>El software, diseño, textos e imágenes de este sitio son propiedad de Jorge Linero Chamorro. Queda prohibida su reproducción, distribución o transformación sin autorización expresa por escrito.</p>
+
+    <h3>Limitación de responsabilidad</h3>
+    <p>El titular no garantiza la disponibilidad continua del servicio ni se responsabiliza de los daños que puedan derivarse de su interrupción o mal funcionamiento. Los datos introducidos por el cliente en la aplicación son responsabilidad exclusiva del mismo.</p>
+  </section>
+
+  <!-- PRIVACIDAD -->
+  <section class="doc-section" id="privacidad">
+    <h2>2. Política de Privacidad</h2>
+    <p>En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 de Protección de Datos (LOPDGDD), le informamos sobre el tratamiento de sus datos personales.</p>
+
+    <h3>Responsable del tratamiento</h3>
+    <div class="info-box">
+      <p><strong>Identidad:</strong> Jorge Linero Chamorro</p>
+      <p><strong>NIF:</strong> 28645258T</p>
+      <p><strong>Email:</strong> <a href="mailto:jorgelinerochamorro@gmail.com">jorgelinerochamorro@gmail.com</a></p>
+    </div>
+
+    <h3>Datos que tratamos y para qué</h3>
+    <ul>
+      <li><strong>Dirección IP</strong> — cuando un usuario activa la prueba gratuita de la aplicación, se registra su IP para controlar el período de demo y evitar activaciones múltiples. Base legal: interés legítimo (art. 6.1.f RGPD).</li>
+      <li><strong>Fecha y hora de acceso</strong> — se registra la última vez que una licencia activa accede al servicio para gestión interna. Base legal: ejecución del contrato (art. 6.1.b RGPD).</li>
+      <li><strong>Datos del negocio introducidos por el cliente</strong> — productos, ventas, usuarios y configuración. Estos datos se almacenan en el propio navegador del cliente (localStorage) y, si el cliente usa la función de sincronización, en servidores seguros (Supabase). El titular no accede a estos datos salvo requerimiento del cliente para soporte técnico.</li>
+    </ul>
+
+    <h3>¿Cuánto tiempo conservamos los datos?</h3>
+    <ul>
+      <li>Direcciones IP del demo: hasta 60 días desde la activación, o hasta que el usuario solicite su eliminación.</li>
+      <li>Fechas de acceso de licencias: mientras la licencia esté activa y hasta 1 año después de su cancelación.</li>
+      <li>Datos del negocio en la nube: hasta que el cliente solicite su eliminación o durante 1 año tras la cancelación del servicio.</li>
+    </ul>
+
+    <h3>¿Con quién compartimos los datos?</h3>
+    <p>Los datos se almacenan en <strong>Supabase</strong> (proveedor de base de datos en la nube con servidores en la UE). No cedemos datos a terceros salvo obligación legal. Supabase actúa como encargado del tratamiento con las garantías adecuadas conforme al RGPD.</p>
+
+    <h3>Transferencias internacionales</h3>
+    <p>Supabase puede almacenar datos en servidores ubicados en la Unión Europea. En caso de transferencias fuera del EEE, Supabase ofrece las garantías adecuadas mediante cláusulas contractuales tipo aprobadas por la Comisión Europea.</p>
+  </section>
+
+  <!-- COOKIES -->
+  <section class="doc-section" id="cookies">
+    <h2>3. Política de Cookies</h2>
+    <p>Esta web <strong>no utiliza cookies</strong> propias ni de terceros para rastrear usuarios ni con fines publicitarios.</p>
+    <p>La aplicación utiliza <strong>almacenamiento local del navegador</strong> (localStorage) para guardar los datos del negocio del cliente en su propio dispositivo. Este mecanismo no es una cookie y no transmite datos a ningún servidor de forma automática.</p>
+    <p>No se emplean cookies analíticas, de marketing ni de seguimiento de ningún tipo.</p>
+  </section>
+
+  <!-- DERECHOS -->
+  <section class="doc-section" id="derechos">
+    <h2>4. Tus derechos</h2>
+    <p>En virtud del RGPD y la LOPDGDD, puedes ejercer los siguientes derechos respecto a tus datos personales:</p>
+    <ul>
+      <li><strong>Acceso:</strong> conocer qué datos tenemos sobre ti.</li>
+      <li><strong>Rectificación:</strong> corregir datos inexactos o incompletos.</li>
+      <li><strong>Supresión:</strong> solicitar la eliminación de tus datos cuando ya no sean necesarios.</li>
+      <li><strong>Oposición:</strong> oponerte al tratamiento de tus datos.</li>
+      <li><strong>Limitación:</strong> solicitar que suspendamos el tratamiento en determinadas circunstancias.</li>
+      <li><strong>Portabilidad:</strong> recibir tus datos en un formato estructurado y legible por máquina.</li>
+    </ul>
+    <p>Para ejercer cualquiera de estos derechos, escribe a <a href="mailto:jorgelinerochamorro@gmail.com">jorgelinerochamorro@gmail.com</a> indicando tu solicitud. Responderemos en un plazo máximo de 30 días.</p>
+    <p>Si consideras que el tratamiento de tus datos no es conforme a la normativa, puedes presentar una reclamación ante la <strong>Agencia Española de Protección de Datos</strong> en <a href="https://www.aepd.es" target="_blank">www.aepd.es</a>.</p>
+  </section>
+
+  <!-- CONTACTO -->
+  <section class="doc-section" id="contacto">
+    <h2>5. Contacto</h2>
+    <p>Para cualquier consulta relacionada con este aviso legal o el tratamiento de tus datos personales:</p>
+    <div class="info-box">
+      <p><strong>Jorge Linero Chamorro</strong></p>
+      <p>📧 <a href="mailto:jorgelinerochamorro@gmail.com">jorgelinerochamorro@gmail.com</a></p>
+      <p>📞 699 279 994</p>
+      <p>📍 Plaza La Caña, Sevilla</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Inventario Fresco</strong> · Jorge Linero Chamorro · NIF 28645258T · Sevilla
+</footer>
