@@ -189,6 +189,33 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- SECCIÓN DEMOS ACTIVOS -->
+<div class="main" id="sec-demos" style="margin-top:0;border-top:1px solid var(--border)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px 0">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:var(--fg)">🎁 Demos activos</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">IPs que han activado la prueba gratuita de 60 días</div>
+    </div>
+    <button class="btn-nuevo" onclick="cargarDemos()" style="background:var(--surface2);color:var(--fg);border:1px solid var(--border)">🔄 Actualizar</button>
+  </div>
+  <div class="table-wrap" style="margin-top:16px">
+    <table>
+      <thead>
+        <tr>
+          <th>IP</th>
+          <th>Activado el</th>
+          <th>Días usados</th>
+          <th>Días restantes</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-demos">
+        <tr><td colspan="5" class="empty"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- MODAL NUEVO / EDITAR -->
 <div class="overlay hidden" id="modal-overlay">
   <div class="modal">
@@ -670,7 +697,7 @@ function abrirSoporte(licenciaId){
   const tipo=row?getTipo(row):'bar';
   const archivo=tipo==='tienda'?APP_TIENDA:APP_BARES;
   const cliente=encodeURIComponent(row?.cliente||licenciaId);
-  const url=archivo+'#soporte='+encodeURIComponent(MASTER_PASS)+'&cliente='+cliente+'&lic='+encodeURIComponent(licenciaId);
+  const url=archivo+'?lic='+encodeURIComponent(licenciaId)+'#soporte='+encodeURIComponent(MASTER_PASS)+'&cliente='+cliente;
   window.open(url,'_blank');
   toast('🔧 Abriendo '+esc(row?.cliente||licenciaId)+' en modo soporte...');
 }
@@ -713,8 +740,87 @@ document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.targe
 // ── AUTO-REFRESH cada 60s ──
 setInterval(cargar,60000);
 
+// ── DEMOS ACTIVOS ──
+async function cargarDemos(){
+  const tb=document.getElementById('tbody-demos');
+  tb.innerHTML='<tr><td colspan="5" class="empty"><div class="spinner"></div></td></tr>';
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/demo_activaciones?select=*&order=activado_en.asc',{headers:sbHeaders()});
+    const rows=await r.json();
+    if(!rows||!rows.length){
+      tb.innerHTML='<tr><td colspan="5" class="empty">Sin demos activos</td></tr>';
+      return;
+    }
+    const ahora=Date.now();
+    tb.innerHTML=rows.map(d=>{
+      const inicio=new Date(d.activado_en).getTime();
+      const usados=Math.floor((ahora-inicio)/86400000);
+      const restantes=Math.max(0,60-usados);
+      let badge='';
+      if(restantes<=0) badge='<span style="color:var(--red);font-weight:700">Expirado</span>';
+      else if(restantes<=3) badge='<span style="color:var(--red);font-weight:700">'+restantes+'d</span>';
+      else if(restantes<=7) badge='<span style="color:var(--amber);font-weight:700">'+restantes+'d</span>';
+      else badge='<span style="color:var(--green)">'+restantes+'d</span>';
+      const activadoFmt=new Date(d.activado_en).toLocaleDateString('es-ES');
+      return `<tr>
+        <td><code style="font-size:13px">${esc(d.ip)}</code></td>
+        <td>${activadoFmt}</td>
+        <td>${usados} día${usados!==1?'s':''}</td>
+        <td>${badge}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',15)" title="Extender 15 días">+15d</button>
+            <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',30)" title="Extender 30 días">+30d</button>
+            <button class="btn btn-ghost btn-sm" onclick="eliminarDemo('${esc(d.ip)}')" title="Eliminar demo (resetea el IP)" style="color:var(--red)">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    tb.innerHTML='<tr><td colspan="5" class="empty">Error: '+esc(e.message)+'</td></tr>';
+  }
+}
+
+async function extenderDemo(ip,dias){
+  if(!confirm('¿Extender '+dias+' días el demo del IP '+ip+'?')) return;
+  try{
+    // Obtener activado_en actual
+    const r=await fetch(SB_URL+'/rest/v1/demo_activaciones?ip=eq.'+encodeURIComponent(ip)+'&select=activado_en',{headers:sbHeaders()});
+    const rows=await r.json();
+    if(!rows||!rows.length){ toast('IP no encontrado',true); return; }
+    const actual=new Date(rows[0].activado_en).getTime();
+    const nuevo=new Date(actual+dias*86400000).toISOString();
+    const p=await fetch(SB_URL+'/rest/v1/demo_activaciones?ip=eq.'+encodeURIComponent(ip),{
+      method:'PATCH',
+      headers:{...sbHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify({activado_en:nuevo})
+    });
+    if(!p.ok) throw new Error('HTTP '+p.status);
+    toast('✅ Demo extendido +'+dias+' días');
+    cargarDemos();
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
+async function eliminarDemo(ip){
+  if(!confirm('¿Eliminar el demo del IP '+ip+'?\nEl usuario podrá activar una prueba nueva.')) return;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/demo_activaciones?ip=eq.'+encodeURIComponent(ip),{
+      method:'DELETE',
+      headers:sbHeaders()
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    toast('🗑️ Demo eliminado');
+    cargarDemos();
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
 // ── INICIO ──
 cargar();
+cargarDemos();
 </script>
 </body>
 </html>
