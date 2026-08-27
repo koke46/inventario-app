@@ -4977,6 +4977,7 @@ function arrancarApp(){
   }
   const ok=await checkLicencia();
   if(!ok){mostrarBloqueo();return;}
+  if(_sesion&&_sesion.user==='soporte'){_sesion=null;saveJ('if_sesion',null);}
   if(!_sesion){
     document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('auth-user').focus();return;
   }
