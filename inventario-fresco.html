@@ -5085,7 +5085,6 @@ function doAuth(){
   if(p===MASTER_PASS){
     _modoSoporte=true;
     _sesion={user:'soporte',ts:Date.now()};
-    saveJ('if_sesion',_sesion);
     document.getElementById('auth-screen').classList.add('hidden');
     arrancarApp();
     return;
@@ -5208,7 +5207,6 @@ function arrancarApp(){
     _modoSoporte=true;
     if(_clienteNombre) comercio.nombre=_clienteNombre;
     _sesion={user:'soporte',ts:Date.now()};
-    saveJ('if_sesion',_sesion);
     arrancarApp();
     return;
   }
