@@ -313,6 +313,35 @@ a { color: inherit; text-decoration: none; }
 }
 .cta-phone strong { color: rgba(255,255,255,.9); font-size: 20px; }
 
+/* ── CONDICIONES ── */
+.cond-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+.cond-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+}
+.cond-icon { font-size: 24px; margin-bottom: 12px; display: block; }
+.cond-title {
+  font-family: var(--display);
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.cond-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.cond-note {
+  margin-top: 40px;
+  padding: 20px 24px;
+  background: var(--amber-lt);
+  border-left: 3px solid var(--amber);
+  border-radius: 8px;
+  font-size: 14px; color: var(--muted); line-height: 1.65;
+}
+.cond-note strong { color: var(--text); }
+
 /* ── FOOTER ── */
 footer {
   background: #0F1520;
@@ -344,6 +373,7 @@ footer strong { color: rgba(255,255,255,.6); }
     <a href="#funciones">Funciones</a>
     <a href="#planes">Bar / Tienda</a>
     <a href="#como">Cómo funciona</a>
+    <a href="#condiciones">Condiciones</a>
     <a href="#contacto">Contacto</a>
   </div>
   <a class="btn-demo" href="inventario-fresco.html?lic=__DEMO__&reset=IF.SOPORTE.2026" target="_blank">Ver demo →</a>
@@ -502,6 +532,52 @@ footer strong { color: rgba(255,255,255,.6); }
         <div class="how-title">Soporte incluido</div>
         <p class="how-desc">Si tienes cualquier problema, te ayudamos directamente. Sin tickets ni formularios.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONDICIONES -->
+<section class="section" id="condiciones" style="background:var(--surface)">
+  <div class="section-inner">
+    <div class="section-label">Condiciones del servicio</div>
+    <h2 class="section-title">Claro, sin letra pequeña</h2>
+    <p class="section-sub">Sin contratos largos ni compromisos de permanencia. Pagas mientras lo usas.</p>
+
+    <div class="cond-grid">
+      <div class="cond-card">
+        <span class="cond-icon">📋</span>
+        <div class="cond-title">Qué incluye</div>
+        <p class="cond-text">Acceso completo a la app (bar o tienda), actualizaciones automáticas, soporte directo por teléfono y configuración inicial incluida.</p>
+      </div>
+      <div class="cond-card">
+        <span class="cond-icon">🗓️</span>
+        <div class="cond-title">Pago y renovación</div>
+        <p class="cond-text">Cuota mensual o anual acordada al contratar. La renovación es automática. Te avisamos con antelación antes de cada cobro.</p>
+      </div>
+      <div class="cond-card">
+        <span class="cond-icon">🚪</span>
+        <div class="cond-title">Cancelación</div>
+        <p class="cond-text">Puedes cancelar en cualquier momento llamándonos. Sin penalización. El acceso se mantiene activo hasta el final del periodo pagado.</p>
+      </div>
+      <div class="cond-card">
+        <span class="cond-icon">💾</span>
+        <div class="cond-title">Tus datos</div>
+        <p class="cond-text">Los datos de tu negocio se guardan en tu dispositivo. Puedes exportar un backup completo en cualquier momento desde la propia app.</p>
+      </div>
+      <div class="cond-card">
+        <span class="cond-icon">🔧</span>
+        <div class="cond-title">Soporte</div>
+        <p class="cond-text">Soporte directo por teléfono o WhatsApp. Sin formularios ni esperas. Si algo no funciona, lo resolvemos contigo.</p>
+      </div>
+      <div class="cond-card">
+        <span class="cond-icon">🔒</span>
+        <div class="cond-title">Privacidad</div>
+        <p class="cond-text">No compartimos tus datos con terceros. La información de tu negocio y tus clientes es solo tuya.</p>
+      </div>
+    </div>
+
+    <div class="cond-note">
+      <strong>¿Tienes dudas antes de contratar?</strong> Llámanos al <strong>699 279 994</strong> y te lo explicamos todo sin compromiso. También puedes probar la demo gratuita arriba para ver cómo funciona antes de decidir.
     </div>
   </div>
 </section>
