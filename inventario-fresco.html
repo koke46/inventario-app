@@ -1395,6 +1395,11 @@ async function checkLicencia(){
     const row=Array.isArray(data)&&data.length>0?data[0]:null;
     const activa=row?.activa===true;
     saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,ts:Date.now()});
+    if(activa){
+      fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
+        {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({ultimo_acceso:new Date().toISOString()})}).catch(()=>{});
+    }
     return activa;
   }catch(e){
     console.log('[Licencia] Error al conectar:',e.message);

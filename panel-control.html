@@ -178,6 +178,7 @@ tr:hover td{background:var(--surface2)}
           <th>Usuario</th>
           <th>Notas</th>
           <th>Alta</th>
+          <th>Último acceso</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -411,6 +412,7 @@ function renderTabla(){
       <td><span class="lic-id">${esc(r.usuario||'—')}</span></td>
       <td><div class="notas-text" title="${esc(notas)}">${esc(notas)||'—'}</div></td>
       <td><div class="fecha-text">${fecha}</div></td>
+      <td><div class="fecha-text" style="color:${_colorAcceso(r.ultimo_acceso)}">${_tiempoDesde(r.ultimo_acceso)}</div></td>
       <td>
         <div class="actions">
           <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
@@ -674,6 +676,24 @@ function abrirSoporte(licenciaId){
 
 // ── UTILS ──
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _tiempoDesde(iso){
+  if(!iso) return 'Nunca';
+  const diff=Date.now()-new Date(iso).getTime();
+  const min=Math.floor(diff/60000);
+  if(min<2) return 'Ahora mismo';
+  if(min<60) return 'hace '+min+' min';
+  const h=Math.floor(diff/3600000);
+  if(h<24) return 'hace '+h+'h';
+  const d=Math.floor(diff/86400000);
+  return 'hace '+d+' día'+(d!==1?'s':'');
+}
+function _colorAcceso(iso){
+  if(!iso) return 'var(--muted)';
+  const h=(Date.now()-new Date(iso).getTime())/3600000;
+  if(h<24) return 'var(--green)';
+  if(h<24*7) return 'var(--amber)';
+  return 'var(--red)';
+}
 function toast(msg,err=false){
   const t=document.getElementById('toast');
   t.textContent=msg;
