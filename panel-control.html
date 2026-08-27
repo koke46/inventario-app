@@ -612,15 +612,16 @@ async function crearYMostrarFicha(){
 }
 const BASE_URL = 'https://koke46.github.io/inventario-app';
 let _fichaActual={};
-function _urlApp(tipo,licenciaId){
+function _urlApp(tipo,licenciaId,cliente){
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
-  return `${BASE_URL}/${archivo}?lic=${encodeURIComponent(licenciaId)}`;
+  const nombre=cliente?'&nombre='+encodeURIComponent(cliente):'';
+  return `${BASE_URL}/${archivo}?lic=${encodeURIComponent(licenciaId)}${nombre}`;
 }
 function mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas){
   _fichaActual={cliente,tipo,licenciaId,usuario,pass};
   const tipoNombre=tipo==='tienda'?'Tienda':'Bar';
   const fecha=new Date().toLocaleDateString('es-ES');
-  const enlace=_urlApp(tipo,licenciaId);
+  const enlace=_urlApp(tipo,licenciaId,cliente);
   const ficha=
 `════════════════════════════
   INVENTARIO FRESCO — ${tipoNombre.toUpperCase()}
@@ -646,8 +647,8 @@ function cerrarFicha(){
   document.getElementById('ficha-overlay').classList.add('hidden');
 }
 function copiarEnlaceApp(){
-  const {licenciaId,tipo}=_fichaActual;
-  const enlace=_urlApp(tipo,licenciaId);
+  const {licenciaId,tipo,cliente}=_fichaActual;
+  const enlace=_urlApp(tipo,licenciaId,cliente);
   navigator.clipboard.writeText(enlace)
     .then(()=>{
       document.getElementById('ficha-hint').innerHTML='<span style="color:var(--green)">✅ Enlace copiado — pégalo al cliente por WhatsApp o email</span>';
