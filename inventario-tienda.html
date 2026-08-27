@@ -110,6 +110,17 @@ body.touch .stat-val{font-size:32px;}
 .demo-check-label{display:flex;align-items:flex-start;gap:10px;text-align:left;font-size:13px;color:#9CA3AF;line-height:1.5;margin-bottom:16px;cursor:pointer;}
 .demo-check-label input{margin-top:2px;accent-color:#F59E0B;width:16px;height:16px;flex-shrink:0;cursor:pointer;}
 .demo-btn:disabled{opacity:.4;cursor:not-allowed;}
+/* ── AVISO EXPIRACIÓN ── */
+#demo-aviso{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99996;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#demo-aviso.hidden{display:none;}
+.aviso-card{background:#1A2235;border-radius:20px;padding:40px 32px;text-align:center;max-width:360px;width:92%;}
+.aviso-ico{font-size:48px;margin-bottom:14px;}
+.aviso-title{font-family:var(--display,sans-serif);font-size:20px;font-weight:800;color:#F0F6FC;margin-bottom:10px;}
+.aviso-sub{font-size:14px;color:#8B949E;line-height:1.6;margin-bottom:24px;}
+.aviso-dias{font-size:52px;font-weight:900;line-height:1;margin-bottom:4px;}
+.aviso-btn{width:100%;padding:14px;border-radius:12px;background:#25D366;color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px;}
+.aviso-btn:hover{background:#1ebe5d;}
+.aviso-skip{font-size:13px;color:#6B7280;cursor:pointer;text-decoration:underline;}
 /* ── DEMO BANNER ── */
 #demo-banner{position:fixed;top:0;left:0;right:0;z-index:9997;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:linear-gradient(90deg,#78350F,#B45309);color:#FEF3C7;font-size:13px;font-weight:600;flex-wrap:wrap;text-align:center;}
 #demo-banner.hidden{display:none;}
@@ -501,6 +512,21 @@ body.demo-activo{padding-top:40px;}
       <button class="btn-cancel" onclick="cerrarModalUserPin()">Cancelar</button>
       <button class="btn-save" onclick="confirmarUserPin()">Entrar</button>
     </div>
+  </div>
+</div>
+
+<!-- ── AVISO EXPIRACIÓN DEMO ── -->
+<div id="demo-aviso" class="hidden">
+  <div class="aviso-card">
+    <div class="aviso-ico" id="aviso-ico">⏰</div>
+    <div class="aviso-dias" id="aviso-dias" style="color:#F59E0B">7</div>
+    <div style="font-size:13px;color:#8B949E;margin-bottom:16px">días restantes</div>
+    <div class="aviso-title" id="aviso-title">Tu prueba está a punto de terminar</div>
+    <p class="aviso-sub" id="aviso-sub">Llámanos ahora para contratar y seguir usando Inventario Fresco sin interrupciones.</p>
+    <button class="aviso-btn" onclick="window.open('https://wa.me/34699279994?text=Hola%2C%20quiero%20contratar%20Inventario%20Fresco','_blank');document.getElementById('demo-aviso').classList.add('hidden')">
+      💬 Contactar por WhatsApp
+    </button>
+    <div class="aviso-skip" onclick="document.getElementById('demo-aviso').classList.add('hidden')">Ahora no</div>
   </div>
 </div>
 
@@ -4930,8 +4956,16 @@ function arrancarApp(){
       return;
     }
     document.getElementById('demo-dias-num').textContent=restantes;
-    document.getElementById('demo-banner').classList.remove('hidden');
+    const banner=document.getElementById('demo-banner');
+    banner.classList.remove('hidden');
     document.body.classList.add('demo-activo');
+    if(restantes<=3){
+      banner.style.background='linear-gradient(90deg,#7F1D1D,#DC2626)';
+      setTimeout(()=>_avisoDemoExpira(restantes),800);
+    } else if(restantes<=7){
+      banner.style.background='linear-gradient(90deg,#78350F,#D97706)';
+      setTimeout(()=>_avisoDemoExpira(restantes),800);
+    }
     _sesion={user:'admin',ts:Date.now()};saveJ('if_sesion',_sesion);
     arrancarApp();
     return;
@@ -4944,6 +4978,21 @@ function arrancarApp(){
   arrancarApp();
 })();
 
+function _avisoDemoExpira(restantes){
+  const hoy=new Date().toISOString().slice(0,10);
+  const clave='if_demo_aviso_'+hoy;
+  if(localStorage.getItem(clave)) return;
+  localStorage.setItem(clave,'1');
+  const urgente=restantes<=3;
+  document.getElementById('aviso-ico').textContent=urgente?'🚨':'⏰';
+  document.getElementById('aviso-dias').textContent=restantes;
+  document.getElementById('aviso-dias').style.color=urgente?'#DC2626':'#F59E0B';
+  document.getElementById('aviso-title').textContent=urgente?'¡Tu prueba termina muy pronto!':'Tu prueba está a punto de terminar';
+  document.getElementById('aviso-sub').textContent=urgente
+    ?'Solo te quedan '+restantes+' día'+(restantes===1?'':'s')+'. Llámanos hoy para no perder tus datos ni el acceso.'
+    :'Te quedan '+restantes+' días. Llámanos para contratar y seguir sin interrupciones.';
+  document.getElementById('demo-aviso').classList.remove('hidden');
+}
 let _demoIp='unknown';
 async function _demoCheckIp(){
   try{const r=await fetch('https://api.ipify.org?format=json');const d=await r.json();_demoIp=d.ip||'unknown';}catch(e){}
