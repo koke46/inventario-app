@@ -313,6 +313,89 @@ a { color: inherit; text-decoration: none; }
 }
 .cta-phone strong { color: rgba(255,255,255,.9); font-size: 20px; }
 
+/* ── PRECIO ── */
+.precio-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+}
+.precio-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber); color: #1C1B18;
+  font-size: 13px; font-weight: 800; letter-spacing: .4px;
+  text-transform: uppercase;
+  padding: 6px 18px; border-radius: 99px;
+  margin-bottom: 28px;
+}
+.precio-card {
+  background: var(--surface);
+  border: 2px solid var(--amber);
+  border-radius: 24px;
+  padding: 52px 56px;
+  max-width: 480px; width: 100%;
+  box-shadow: 0 16px 64px rgba(245,158,11,.1);
+  position: relative;
+}
+.precio-free {
+  font-family: var(--display);
+  font-size: clamp(52px, 10vw, 88px);
+  font-weight: 800; line-height: 1;
+  color: var(--amber);
+  letter-spacing: -2px;
+  margin-bottom: 4px;
+}
+.precio-free-sub {
+  font-size: 17px; color: var(--muted);
+  margin-bottom: 36px;
+}
+.precio-divider {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 36px; color: var(--muted); font-size: 13px;
+}
+.precio-divider::before, .precio-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.precio-after {
+  display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  margin-bottom: 8px;
+}
+.precio-num {
+  font-family: var(--display);
+  font-size: 48px; font-weight: 800;
+  letter-spacing: -1px; color: var(--text);
+}
+.precio-mes {
+  font-size: 18px; color: var(--muted); font-weight: 500;
+}
+.precio-after-sub {
+  font-size: 14px; color: var(--muted);
+  margin-bottom: 36px;
+}
+.precio-items {
+  list-style: none; text-align: left;
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 36px;
+}
+.precio-items li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px;
+}
+.precio-items li::before {
+  content: '✓'; color: var(--amber); font-weight: 700; flex-shrink: 0;
+}
+.btn-precio {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 16px;
+  border-radius: 14px;
+  background: var(--navy); color: #fff;
+  font-family: var(--body); font-size: 16px; font-weight: 700;
+  border: none; cursor: pointer; transition: background .15s;
+}
+.btn-precio:hover { background: var(--navy-mid); }
+.precio-nota {
+  margin-top: 20px;
+  font-size: 13px; color: var(--muted);
+}
+
 /* ── CONDICIONES ── */
 .cond-grid {
   display: grid;
@@ -373,6 +456,7 @@ footer strong { color: rgba(255,255,255,.6); }
     <a href="#funciones">Funciones</a>
     <a href="#planes">Bar / Tienda</a>
     <a href="#como">Cómo funciona</a>
+    <a href="#precio">Precio</a>
     <a href="#condiciones">Condiciones</a>
     <a href="#contacto">Contacto</a>
   </div>
@@ -532,6 +616,42 @@ footer strong { color: rgba(255,255,255,.6); }
         <div class="how-title">Soporte incluido</div>
         <p class="how-desc">Si tienes cualquier problema, te ayudamos directamente. Sin tickets ni formularios.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRECIO -->
+<section class="section" id="precio">
+  <div class="section-inner">
+    <div class="section-label">Precio</div>
+    <h2 class="section-title" style="text-align:center">Empieza gratis.<br>Quédate si te convence.</h2>
+    <br>
+    <div class="precio-wrap">
+      <div class="precio-badge">🎁 Oferta de lanzamiento</div>
+      <div class="precio-card">
+        <div class="precio-free">2 meses</div>
+        <div class="precio-free-sub">completamente gratis, sin tarjeta</div>
+
+        <div class="precio-divider">después</div>
+
+        <div class="precio-after">
+          <span class="precio-num">9,99€</span>
+          <span class="precio-mes">/mes</span>
+        </div>
+        <div class="precio-after-sub">Sin permanencia · Cancela cuando quieras</div>
+
+        <ul class="precio-items">
+          <li>App completa (bar o tienda)</li>
+          <li>Actualizaciones automáticas incluidas</li>
+          <li>Soporte directo por teléfono y WhatsApp</li>
+          <li>Configuración inicial incluida</li>
+          <li>Funciona en móvil, tablet y PC</li>
+          <li>Sin límite de productos ni ventas</li>
+        </ul>
+
+        <a class="btn-precio" href="tel:699279994">📞 Llama y empieza gratis</a>
+      </div>
+      <p class="precio-nota">Sin contratos. Sin letra pequeña. Si no te convence, no pagas nada.</p>
     </div>
   </div>
 </section>
