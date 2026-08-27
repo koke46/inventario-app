@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel de Control</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#263348;--border:#334155;
+  --text:#f1f5f9;--muted:#94a3b8;--purple:#7c3aed;--purple-lt:#4c1d95;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;
+  --mono:'Courier New',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:22px}
+.topbar-title{font-size:16px;font-weight:700;letter-spacing:.3px}
+.topbar-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--purple);color:#fff}
+.btn-primary:hover{background:#6d28d9}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-danger{background:#7f1d1d;color:#fca5a5}
+.btn-danger:hover{background:#991b1b}
+
+/* ── LAYOUT ── */
+.main{padding:24px;max-width:1200px;margin:0 auto}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px}
+.stat-val{font-size:28px;font-weight:800;line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.red .stat-val{color:var(--red)}
+.stat-card.amber .stat-val{color:var(--amber)}
+.stat-card.blue .stat-val{color:var(--blue)}
+
+/* ── BARRA BÚSQUEDA ── */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-size:13px;outline:none}
+.search:focus{border-color:var(--purple)}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;cursor:pointer;outline:none}
+.filter-sel:focus{border-color:var(--purple)}
+
+/* ── TABLA ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+td{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-on{background:#14532d;color:var(--green)}
+.badge-off{background:#7f1d1d;color:#fca5a5}
+.badge-bar{background:#451a03;color:var(--amber)}
+.badge-tienda{background:#1e3a5f;color:#93c5fd}
+.badge-otro{background:var(--surface2);color:var(--muted)}
+
+.lic-id{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--bg);border-radius:4px;padding:2px 6px}
+.cliente-name{font-weight:600;font-size:14px}
+.notas-text{font-size:11px;color:var(--muted);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fecha-text{font-size:11px;color:var(--muted)}
+
+.toggle-btn{width:42px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:.2s;flex-shrink:0}
+.toggle-btn.on{background:var(--green)}
+.toggle-btn.off{background:var(--border)}
+.toggle-btn::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;transition:.2s}
+.toggle-btn.on::after{left:23px}
+.toggle-btn.off::after{left:3px}
+
+.actions{display:flex;gap:6px;align-items:center}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.overlay.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;outline:none}
+.form-input:focus{border-color:var(--purple)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.switch-wrap{display:flex;align-items:center;gap:10px}
+.switch-label{font-size:14px}
+
+/* ── EMPTY ── */
+.empty{padding:60px;text-align:center;color:var(--muted)}
+.empty-ico{font-size:40px;margin-bottom:12px}
+.empty-txt{font-size:14px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:.3s;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.refresh-info{font-size:11px;color:var(--muted);text-align:right;margin-bottom:8px}
+
+/* ── GENERADOR ── */
+.btn-green{background:#15803d;color:#fff}
+.btn-green:hover{background:#166534}
+.gen-pass-wrap{display:flex;gap:6px}
+.gen-pass-wrap .form-input{flex:1;font-family:var(--mono);letter-spacing:.5px}
+
+/* ── FICHA ── */
+.ficha-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px}
+.ficha-overlay.hidden{display:none}
+.ficha-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:420px}
+.ficha-title{font-size:16px;font-weight:700;margin-bottom:16px;text-align:center}
+.ficha-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.9;white-space:pre-wrap;word-break:break-all;user-select:all;color:var(--text)}
+.ficha-actions{display:flex;gap:10px;margin-top:16px;justify-content:center}
+.ficha-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">⚡</div>
+  <div>
+    <div class="topbar-title">Panel de Control</div>
+    <div class="topbar-sub">Gestión de licencias</div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="cargar()" id="btn-refresh">🔄 Actualizar</button>
+<button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">➕ Nuevo cliente</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- STATS -->
+  <div class="stats" id="stats">
+    <div class="stat-card"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total clientes</div></div>
+    <div class="stat-card green"><div class="stat-val" id="s-activos">—</div><div class="stat-lbl">Activos</div></div>
+    <div class="stat-card red"><div class="stat-val" id="s-bloqueados">—</div><div class="stat-lbl">Bloqueados</div></div>
+    <div class="stat-card amber"><div class="stat-val" id="s-bares">—</div><div class="stat-lbl">Bares</div></div>
+    <div class="stat-card blue"><div class="stat-val" id="s-tiendas">—</div><div class="stat-lbl">Tiendas</div></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <input class="search" id="search" placeholder="🔍 Buscar cliente o ID..." oninput="renderTabla()">
+    <select class="filter-sel" id="filtro-tipo" onchange="renderTabla()">
+      <option value="">Todos los tipos</option>
+      <option value="bar">🍺 Bares</option>
+      <option value="tienda">🛒 Tiendas</option>
+    </select>
+    <select class="filter-sel" id="filtro-estado" onchange="renderTabla()">
+      <option value="">Todos los estados</option>
+      <option value="activo">✅ Activos</option>
+      <option value="bloqueado">🔴 Bloqueados</option>
+    </select>
+  </div>
+  <div class="refresh-info" id="refresh-info"></div>
+
+  <!-- TABLA -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>ID Licencia</th>
+          <th>Tipo</th>
+          <th>Estado</th>
+          <th>Usuario</th>
+          <th>Notas</th>
+          <th>Alta</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" class="empty"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL NUEVO / EDITAR -->
+<div class="overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-titulo">Nuevo cliente</div>
+    <input type="hidden" id="m-id">
+    <div class="form-group">
+      <label class="form-label">Nombre del cliente</label>
+      <input class="form-input" id="m-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="new-password" oninput="window._clienteVal=this.value">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo de app</label>
+        <select class="form-input" id="m-tipo" onchange="generarId()">
+          <option value="bar">🍺 Bar</option>
+          <option value="tienda">🛒 Tienda</option>
+          <option value="otro">📦 Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID Licencia</label>
+        <input class="form-input" id="m-licencia-id" placeholder="BAR_0001" style="font-family:var(--mono)" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Usuario acceso</label>
+        <input class="form-input" id="m-usuario" placeholder="admin" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña acceso</label>
+        <div class="gen-pass-wrap">
+          <input class="form-input" id="m-contrasena" placeholder="••••••" type="text" autocomplete="off">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('m-contrasena').value=genPass()" title="Generar">🔀</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <input class="form-input" id="m-notas" placeholder="Teléfono, dirección, precio mensual..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estado</label>
+      <div class="switch-wrap">
+        <button class="toggle-btn on" id="m-toggle" onclick="toggleModal()"></button>
+        <span class="switch-label" id="m-toggle-lbl">Activa</span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCliente()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GENERADOR -->
+<div class="overlay hidden" id="gen-overlay">
+  <div class="modal">
+    <div class="modal-title">🎟️ Vender app nueva</div>
+    <div class="form-group">
+      <label class="form-label">Nombre del cliente / negocio</label>
+      <input class="form-input" id="gen-cliente" placeholder="Ej: Bar El Rincón · María López">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de app</label>
+      <select class="form-input" id="gen-tipo" onchange="actualizarGenId()">
+        <option value="bar">🍺 Bar</option>
+        <option value="tienda">🛒 Tienda de alimentación</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ID Licencia</label>
+        <input class="form-input" id="gen-licencia-id" style="font-family:var(--mono)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usuario acceso</label>
+        <input class="form-input" id="gen-usuario" value="admin">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña acceso</label>
+      <div class="gen-pass-wrap">
+        <input class="form-input" id="gen-pass" placeholder="Contraseña generada...">
+        <button class="btn btn-ghost btn-sm" onclick="generarPassword()" title="Nueva contraseña">🔀</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas (opcional)</label>
+      <input class="form-input" id="gen-notas" placeholder="Teléfono, precio mensual, dirección...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="cerrarGenerador()">Cancelar</button>
+      <button class="btn btn-green" onclick="crearYMostrarFicha()">✅ Crear y generar ficha</button>
+    </div>
+  </div>
+</div>
+
+<!-- FICHA RESULTADO -->
+<div class="ficha-overlay hidden" id="ficha-overlay">
+  <div class="ficha-card">
+    <div class="ficha-title">📋 Ficha del cliente</div>
+    <div class="ficha-box" id="ficha-box"></div>
+    <div class="ficha-actions">
+      <button class="btn btn-ghost btn-sm" onclick="copiarFicha()">📋 Copiar ficha</button>
+      <button class="btn btn-green btn-sm" onclick="copiarEnlaceApp()">🔗 Copiar enlace app</button>
+      <button class="btn btn-primary btn-sm" onclick="cerrarFicha()">✓ Cerrar</button>
+    </div>
+    <div class="ficha-hint" id="ficha-hint">Copia la ficha y envíala al cliente junto con el enlace</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzU4MzQ2MiwiZXhwIjoyMTAzMTU5NDYyfQ.p8tdF6eNFIQptSjM-a7wQQI_LrY_qphB-sIH7SgWdzU';
+
+let _datos=[];
+let _modalActiva=true;
+
+// ── API ──
+function sbHeaders(){
+  return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+}
+async function sbGet(){
+  const r=await fetch(SB_URL+'/rest/v1/licencias?select=*&order=created_at.desc',{headers:sbHeaders()});
+  if(!r.ok) throw new Error('Error '+r.status);
+  return r.json();
+}
+async function sbPost(body){
+  const r=await fetch(SB_URL+'/rest/v1/licencias',{method:'POST',headers:sbHeaders(),body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  return r.json();
+}
+async function sbPatch(licenciaId,body){
+  const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'PATCH',headers:sbHeaders(),body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  return r.json();
+}
+async function sbDelete(licenciaId){
+  const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'DELETE',headers:sbHeaders()});
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+}
+
+// ── CARGA ──
+async function cargar(){
+  const btn=document.getElementById('btn-refresh');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  try{
+    _datos=await sbGet();
+    renderStats();
+    renderTabla();
+    const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('refresh-info').textContent='Actualizado a las '+now;
+  }catch(e){
+    toast('❌ Error al conectar: '+e.message,true);
+  }finally{
+    btn.disabled=false;btn.innerHTML='🔄 Actualizar';
+  }
+}
+
+// ── TIPO ──
+function getTipo(row){
+  const id=(row.licencia_id||'').toUpperCase();
+  if(id.startsWith('BAR')) return 'bar';
+  if(id.startsWith('TIENDA')) return 'tienda';
+  // Fallback: busca en notas
+  const n=(row.notas||'').toLowerCase();
+  if(n.includes('[bar]')) return 'bar';
+  if(n.includes('[tienda]')) return 'tienda';
+  return 'otro';
+}
+function getNotas(row){
+  return (row.notas||'').replace(/\[bar\]|\[tienda\]/gi,'').trim();
+}
+
+// ── STATS ──
+function renderStats(){
+  const total=_datos.length;
+  const activos=_datos.filter(r=>r.activa).length;
+  const bloqueados=total-activos;
+  const bares=_datos.filter(r=>getTipo(r)==='bar').length;
+  const tiendas=_datos.filter(r=>getTipo(r)==='tienda').length;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-activos').textContent=activos;
+  document.getElementById('s-bloqueados').textContent=bloqueados;
+  document.getElementById('s-bares').textContent=bares;
+  document.getElementById('s-tiendas').textContent=tiendas;
+}
+
+// ── TABLA ──
+function renderTabla(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const ft=document.getElementById('filtro-tipo').value;
+  const fe=document.getElementById('filtro-estado').value;
+
+  let rows=_datos;
+  if(q) rows=rows.filter(r=>(r.cliente||'').toLowerCase().includes(q)||(r.licencia_id||'').toLowerCase().includes(q));
+  if(ft) rows=rows.filter(r=>getTipo(r)===ft);
+  if(fe==='activo') rows=rows.filter(r=>r.activa);
+  if(fe==='bloqueado') rows=rows.filter(r=>!r.activa);
+
+  const tbody=document.getElementById('tbody');
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML=rows.map(r=>{
+    const tipo=getTipo(r);
+    const notas=getNotas(r);
+    const tipoBadge=tipo==='bar'?'<span class="badge badge-bar">🍺 Bar</span>':tipo==='tienda'?'<span class="badge badge-tienda">🛒 Tienda</span>':'<span class="badge badge-otro">📦 Otro</span>';
+    const estadoBadge=r.activa?'<span class="badge badge-on">● Activa</span>':'<span class="badge badge-off">● Bloqueada</span>';
+    const fecha=r.created_at?new Date(r.created_at).toLocaleDateString('es-ES'):'—';
+    return`<tr>
+      <td><div class="cliente-name">${esc(r.cliente||'—')}</div></td>
+      <td><span class="lic-id">${esc(r.licencia_id||'')}</span></td>
+      <td>${tipoBadge}</td>
+      <td>${estadoBadge}</td>
+      <td><span class="lic-id">${esc(r.usuario||'—')}</span></td>
+      <td><div class="notas-text" title="${esc(notas)}">${esc(notas)||'—'}</div></td>
+      <td><div class="fecha-text">${fecha}</div></td>
+      <td>
+        <div class="actions">
+          <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${esc(r.licencia_id)}')">✏️</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── TOGGLE ACTIVA ──
+async function toggleActiva(licenciaId,activa){
+  const nuevo=!activa;
+  try{
+    await sbPatch(licenciaId,{activa:nuevo});
+    const row=_datos.find(r=>r.licencia_id===licenciaId);
+    if(row) row.activa=nuevo;
+    renderStats();renderTabla();
+    toast(nuevo?'✅ Licencia activada':'🔴 Licencia bloqueada');
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
+// ── ELIMINAR ──
+async function eliminar(licenciaId,cliente){
+  if(!confirm(`¿Eliminar cliente "${cliente}"?\n\nID: ${licenciaId}\n\nEsta acción no se puede deshacer.`)) return;
+  try{
+    await sbDelete(licenciaId);
+    _datos=_datos.filter(r=>r.licencia_id!==licenciaId);
+    renderStats();renderTabla();
+    toast('🗑️ Cliente eliminado');
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
+// ── MODAL ──
+function abrirModalNuevo(){
+  document.getElementById('modal-titulo').textContent='Nuevo cliente';
+  document.getElementById('m-id').value='';
+  document.getElementById('m-tipo').value='bar';
+  const mLicId=document.getElementById('m-licencia-id');
+  mLicId.value='';mLicId.readOnly=false;mLicId.style.opacity='1';
+  document.getElementById('m-usuario').value='admin';
+  document.getElementById('m-contrasena').value=genPass();
+  _modalActiva=true;
+  actualizarToggleModal();
+  generarId();
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  window._clienteVal='';
+  document.getElementById('m-cliente').value='';
+  document.getElementById('m-notas').value='';
+  setTimeout(()=>document.getElementById('m-cliente').focus(),50);
+}
+function abrirModalEditar(licenciaId){
+  window._clienteVal=undefined;
+  const r=_datos.find(x=>x.licencia_id===licenciaId);
+  if(!r) return;
+  const tipo=getTipo(r);
+  document.getElementById('modal-titulo').textContent='Editar cliente';
+  document.getElementById('m-id').value=r.licencia_id;
+  document.getElementById('m-cliente').value=r.cliente||'';
+  document.getElementById('m-tipo').value=tipo==='otro'?'otro':tipo;
+  document.getElementById('m-licencia-id').value=r.licencia_id;
+  document.getElementById('m-licencia-id').readOnly=true;
+  document.getElementById('m-licencia-id').style.opacity='.5';
+  document.getElementById('m-usuario').value=r.usuario||'admin';
+  document.getElementById('m-contrasena').value=r.contrasena||'';
+  document.getElementById('m-notas').value=getNotas(r);
+  _modalActiva=r.activa;
+  actualizarToggleModal();
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function cerrarModal(){
+  document.getElementById('modal-overlay').classList.add('hidden');
+  document.getElementById('m-licencia-id').readOnly=false;
+  document.getElementById('m-licencia-id').style.opacity='';
+}
+function toggleModal(){
+  _modalActiva=!_modalActiva;
+  actualizarToggleModal();
+}
+function actualizarToggleModal(){
+  const btn=document.getElementById('m-toggle');
+  const lbl=document.getElementById('m-toggle-lbl');
+  btn.className='toggle-btn '+(_modalActiva?'on':'off');
+  lbl.textContent=_modalActiva?'Activa':'Bloqueada';
+}
+
+// ── GENERAR ID ──
+function generarId(){
+  const idInput=document.getElementById('m-id');
+  if(idInput.value) return; // editando, no tocar
+  const tipo=document.getElementById('m-tipo').value;
+  const prefijo=tipo==='bar'?'BAR':tipo==='tienda'?'TIENDA':'APP';
+  const existentes=_datos.map(r=>r.licencia_id||'').filter(id=>id.startsWith(prefijo+'_'));
+  let n=1;
+  while(existentes.includes(prefijo+'_'+String(n).padStart(4,'0'))) n++;
+  document.getElementById('m-licencia-id').value=prefijo+'_'+String(n).padStart(4,'0');
+}
+
+// ── GUARDAR ──
+async function guardarCliente(){
+  const cliente=((window._clienteVal!==undefined?window._clienteVal:document.getElementById('m-cliente').value)||'').trim();
+  window._clienteVal=undefined;
+  const licenciaId=(document.getElementById('m-licencia-id').value||'').trim();
+  const tipo=document.getElementById('m-tipo').value;
+  const usuario=(document.getElementById('m-usuario').value||'admin').trim();
+  const contrasena=(document.getElementById('m-contrasena').value||'').trim();
+  const notasRaw=(document.getElementById('m-notas').value||'').trim();
+  const editando=!!document.getElementById('m-id').value;
+
+  if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
+  if(!licenciaId){toast('⚠️ El ID de licencia es obligatorio',true);return;}
+  if(!contrasena){toast('⚠️ La contraseña no puede estar vacía',true);return;}
+
+  const tipoPrefijo=tipo==='bar'?'[bar] ':tipo==='tienda'?'[tienda] ':'';
+  const licenciaIdUp=licenciaId.toUpperCase();
+  const idDetectaTipo=licenciaIdUp.startsWith('BAR')||licenciaIdUp.startsWith('TIENDA');
+  const notas=idDetectaTipo?notasRaw:tipoPrefijo+notasRaw;
+
+  try{
+    if(editando){
+      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva});
+      const idx=_datos.findIndex(x=>x.licencia_id===licenciaId);
+      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva};
+      toast('✅ Cliente actualizado');
+    }else{
+      if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
+      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva});
+      _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
+      cerrarModal();
+      renderStats();renderTabla();
+      mostrarFicha(cliente,tipo,licenciaId,usuario,contrasena,notas);
+      return;
+    }
+    cerrarModal();
+    renderStats();renderTabla();
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
+// ── GENERADOR ──
+function abrirGenerador(){
+  document.getElementById('gen-cliente').value='';
+  document.getElementById('gen-tipo').value='bar';
+  document.getElementById('gen-usuario').value='admin';
+  document.getElementById('gen-notas').value='';
+  actualizarGenId();
+  generarPassword();
+  document.getElementById('gen-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('gen-cliente').focus(),50);
+}
+function cerrarGenerador(){
+  document.getElementById('gen-overlay').classList.add('hidden');
+}
+function actualizarGenId(){
+  const tipo=document.getElementById('gen-tipo').value;
+  const prefijo=tipo==='tienda'?'TIENDA':'BAR';
+  const existentes=_datos.map(r=>r.licencia_id||'').filter(id=>id.startsWith(prefijo+'_'));
+  let n=1;
+  while(existentes.includes(prefijo+'_'+String(n).padStart(4,'0'))) n++;
+  document.getElementById('gen-licencia-id').value=prefijo+'_'+String(n).padStart(4,'0');
+}
+function genPass(){
+  const chars='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let p='';for(let i=0;i<8;i++) p+=chars[Math.floor(Math.random()*chars.length)];
+  return p;
+}
+function generarPassword(){
+  document.getElementById('gen-pass').value=genPass();
+}
+async function crearYMostrarFicha(){
+  const cliente=(document.getElementById('gen-cliente').value||'').trim();
+  const tipo=document.getElementById('gen-tipo').value;
+  const licenciaId=(document.getElementById('gen-licencia-id').value||'').trim();
+  const usuario=(document.getElementById('gen-usuario').value||'admin').trim();
+  const pass=(document.getElementById('gen-pass').value||'').trim();
+  const notas=(document.getElementById('gen-notas').value||'').trim();
+  if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
+  if(!pass){toast('⚠️ Genera o escribe una contraseña',true);return;}
+  if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
+  try{
+    const notasGuardar=notas;
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true});
+    _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasGuardar,activa:true,created_at:new Date().toISOString()});
+    renderStats();renderTabla();
+    cerrarGenerador();
+    mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas);
+  }catch(e){
+    toast('❌ Error al crear: '+e.message,true);
+  }
+}
+const BASE_URL = 'https://koke46.github.io/inventario-app';
+let _fichaActual={};
+function _urlApp(tipo,licenciaId){
+  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+  return `${BASE_URL}/${archivo}?lic=${encodeURIComponent(licenciaId)}`;
+}
+function mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas){
+  _fichaActual={cliente,tipo,licenciaId,usuario,pass};
+  const tipoNombre=tipo==='tienda'?'Tienda':'Bar';
+  const fecha=new Date().toLocaleDateString('es-ES');
+  const enlace=_urlApp(tipo,licenciaId);
+  const ficha=
+`════════════════════════════
+  INVENTARIO FRESCO — ${tipoNombre.toUpperCase()}
+  Licencia: ${licenciaId}
+════════════════════════════
+Cliente:  ${cliente}
+Fecha:    ${fecha}
+${notas?'Notas:    '+notas+'\n':''}
+── ACCESO A LA APP ─────────
+  Usuario:     ${usuario}
+  Contraseña:  ${pass}
+
+── ENLACE ──────────────────
+  ${enlace}
+
+── SOPORTE ─────────────────
+  Teléfono: 699 279 994
+════════════════════════════`;
+  document.getElementById('ficha-box').textContent=ficha;
+  document.getElementById('ficha-overlay').classList.remove('hidden');
+}
+function cerrarFicha(){
+  document.getElementById('ficha-overlay').classList.add('hidden');
+}
+function copiarEnlaceApp(){
+  const {licenciaId,tipo}=_fichaActual;
+  const enlace=_urlApp(tipo,licenciaId);
+  navigator.clipboard.writeText(enlace)
+    .then(()=>{
+      document.getElementById('ficha-hint').innerHTML='<span style="color:var(--green)">✅ Enlace copiado — pégalo al cliente por WhatsApp o email</span>';
+      toast('🔗 Enlace copiado');
+    })
+    .catch(()=>toast('Copia el enlace manualmente de la ficha',true));
+}
+function copiarFicha(){
+  const txt=document.getElementById('ficha-box').textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast('📋 Ficha copiada al portapapeles')).catch(()=>toast('Selecciona el texto y cópialo manualmente',true));
+}
+
+// ── SOPORTE ──
+const MASTER_PASS='IF.SOPORTE.2026';
+const APP_BARES  ='inventario-fresco.html';
+const APP_TIENDA ='inventario-tienda.html';
+function abrirSoporte(licenciaId){
+  const row=_datos.find(r=>r.licencia_id===licenciaId);
+  const tipo=row?getTipo(row):'bar';
+  const archivo=tipo==='tienda'?APP_TIENDA:APP_BARES;
+  const cliente=encodeURIComponent(row?.cliente||licenciaId);
+  const url=archivo+'#soporte='+encodeURIComponent(MASTER_PASS)+'&cliente='+cliente+'&lic='+encodeURIComponent(licenciaId);
+  window.open(url,'_blank');
+  toast('🔧 Abriendo '+esc(row?.cliente||licenciaId)+' en modo soporte...');
+}
+
+// ── UTILS ──
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=err?'#7f1d1d':'#1e293b';
+  t.style.color=err?'#fca5a5':undefined;
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Cerrar modal con Escape
+document.addEventListener('keydown',e=>{if(e.key==='Escape') cerrarModal();});
+// Cerrar modal al clicar fuera
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay')) cerrarModal();});
+
+// ── AUTO-REFRESH cada 60s ──
+setInterval(cargar,60000);
+
+// ── INICIO ──
+cargar();
+</script>
+</body>
+</html>
