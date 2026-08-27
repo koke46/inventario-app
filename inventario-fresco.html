@@ -1504,6 +1504,7 @@ function save(){
   saveJ('if_cierres',cierresCaja);
   saveJ('if_proveedores',proveedores);
   saveJ('if_pedidos',pedidosCompra);
+  saveJ('if_usuarios',usuarios);
 }
 
 // ══════════════════════════════════════════════
@@ -5181,7 +5182,11 @@ function arrancarApp(){
   // Demo: activación con IP + localStorage
   if(LICENCIA_ID==='__DEMO__'){
     const localInicio=localStorage.getItem('if_demo_inicio');
-    const sbInicio=await _demoCheckIp();
+    // Si ya hay datos locales arrancamos sin esperar la red (evita bloqueo)
+    // Si no hay datos locales comprobamos IP en Supabase (dispositivo nuevo)
+    let sbInicio=null;
+    if(!localInicio) sbInicio=await _demoCheckIp();
+    else _demoCheckIp().catch(()=>{});
     const inicio=sbInicio||(localInicio?parseInt(localInicio):null);
     if(!inicio){
       document.getElementById('demo-modal').classList.remove('hidden');
