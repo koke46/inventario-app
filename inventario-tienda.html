@@ -801,6 +801,11 @@ body.demo-activo{padding-top:40px;}
             <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">Guarda todos tus datos en un archivo JSON. Úsalo para hacer copias de seguridad o trasladar datos a otro dispositivo.</div>
             <button class="btn-save" style="width:100%;margin-bottom:8px" onclick="exportarDatos()">📤 Exportar datos (backup)</button>
             <button class="btn-save" style="width:100%;background:var(--surface2);color:var(--fg);border:1.5px solid var(--border)" onclick="importarDatos()">📥 Importar / Restaurar backup</button>
+            <div style="height:1px;background:var(--border);margin:16px 0"></div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">☁️ <strong>Sincronización en la nube</strong> — guarda tus datos en la nube para abrirlos en otro dispositivo.</div>
+            <button class="btn-save" style="width:100%;margin-bottom:8px;background:#1B2645" onclick="sincronizarNube()">☁️ Guardar en la nube</button>
+            <button class="btn-save" style="width:100%;background:var(--surface2);color:var(--fg);border:1.5px solid var(--border)" onclick="restaurarNube()">⬇️ Restaurar desde la nube</button>
+            <div id="sync-info" style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center"></div>
           </div>
         </div>
         <div class="aj-panel" id="panel-alertas">
@@ -1937,6 +1942,51 @@ function importarDatos(){
     reader.readAsText(file);
   };
   input.click();
+}
+async function sincronizarNube(){
+  if(LICENCIA_ID==='__DEMO__'){toast('⚠️ La sincronización no está disponible en modo demo');return;}
+  try{
+    const datos={
+      version:2,app:'inventario-tienda',fecha:new Date().toISOString(),
+      comercio,productos,lotes,movimientos,almacen,comandas,
+      cierresCaja,proveedores,pedidosCompra,usuarios
+    };
+    const res=await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
+      method:'POST',
+      headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal,resolution=merge-duplicates'},
+      body:JSON.stringify({licencia_id:LICENCIA_ID,datos:datos,actualizado_en:new Date().toISOString()})
+    });
+    if(res.ok){
+      const el=document.getElementById('sync-info');
+      if(el) el.textContent='Última sincronización: '+new Date().toLocaleString('es-ES');
+      toast('☁️ Datos guardados en la nube');
+    } else {toast('⚠️ Error al sincronizar ('+res.status+')');}
+  }catch(e){toast('⚠️ Sin conexión — no se pudo sincronizar');}
+}
+async function restaurarNube(){
+  if(LICENCIA_ID==='__DEMO__'){toast('⚠️ No disponible en modo demo');return;}
+  if(!confirm('¿Restaurar datos desde la nube?\n\nSe sobreescribirán los datos actuales de este dispositivo.\n\nEsta acción no se puede deshacer.'))return;
+  try{
+    const res=await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=datos,actualizado_en',
+      {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
+    const rows=await res.json();
+    if(!rows||!rows.length){toast('⚠️ No hay datos en la nube para esta licencia');return;}
+    const data=rows[0].datos;
+    const fecha=new Date(rows[0].actualizado_en).toLocaleString('es-ES');
+    if(!confirm('Se restaurarán los datos guardados el '+fecha+'\n\n¿Continuar?'))return;
+    if(data.comercio)    {comercio={...comercio,...data.comercio};saveJ('if_comercio',comercio);}
+    if(data.productos)   {productos=data.productos;saveJ('if_productos',productos);}
+    if(data.lotes)       {lotes=data.lotes;saveJ('if_lotes',lotes);}
+    if(data.movimientos) {movimientos=data.movimientos;saveJ('if_movimientos',movimientos);}
+    if(data.almacen)     {almacen=data.almacen;saveJ('if_almacen',almacen);}
+    if(data.comandas)    {comandas=data.comandas;saveJ('if_comandas',comandas);}
+    if(data.cierresCaja) {cierresCaja=data.cierresCaja;saveJ('if_cierres',cierresCaja);}
+    if(data.proveedores) {proveedores=data.proveedores;saveJ('if_proveedores',proveedores);}
+    if(data.pedidosCompra){pedidosCompra=data.pedidosCompra;saveJ('if_pedidos',pedidosCompra);}
+    if(data.usuarios)    {usuarios=data.usuarios;saveJ('if_usuarios',usuarios);}
+    toast('✅ Datos restaurados — recargando...');
+    setTimeout(()=>location.reload(),1200);
+  }catch(e){toast('⚠️ Sin conexión — no se pudo restaurar');}
 }
 function abrirModalFactura(){
   if(!_ultimaComanda){toast('⚠️ No hay comanda reciente');return;}
