@@ -101,6 +101,26 @@ body.touch .stat-val{font-size:32px;}
 .bloqueo-title{font-size:22px;font-weight:800;color:#F0F6FC;margin-bottom:10px;}
 .bloqueo-sub{font-size:14px;color:#8B949E;line-height:1.6;margin-bottom:24px;}
 .bloqueo-contact{font-size:13px;font-weight:700;color:#F78166;padding:12px 20px;background:rgba(247,129,102,.1);border:1px solid rgba(247,129,102,.3);border-radius:10px;}
+/* ── DEMO MODAL ── */
+#demo-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#demo-modal.hidden{display:none;}
+.demo-card{background:#1A2235;border:1px solid #F59E0B;border-radius:24px;padding:52px 40px;text-align:center;max-width:380px;width:92%;box-shadow:0 0 60px rgba(245,158,11,.15);}
+.demo-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#F59E0B;font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:5px 14px;border-radius:99px;margin-bottom:20px;}
+.demo-ico{font-size:52px;margin-bottom:16px;}
+.demo-title{font-size:22px;font-weight:800;color:#F0F6FC;margin-bottom:10px;}
+.demo-sub{font-size:14px;color:#8B949E;line-height:1.65;margin-bottom:28px;}
+.demo-free{font-size:42px;font-weight:900;color:#F59E0B;line-height:1;margin-bottom:4px;}
+.demo-free-sub{font-size:13px;color:#8B949E;margin-bottom:32px;}
+.demo-btn{width:100%;padding:16px;border-radius:14px;background:#F59E0B;color:#1C1B18;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:background .15s;}
+.demo-btn:hover{background:#D97706;}
+.demo-nota{font-size:12px;color:#6B7280;margin-top:14px;}
+/* ── DEMO BANNER ── */
+#demo-banner{position:fixed;top:0;left:0;right:0;z-index:9997;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:linear-gradient(90deg,#78350F,#B45309);color:#FEF3C7;font-size:13px;font-weight:600;flex-wrap:wrap;text-align:center;}
+#demo-banner.hidden{display:none;}
+#demo-banner strong{font-size:14px;color:#FDE68A;}
+.demo-banner-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#FEF3C7;padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.demo-banner-btn:hover{background:rgba(255,255,255,.25);}
+body.demo-activo{padding-top:40px;}
 .bloqueo-ver{font-size:11px;color:#30363D;margin-top:20px;font-family:monospace;}
 .login-card{width:380px;background:#1E2229;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.5);}
 .login-top{padding:36px 32px 28px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06);}
@@ -517,6 +537,26 @@ body.touch .stat-val{font-size:32px;}
       <button class="btn-cancel" onclick="cerrarModalUserPin()">Cancelar</button>
       <button class="btn-save" onclick="confirmarUserPin()">Entrar</button>
     </div>
+  </div>
+</div>
+
+<!-- ── DEMO BANNER ── -->
+<div id="demo-banner" class="hidden">
+  <span>🎁 Modo demo · Te quedan <strong id="demo-dias-num">60</strong> días de prueba gratuita</span>
+  <button class="demo-banner-btn" onclick="window.open('tel:699279994')">📞 Contratar — 699 279 994</button>
+</div>
+
+<!-- ── DEMO MODAL ACTIVACIÓN ── -->
+<div id="demo-modal" class="hidden">
+  <div class="demo-card">
+    <div class="demo-badge">🎁 Prueba gratuita</div>
+    <div class="demo-ico">🥦</div>
+    <div class="demo-title">Activa tu demo gratuita</div>
+    <p class="demo-sub">Prueba Inventario Fresco durante dos meses sin pagar nada. Sin tarjeta. Sin compromiso.</p>
+    <div class="demo-free">2 meses</div>
+    <div class="demo-free-sub">completamente gratis</div>
+    <button class="demo-btn" onclick="activarDemo()">Activar demo gratuita →</button>
+    <p class="demo-nota">Después, 9,99 €/mes · Cancela cuando quieras</p>
   </div>
 </div>
 
@@ -5081,14 +5121,64 @@ function arrancarApp(){
     arrancarApp();
     return;
   }
+  // Demo: activación con IP + localStorage
+  if(LICENCIA_ID==='__DEMO__'){
+    const localInicio=localStorage.getItem('if_demo_inicio');
+    const sbInicio=await _demoCheckIp();
+    const inicio=sbInicio||(localInicio?parseInt(localInicio):null);
+    if(!inicio){
+      document.getElementById('demo-modal').classList.remove('hidden');
+      return;
+    }
+    if(!localInicio) localStorage.setItem('if_demo_inicio',inicio.toString());
+    const restantes=60-Math.floor((Date.now()-inicio)/86400000);
+    if(restantes<=0){
+      document.getElementById('bloqueo-contacto').textContent=LIC_CONTACTO;
+      document.getElementById('bloqueo-id').textContent='Tu periodo de prueba de 60 días ha terminado';
+      document.getElementById('bloqueo-screen').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('demo-dias-num').textContent=restantes;
+    document.getElementById('demo-banner').classList.remove('hidden');
+    document.body.classList.add('demo-activo');
+    _sesion={user:'admin',ts:Date.now()};saveJ('if_sesion',_sesion);
+    arrancarApp();
+    return;
+  }
   const ok=await checkLicencia();
   if(!ok){mostrarBloqueo();return;}
   if(!_sesion){
-    if(LICENCIA_ID==='__DEMO__'){_sesion={user:'admin',ts:Date.now()};saveJ('if_sesion',_sesion);}
-    else{document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('auth-user').focus();return;}
+    document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('auth-user').focus();return;
   }
   arrancarApp();
 })();
+
+let _demoIp='unknown';
+async function _demoCheckIp(){
+  try{const r=await fetch('https://api.ipify.org?format=json');const d=await r.json();_demoIp=d.ip||'unknown';}catch(e){}
+  try{
+    const res=await fetch(LIC_SB_URL+'/rest/v1/demo_activaciones?ip=eq.'+encodeURIComponent(_demoIp)+'&select=activado_en',
+      {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
+    const rows=await res.json();
+    if(Array.isArray(rows)&&rows.length>0) return new Date(rows[0].activado_en).getTime();
+  }catch(e){}
+  return null;
+}
+async function activarDemo(){
+  const ahora=Date.now();
+  localStorage.setItem('if_demo_inicio',ahora.toString());
+  fetch(LIC_SB_URL+'/rest/v1/demo_activaciones',{
+    method:'POST',
+    headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal,resolution=ignore-duplicates'},
+    body:JSON.stringify({ip:_demoIp,activado_en:new Date(ahora).toISOString()})
+  }).catch(()=>{});
+  document.getElementById('demo-modal').classList.add('hidden');
+  document.getElementById('demo-dias-num').textContent='60';
+  document.getElementById('demo-banner').classList.remove('hidden');
+  document.body.classList.add('demo-activo');
+  _sesion={user:'admin',ts:Date.now()};saveJ('if_sesion',_sesion);
+  arrancarApp();
+}
 
 // ══════════════════════════════════════════════
 // SUPABASE – PEDIDOS EN TIEMPO REAL (polling)
