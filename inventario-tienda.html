@@ -4851,9 +4851,7 @@ function eliminarPinCaja(){
 // INIT
 // ══════════════════════════════════════════════
 function arrancarApp(){
-  // Categorías por defecto de la tienda
   if(!comercio.categorias) comercio.categorias=[];
-  ['Bocadillos'].forEach(c=>{if(!comercio.categorias.includes(c)) comercio.categorias.push(c);});
   document.getElementById('topbar-comercio').textContent=comercio.nombre||'Mi Comercio';
   if(_modoSoporte){
     let badge=document.getElementById('soporte-badge');
