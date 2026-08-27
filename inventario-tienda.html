@@ -1393,6 +1393,13 @@ const LIC_SB_URL    = 'https://aqbdlvmfbdagypmwxhca.supabase.co';
 const LIC_SB_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
 const LIC_CONTACTO  = 'Llama al 699 279 994';
 
+// Compatibilidad: si el panel antiguo puso ?lic en el hash en vez del query string, redirigir
+if(LICENCIA_ID==='__DEMO__'&&location.hash.includes('soporte='+MASTER_PASS)){
+  const _hp2=new URLSearchParams(location.hash.slice(1));
+  const _licHash=_hp2.get('lic');
+  if(_licHash) location.replace(location.pathname+'?lic='+encodeURIComponent(_licHash)+location.hash);
+}
+
 async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
