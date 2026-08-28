@@ -321,6 +321,7 @@ tr:hover td{background:var(--surface2)}
     <div class="ficha-actions">
       <button class="btn btn-ghost btn-sm" onclick="copiarFicha()">📋 Copiar ficha</button>
       <button class="btn btn-green btn-sm" onclick="copiarEnlaceApp()">🔗 Copiar enlace app</button>
+      <button class="btn btn-ghost btn-sm" onclick="copiarEnlacePrimerAcceso()" title="Link para que el cliente vea el login aunque ya haya entrado antes">🔄 Primer acceso</button>
       <button class="btn btn-primary btn-sm" onclick="cerrarFicha()">✓ Cerrar</button>
     </div>
     <div class="ficha-hint" id="ficha-hint">Copia la ficha y envíala al cliente junto con el enlace</div>
@@ -686,6 +687,17 @@ function copiarEnlaceApp(){
 function copiarFicha(){
   const txt=document.getElementById('ficha-box').textContent;
   navigator.clipboard.writeText(txt).then(()=>toast('📋 Ficha copiada al portapapeles')).catch(()=>toast('Selecciona el texto y cópialo manualmente',true));
+}
+function copiarEnlacePrimerAcceso(){
+  const {licenciaId,tipo}=_fichaActual;
+  const archivo=tipo==='tienda'?APP_TIENDA:APP_BARES;
+  const enlace=BASE_URL+'/'+archivo+'?lic='+encodeURIComponent(licenciaId)+'&reset_session=1';
+  navigator.clipboard.writeText(enlace)
+    .then(()=>{
+      document.getElementById('ficha-hint').innerHTML='<span style="color:var(--green)">✅ Enlace "primer acceso" copiado — el cliente verá el login aunque ya haya entrado antes</span>';
+      toast('🔄 Enlace primer acceso copiado');
+    })
+    .catch(()=>toast('Copia el enlace manualmente de la ficha',true));
 }
 
 // ── SOPORTE ──
