@@ -1803,7 +1803,7 @@ async function cargarDatosSupabase(){
     );
     if(!r.ok) return;
     const d=await r.json();
-    if(!d.length||!d[0].datos){
+    if(!d.length||!d[0].datos||!d[0].datos.comercio?.nombre){
       comercio={nombre:'',umbral:7};productos=[];lotes=[];movimientos=[];almacen=[];
       comandas=[];cierresCaja=[];proveedores=[];pedidosCompra=[];usuarios=[];
       return;
@@ -5762,7 +5762,7 @@ function arrancarApp(){
   document.getElementById('aj-nombre').value=comercio.nombre||'';
   if(comercio.supabase?.url) conectarSupabase();
   // Sincronizar datos al arrancar para que carta-publica tenga productos
-  _autoSyncSupabase();
+  if(comercio.nombre) _autoSyncSupabase();
   // Polling pedidos QR
   if(LIC_SB_URL&&LIC_SB_KEY){
     _pollPedidosQR();
