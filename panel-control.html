@@ -501,6 +501,7 @@ function renderTabla(){
           <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
           <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${esc(r.licencia_id)}')">✏️</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
@@ -543,6 +544,30 @@ async function limpiarCaja(licenciaId,cliente){
     });
     if(!p.ok){const t=await p.text();throw new Error('Escritura fallida: '+p.status+' '+t);}
     toast('🧹 Caja limpiada — el cliente verá 0 al recargar');
+  }catch(e){
+    toast('❌ '+e.message,true);
+  }
+}
+
+// ── RESETEAR HOY ──
+async function resetearHoyCliente(licenciaId,cliente){
+  if(!confirm(`¿Resetear el facturado de hoy de "${cliente}" a 0?\n\nEl historial de días anteriores se conserva.`)) return;
+  try{
+    const h={...sbHeaders(),'Prefer':'return=minimal'};
+    const r=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId)+'&select=datos&limit=1',{headers:h});
+    if(!r.ok) throw new Error('Lectura fallida: '+r.status);
+    const rows=await r.json();
+    let datos=rows.length&&rows[0].datos?{...rows[0].datos}:{};
+    const hoy=new Date().toISOString().slice(0,10);
+    if(datos.comandas) datos.comandas=datos.comandas.filter(c=>c.fecha?.slice(0,10)!==hoy);
+    if(datos.cierresCaja) datos.cierresCaja=datos.cierresCaja.filter(c=>(c.fecha||c.ts||'').slice(0,10)!==hoy);
+    const p=await fetch(SB_URL+'/rest/v1/sincronizaciones',{
+      method:'POST',
+      headers:{...h,'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({licencia_id:licenciaId,datos,actualizado_en:new Date().toISOString()})
+    });
+    if(!p.ok){const t=await p.text();throw new Error('Escritura fallida: '+p.status+' '+t);}
+    toast('📊 Facturado hoy reseteado a 0 — el cliente verá 0 al recargar');
   }catch(e){
     toast('❌ '+e.message,true);
   }
