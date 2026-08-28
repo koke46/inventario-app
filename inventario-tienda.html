@@ -623,6 +623,7 @@ body.demo-activo{padding-top:40px;}
   <button class="nav-btn" id="nav-ventas" onclick="showPage('ventas',this)">💶<span class="tip">Ventas</span></button>
   <button class="nav-btn" id="nav-anadir" onclick="abrirModalAnadir()">📥<span class="tip">Nuevo producto</span></button>
   <button class="nav-btn" id="nav-qr" onclick="abrirModalQR()" style="display:none">📱<span class="tip">Carta QR</span></button>
+  <button class="nav-btn" id="nav-reservas" onclick="showPage('reservas',this)">📅<span class="tip">Reservas</span></button>
   <button class="nav-btn" id="nav-proveedores" onclick="showPage('proveedores',this)">🏭<span class="tip">Proveedores</span></button>
   <div class="sidebar-spacer"></div>
   <button class="nav-btn" id="nav-ajustes" onclick="showPage('ajustes',this)">⚙️<span class="tip">Ajustes</span></button>
@@ -718,6 +719,17 @@ body.demo-activo{padding-top:40px;}
         <button class="cad-filt-btn" data-umbral="0" onclick="setCadUmbral(0,this)">Solo caducados</button>
       </div>
       <div id="cad-body"></div>
+    </div>
+
+    <!-- ══ RESERVAS ══ -->
+    <div class="page" id="page-reservas">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <input type="date" id="res-fecha-sel" class="form-input" style="max-width:180px" onchange="renderReservas()">
+        <button class="btn-save" style="background:var(--surface2);color:var(--fg);border:1px solid var(--border)" onclick="resHoy()">Hoy</button>
+        <button class="btn-save" style="background:var(--surface2);color:var(--fg);border:1px solid var(--border)" onclick="resManana()">Mañana</button>
+        <button class="btn-save" style="margin-left:auto" onclick="abrirModalReserva()">➕ Nueva reserva</button>
+      </div>
+      <div id="res-body"></div>
     </div>
 
     <!-- ══ AJUSTES ══ -->
@@ -1233,6 +1245,63 @@ body.demo-activo{padding-top:40px;}
   </div>
 </div>
 
+<!-- ── MODAL RESERVA ── -->
+<div class="modal-overlay" id="modal-reserva" onclick="if(event.target===this)cerrarModalReserva()">
+  <div class="modal" style="width:420px">
+    <div class="modal-hd">
+      <h3 id="modal-reserva-titulo">📅 Nueva reserva</h3>
+      <button class="modal-close" onclick="cerrarModalReserva()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Nombre *</label>
+          <input class="form-input" id="res-nombre" type="text" maxlength="60" placeholder="Ej: García (4 personas)" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Fecha *</label>
+          <input class="form-input" id="res-fecha" type="date">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Hora *</label>
+          <input class="form-input" id="res-hora" type="time">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Personas</label>
+          <input class="form-input" id="res-personas" type="number" min="1" max="50" placeholder="2" inputmode="numeric">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Mesa</label>
+          <select class="form-input" id="res-mesa">
+            <option value="">Sin asignar</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nota</label>
+        <textarea class="form-input" id="res-nota" rows="2" maxlength="200" placeholder="Cumpleaños, alergia, preferencia..." style="resize:none"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-input" id="res-estado">
+          <option value="pendiente">🕐 Pendiente</option>
+          <option value="confirmada">✅ Confirmada</option>
+          <option value="cancelada">❌ Cancelada</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" onclick="cerrarModalReserva()">Cancelar</button>
+      <button class="btn-ok" id="res-del-btn" style="background:#c62828;display:none" onclick="eliminarReserva()">🗑️ Borrar</button>
+      <button class="btn-ok" onclick="guardarReserva()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL APERTURA CAJA ── -->
 <div class="modal-overlay" id="modal-apertura">
   <div class="modal" style="width:380px">
@@ -1564,6 +1633,7 @@ let comandas    = loadJ('if_comandas',[]);
 let cierresCaja = loadJ('if_cierres',[]);
 let proveedores   = loadJ('if_proveedores',[]);
 let pedidosCompra = loadJ('if_pedidos',[]);
+let reservas      = loadJ('if_reservas',[]);
 
 function save(){
   saveJ('if_comercio',comercio);
@@ -1575,6 +1645,7 @@ function save(){
   saveJ('if_cierres',cierresCaja);
   saveJ('if_proveedores',proveedores);
   saveJ('if_pedidos',pedidosCompra);
+  saveJ('if_reservas',reservas);
   saveJ('if_usuarios',usuarios);
   _autoSyncSupabase();
 }
@@ -1584,7 +1655,7 @@ function _autoSyncSupabase(){
   if(!LIC_SB_URL||!LIC_SB_KEY) return;
   clearTimeout(_syncTimer);
   _syncTimer=setTimeout(()=>{
-    const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,usuarios};
+    const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,reservas,usuarios};
     fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
       method:'POST',
       headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
@@ -1692,6 +1763,7 @@ const PAGE_META={
   ventas:      {title:'Ventas',sub:'Facturación diaria de comandas cobradas'},
   ajustes:     {title:'Ajustes',sub:'Configuración del comercio'},
   proveedores: {title:'Proveedores',sub:'Gestión de proveedores y pedidos de compra'},
+  reservas:    {title:'Reservas',sub:'Calendario de reservas de mesas'},
 };
 function showPage(p,btn){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
@@ -1708,6 +1780,7 @@ function showPage(p,btn){
   else if(p==='cocina') renderCocina();
   else if(p==='historial') renderHistorial();
   else if(p==='ventas'){_poblarSelectorMes();renderVentas();}
+  else if(p==='reservas'){resHoy();renderReservas();}
   else if(p==='ajustes') renderAjustes();
   else if(p==='proveedores') renderProveedores();
 }
@@ -2210,6 +2283,7 @@ async function restaurarNube(){
     if(data.cierresCaja) {cierresCaja=data.cierresCaja;saveJ('if_cierres',cierresCaja);}
     if(data.proveedores) {proveedores=data.proveedores;saveJ('if_proveedores',proveedores);}
     if(data.pedidosCompra){pedidosCompra=data.pedidosCompra;saveJ('if_pedidos',pedidosCompra);}
+    if(data.reservas)    {reservas=data.reservas;saveJ('if_reservas',reservas);}
     if(data.usuarios)    {usuarios=data.usuarios;saveJ('if_usuarios',usuarios);}
     toast('✅ Datos restaurados — recargando...');
     setTimeout(()=>location.reload(),1200);
@@ -4020,6 +4094,94 @@ ${cierresMes.length?`<h2>Cierres de caja del mes (${cierresMes.length})</h2><tab
   const w=window.open('','_blank','width=900,height=820');
   if(w){w.document.write(html);w.document.close();}
 }
+// ══════════════════════════════════════════════
+// RESERVAS
+// ══════════════════════════════════════════════
+let _resEditId=null;
+function resHoy(){
+  const hoy=new Date().toISOString().slice(0,10);
+  document.getElementById('res-fecha-sel').value=hoy;
+  renderReservas();
+}
+function resManana(){
+  const m=new Date();m.setDate(m.getDate()+1);
+  document.getElementById('res-fecha-sel').value=m.toISOString().slice(0,10);
+  renderReservas();
+}
+function renderReservas(){
+  const fecha=document.getElementById('res-fecha-sel')?.value||new Date().toISOString().slice(0,10);
+  const delDia=reservas.filter(r=>r.fecha===fecha).sort((a,b)=>a.hora.localeCompare(b.hora));
+  const estadoBadge={pendiente:'🕐',confirmada:'✅',cancelada:'❌'};
+  const body=document.getElementById('res-body');if(!body)return;
+  if(!delDia.length){
+    body.innerHTML=`<div style="text-align:center;padding:48px;color:var(--muted)">
+      <div style="font-size:40px;margin-bottom:12px">📅</div>
+      <div style="font-size:15px;font-weight:600">Sin reservas para este día</div>
+      <div style="font-size:13px;margin-top:6px">Pulsa "Nueva reserva" para añadir una</div>
+    </div>`;
+    return;
+  }
+  body.innerHTML=delDia.map(r=>`
+    <div onclick="abrirModalReserva('${esc(r.id)}')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;${r.estado==='cancelada'?'opacity:.5':''}">
+      <div style="font-size:22px;font-weight:800;font-family:var(--mono);min-width:48px;color:var(--amber)">${r.hora}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:15px">${esc(r.nombre)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">
+          ${r.personas?'👥 '+r.personas+' pers. · ':''}${r.mesa?'🪑 Mesa '+esc(r.mesa)+' · ':''}${r.nota?'📝 '+esc(r.nota):''}
+        </div>
+      </div>
+      <div style="font-size:18px">${estadoBadge[r.estado]||'🕐'}</div>
+    </div>`).join('');
+}
+function abrirModalReserva(id){
+  _resEditId=id||null;
+  const r=id?reservas.find(x=>x.id===id):null;
+  const hoy=new Date().toISOString().slice(0,10);
+  const mesas=(comercio.mesas||[]).map(m=>`<option value="${esc(m)}"${r?.mesa===m?' selected':''}>${esc(m)}</option>`).join('');
+  document.getElementById('res-mesa').innerHTML=`<option value="">Sin asignar</option>${mesas}`;
+  document.getElementById('modal-reserva-titulo').textContent=id?'✏️ Editar reserva':'📅 Nueva reserva';
+  document.getElementById('res-nombre').value=r?.nombre||'';
+  document.getElementById('res-fecha').value=r?.fecha||document.getElementById('res-fecha-sel')?.value||hoy;
+  document.getElementById('res-hora').value=r?.hora||'20:00';
+  document.getElementById('res-personas').value=r?.personas||'';
+  document.getElementById('res-nota').value=r?.nota||'';
+  document.getElementById('res-estado').value=r?.estado||'pendiente';
+  document.getElementById('res-del-btn').style.display=id?'inline-flex':'none';
+  document.getElementById('modal-reserva').classList.add('open');
+  setTimeout(()=>document.getElementById('res-nombre').focus(),100);
+}
+function cerrarModalReserva(){document.getElementById('modal-reserva').classList.remove('open');}
+function guardarReserva(){
+  const nombre=(document.getElementById('res-nombre').value||'').trim();
+  const fecha=document.getElementById('res-fecha').value;
+  const hora=document.getElementById('res-hora').value;
+  if(!nombre){toast('⚠️ Escribe el nombre del cliente');return;}
+  if(!fecha){toast('⚠️ Selecciona una fecha');return;}
+  if(!hora){toast('⚠️ Selecciona una hora');return;}
+  const datos={
+    nombre,fecha,hora,
+    personas:parseInt(document.getElementById('res-personas').value)||null,
+    mesa:document.getElementById('res-mesa').value||null,
+    nota:(document.getElementById('res-nota').value||'').trim()||null,
+    estado:document.getElementById('res-estado').value||'pendiente',
+  };
+  if(_resEditId){
+    const idx=reservas.findIndex(r=>r.id===_resEditId);
+    if(idx>=0) reservas[idx]={...reservas[idx],...datos};
+  } else {
+    reservas.push({id:uid(),...datos});
+  }
+  save();cerrarModalReserva();renderReservas();
+  toast(_resEditId?'✅ Reserva actualizada':'✅ Reserva creada');
+}
+function eliminarReserva(){
+  if(!_resEditId) return;
+  if(!confirm('¿Eliminar esta reserva?')) return;
+  reservas=reservas.filter(r=>r.id!==_resEditId);
+  save();cerrarModalReserva();renderReservas();
+  toast('🗑️ Reserva eliminada');
+}
+
 function enviarInformeEmail(){
   const hoy=new Date().toISOString().slice(0,10);
   const hoyStr=new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
