@@ -141,6 +141,15 @@ tr:hover td{background:var(--surface2)}
 <!-- MAIN -->
 <div class="main">
 
+  <!-- TARIFAS -->
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-right:8px">Tarifas</span>
+    <span style="font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 14px;white-space:nowrap">💻 <strong>Básico</strong> · 1 PC · <span style="color:var(--green);font-weight:700">15€/mes</span></span>
+    <span style="font-size:13px;background:var(--bg);border:1px solid var(--amber);border-radius:8px;padding:6px 14px;white-space:nowrap">💻💻 <strong>Pro</strong> · 2 PCs · <span style="color:var(--green);font-weight:700">25€/mes</span></span>
+    <span style="font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 14px;white-space:nowrap">💻💻💻 <strong>Premium</strong> · 3 PCs · <span style="color:var(--green);font-weight:700">35€/mes</span></span>
+    <span style="font-size:12px;color:var(--muted);margin-left:4px">· 2 meses gratis al contratar</span>
+  </div>
+
   <!-- STATS -->
   <div class="stats" id="stats">
     <div class="stat-card"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total clientes</div></div>
@@ -301,6 +310,15 @@ tr:hover td{background:var(--surface2)}
         <input class="form-input" id="gen-pass" placeholder="Contraseña generada...">
         <button class="btn btn-ghost btn-sm" onclick="generarPassword()" title="Nueva contraseña">🔀</button>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <select class="form-input" id="gen-plan" onchange="aplicarPlanEnNotas()">
+        <option value="">— Seleccionar plan —</option>
+        <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
+        <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
+        <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Notas (opcional)</label>
@@ -589,11 +607,18 @@ async function guardarCliente(){
 }
 
 // ── GENERADOR ──
+const _PLANES={basico:'Plan Básico - 1 PC - 15€/mes',pro:'Plan Pro - 2 PCs - 25€/mes',premium:'Plan Premium - 3 PCs - 35€/mes'};
+function aplicarPlanEnNotas(){
+  const plan=document.getElementById('gen-plan')?.value;
+  const notas=document.getElementById('gen-notas');
+  if(notas&&plan&&_PLANES[plan]) notas.value=_PLANES[plan];
+}
 function abrirGenerador(){
   document.getElementById('gen-cliente').value='';
   document.getElementById('gen-tipo').value='bar';
   document.getElementById('gen-usuario').value='admin';
   document.getElementById('gen-notas').value='';
+  const gp=document.getElementById('gen-plan');if(gp) gp.value='';
   actualizarGenId();
   generarPassword();
   document.getElementById('gen-overlay').classList.remove('hidden');
