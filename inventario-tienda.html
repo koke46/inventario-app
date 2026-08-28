@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1A1F2E">
-<title>Inventario Tienda</title>
+<title>El Miarma</title>
 <link rel="manifest" href="/inventario-tienda-manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%232e7d32'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle'%3E🛒%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
@@ -523,8 +523,8 @@ body.demo-activo{padding-top:40px;}
     <div class="aviso-dias" id="aviso-dias" style="color:#F59E0B">7</div>
     <div style="font-size:13px;color:#8B949E;margin-bottom:16px">días restantes</div>
     <div class="aviso-title" id="aviso-title">Tu prueba está a punto de terminar</div>
-    <p class="aviso-sub" id="aviso-sub">Llámanos ahora para contratar y seguir usando Inventario Fresco sin interrupciones.</p>
-    <button class="aviso-btn" onclick="window.open('https://wa.me/34699279994?text=Hola%2C%20quiero%20contratar%20Inventario%20Fresco','_blank');document.getElementById('demo-aviso').classList.add('hidden')">
+    <p class="aviso-sub" id="aviso-sub">Llámanos ahora para contratar y seguir usando El Miarma sin interrupciones.</p>
+    <button class="aviso-btn" onclick="window.open('https://wa.me/34699279994?text=Hola%2C%20quiero%20contratar%20El%20Miarma','_blank');document.getElementById('demo-aviso').classList.add('hidden')">
       💬 Contactar por WhatsApp
     </button>
     <div class="aviso-skip" onclick="document.getElementById('demo-aviso').classList.add('hidden')">Ahora no</div>
@@ -543,7 +543,7 @@ body.demo-activo{padding-top:40px;}
     <div class="demo-badge">🎁 Prueba gratuita</div>
     <div class="demo-ico">🥦</div>
     <div class="demo-title">Activa tu demo gratuita</div>
-    <p class="demo-sub">Prueba Inventario Fresco durante dos meses sin pagar nada. Sin tarjeta. Sin compromiso.</p>
+    <p class="demo-sub">Prueba El Miarma durante dos meses sin pagar nada. Sin tarjeta. Sin compromiso.</p>
     <div class="demo-free">2 meses</div>
     <div class="demo-free-sub">completamente gratis</div>
     <label class="demo-check-label">
@@ -571,7 +571,7 @@ body.demo-activo{padding-top:40px;}
   <div class="login-card">
     <div class="login-top">
       <div class="login-logo">🛒</div>
-      <div class="login-title">Inventario Tienda</div>
+      <div class="login-title">El Miarma</div>
       <div class="login-sub">Introduce tus credenciales</div>
     </div>
     <div class="login-body">
@@ -596,7 +596,7 @@ body.demo-activo{padding-top:40px;}
   <div class="login-card">
     <div class="login-top">
       <div class="login-logo">🛒</div>
-      <div class="login-title">Inventario Tienda</div>
+      <div class="login-title">El Miarma</div>
       <div class="login-sub">Control de stock y caducidades</div>
     </div>
     <div class="login-body">
@@ -4005,7 +4005,7 @@ function enviarInformeEmail(){
     '— TOP PRODUCTOS —',
     ...top.map(([n,d],i)=>`${i+1}. ${n} — ${d.qty} uds — ${fmtEuro(d.total)}`),
     '',
-    'Generado por Inventario Fresco',
+    'Generado por El Miarma',
   ].filter(l=>l!==undefined&&l!=='').join('\n');
   window.open('mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo));
 }
