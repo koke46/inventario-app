@@ -812,13 +812,18 @@ function copiarFicha(){
 }
 async function resetDatosCliente(){
   const {licenciaId,cliente}=_fichaActual;
-  if(!confirm('¿Borrar todos los datos guardados de «'+cliente+'»?\n\nLa próxima vez que abra la app, verá la pantalla de configuración desde cero.\n\nEsta acción no se puede deshacer.')) return;
+  if(!confirm('¿Borrar todos los datos guardados de «'+cliente+'»?\n\nSe eliminarán los datos en la nube y la próxima vez que el cliente abra la app verá la pantalla de configuración desde cero.\n\nEsta acción no se puede deshacer.')) return;
   try{
+    const h=sbHeaders();
+    // Borrar fila de sincronizaciones (datos en la nube)
+    await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
+      {method:'DELETE',headers:h});
+    // Marcar force_reset para que la app limpie el localStorage al próximo acceso
     const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),
-      {method:'PATCH',headers:sbHeaders(),body:JSON.stringify({force_reset:true})});
+      {method:'PATCH',headers:h,body:JSON.stringify({force_reset:true})});
     if(!r.ok) throw new Error('Error '+r.status);
-    toast('✅ Reset programado — la próxima vez que el cliente abra la app se borrarán sus datos');
-    document.getElementById('ficha-hint').innerHTML='<span style="color:#f59e0b">⚠️ Reset programado — esperando que el cliente abra la app</span>';
+    toast('✅ Datos borrados — el cliente verá pantalla limpia al abrir la app');
+    document.getElementById('ficha-hint').innerHTML='<span style="color:#f59e0b">⚠️ Datos borrados en la nube — pendiente de limpiar el dispositivo del cliente</span>';
   }catch(e){toast('❌ '+e.message,true);}
 }
 function copiarEnlacePrimerAcceso(){
