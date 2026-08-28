@@ -3110,7 +3110,7 @@ function renderMesasGrid(){
     <div class="mesa-grid">${mesas.map(m=>{
       const enCocina=comandas.some(c=>c.nombre===m&&!c.cobrada&&c.estado==='cocina');
       const cls=enCocina?'cocina':'libre';
-      const btnElim=isAdmin?`<span onclick="event.stopPropagation();eliminarMesa('${esc(m)}')" title="Eliminar mesa" style="position:absolute;top:2px;right:4px;font-size:13px;line-height:1;color:rgba(255,255,255,.45);cursor:pointer;font-weight:900" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,.45)'">×</span>`:'';
+      const btnElim=isAdmin?`<span onclick="event.stopPropagation();eliminarMesa('${esc(m)}')" title="Eliminar mesa" style="position:absolute;top:2px;right:5px;font-size:15px;line-height:1;color:#ef4444;cursor:pointer;font-weight:900;opacity:.7" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">×</span>`:'';
       return`<div class="mesa-tile ${cls}" onclick="seleccionarMesa('${esc(m)}')" style="position:relative">
         ${btnElim}
         <div>${esc(m)}</div>
