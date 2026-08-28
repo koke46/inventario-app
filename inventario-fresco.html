@@ -5238,6 +5238,8 @@ function arrancarApp(){
   renderPOS();
   document.getElementById('aj-nombre').value=comercio.nombre||'';
   if(comercio.supabase?.url) conectarSupabase();
+  // Sincronizar datos al arrancar para que carta-publica tenga productos
+  _autoSyncSupabase();
   // Polling pedidos QR
   if(LIC_SB_URL&&LIC_SB_KEY&&LICENCIA_ID!=='__DEMO__'){
     _pollPedidosQR();
