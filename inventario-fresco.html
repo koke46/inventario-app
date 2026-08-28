@@ -370,8 +370,10 @@ body.demo-activo{padding-top:40px;}
 .cat-folder:hover{border-color:var(--amber);background:var(--amber-lt);transform:translateY(-2px);}
 .cat-folder:active{transform:scale(.97);}
 .cat-folder-del{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.15);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;opacity:0;transition:.15s;}
-.cat-folder:hover .cat-folder-del{opacity:1;}
+.cat-folder-edit{position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.15);color:var(--muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;opacity:0;transition:.15s;}
+.cat-folder:hover .cat-folder-del,.cat-folder:hover .cat-folder-edit{opacity:1;}
 .cat-folder-del:hover{background:var(--red)!important;color:#fff!important;}
+.cat-folder-edit:hover{background:var(--amber)!important;color:#1A1F2E!important;}
 .cat-folder-ico{font-size:38px;margin-bottom:8px;}
 .cat-folder-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
 .cat-folder-count{font-size:11px;color:var(--muted);}
@@ -1566,6 +1568,36 @@ body.demo-activo{padding-top:40px;}
       <button class="modal-x" onclick="cerrarModalQR()">×</button>
     </div>
     <div class="modal-body" id="modal-qr-body" style="text-align:center;padding:24px 20px"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cat" onclick="if(event.target===this)cerrarModalCat()">
+  <div class="modal" style="max-width:360px;width:95%">
+    <div class="modal-hd">
+      <h3 id="modal-cat-title">📁 Nueva carpeta</h3>
+      <button class="modal-x" onclick="cerrarModalCat()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Nombre</label>
+        <input class="form-input" id="modal-cat-nombre" type="text" maxlength="40" autocomplete="off" placeholder="Ej: Bebidas" onkeydown="if(event.key==='Enter')guardarCategoria()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Foto (opcional)</label>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <img id="modal-cat-foto-preview" src="" alt="" style="display:none;width:100px;height:100px;object-fit:cover;border-radius:12px;border:2px solid var(--amber)">
+          <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px dashed var(--border);border-radius:10px;font-size:13px;color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+            📷 Elegir foto
+            <input type="file" accept="image/*" style="display:none" onchange="onCatFotoChange(this)">
+          </label>
+          <button id="modal-cat-foto-del" onclick="quitarFotoCat()" style="display:none;background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">Quitar foto</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft" style="padding:12px 20px;display:flex;gap:8px">
+      <button class="btn-save" onclick="guardarCategoria()">✓ Guardar</button>
+      <button class="btn-cancel" onclick="cerrarModalCat()">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -3063,14 +3095,78 @@ function eliminarCategoria(cat){
   save();renderCatalogo();
   toast(`✓ Carpeta "${cat}" eliminada`);
 }
+let _catEditando=null;
 function nuevaCategoria(){
-  const nombre=(prompt('Nombre de la nueva carpeta:')||'').trim();
-  if(!nombre) return;
+  _catEditando=null;
+  document.getElementById('modal-cat-title').textContent='📁 Nueva carpeta';
+  document.getElementById('modal-cat-nombre').value='';
+  const prev=document.getElementById('modal-cat-foto-preview');
+  prev.src='';prev.style.display='none';
+  document.getElementById('modal-cat-foto-del').style.display='none';
+  document.getElementById('modal-cat').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-cat-nombre').focus(),100);
+}
+function abrirEditarCategoria(cat){
+  _catEditando=cat;
+  document.getElementById('modal-cat-title').textContent='✏️ Editar carpeta';
+  document.getElementById('modal-cat-nombre').value=cat;
+  const foto=(comercio.catFotos||{})[cat];
+  const prev=document.getElementById('modal-cat-foto-preview');
+  if(foto){prev.src=foto;prev.style.display='block';document.getElementById('modal-cat-foto-del').style.display='inline';}
+  else{prev.src='';prev.style.display='none';document.getElementById('modal-cat-foto-del').style.display='none';}
+  document.getElementById('modal-cat').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-cat-nombre').focus(),100);
+}
+function cerrarModalCat(){document.getElementById('modal-cat').classList.remove('open');_catEditando=null;}
+function onCatFotoChange(input){
+  const file=input.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=300,canvas=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>h){if(w>MAX){h=h*MAX/w;w=MAX;}}else{if(h>MAX){w=w*MAX/h;h=MAX;}}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL('image/jpeg',.8);
+      const prev=document.getElementById('modal-cat-foto-preview');
+      prev.src=dataUrl;prev.style.display='block';
+      document.getElementById('modal-cat-foto-del').style.display='inline';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function quitarFotoCat(){
+  const prev=document.getElementById('modal-cat-foto-preview');
+  prev.src='';prev.style.display='none';
+  document.getElementById('modal-cat-foto-del').style.display='none';
+}
+function guardarCategoria(){
+  const nombre=(document.getElementById('modal-cat-nombre').value||'').trim();
+  if(!nombre){toast('⚠️ Escribe un nombre');return;}
   if(!comercio.categorias) comercio.categorias=[];
-  if(comercio.categorias.includes(nombre)){toast('⚠️ Esa carpeta ya existe');return;}
-  comercio.categorias.push(nombre);
-  save();renderCatalogo();
-  toast(`✓ Carpeta "${nombre}" creada`);
+  if(!comercio.catFotos) comercio.catFotos={};
+  const prev=document.getElementById('modal-cat-foto-preview');
+  const foto=prev.style.display!=='none'&&prev.src?prev.src:null;
+  if(_catEditando){
+    if(_catEditando!==nombre){
+      if(comercio.categorias.includes(nombre)){toast('⚠️ Esa carpeta ya existe');return;}
+      comercio.categorias=comercio.categorias.map(c=>c===_catEditando?nombre:c);
+      productos.forEach(p=>{if(p.categoria===_catEditando) p.categoria=nombre;});
+      if(comercio.catFotos[_catEditando]){comercio.catFotos[nombre]=comercio.catFotos[_catEditando];delete comercio.catFotos[_catEditando];}
+    }
+    if(foto) comercio.catFotos[nombre]=foto;
+    else delete comercio.catFotos[nombre];
+    toast(`✓ Carpeta "${nombre}" actualizada`);
+  } else {
+    if(comercio.categorias.includes(nombre)){toast('⚠️ Esa carpeta ya existe');return;}
+    comercio.categorias.push(nombre);
+    if(foto) comercio.catFotos[nombre]=foto;
+    toast(`✓ Carpeta "${nombre}" creada`);
+  }
+  save();renderCatalogo();cerrarModalCat();
 }
 
 function fmtEuro(n){
@@ -3317,10 +3413,14 @@ function renderCatalogo(){
     }
     cats.forEach(cat=>{
       const n=todosProds.filter(p=>p.categoria===cat).length;
-      const ico=_catEmoji(cat,todosProds);
+      const foto=(comercio.catFotos||{})[cat];
+      const icoHtml=foto
+        ?`<img src="${foto}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;margin-bottom:8px">`
+        :`<div class="cat-folder-ico">${_catEmoji(cat,todosProds)}</div>`;
       html+=`<div class="cat-folder" onclick="abrirCarpeta('${esc(cat)}')">
+        <button class="cat-folder-edit" onclick="event.stopPropagation();abrirEditarCategoria('${esc(cat)}')" title="Editar carpeta">✏️</button>
         <button class="cat-folder-del" onclick="event.stopPropagation();eliminarCategoria('${esc(cat)}')" title="Eliminar carpeta">✕</button>
-        <div class="cat-folder-ico">${ico}</div>
+        ${icoHtml}
         <div class="cat-folder-name">${esc(cat)}</div>
         <div class="cat-folder-count">${n} producto${n!==1?'s':''}</div>
       </div>`;
