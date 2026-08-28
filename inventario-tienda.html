@@ -978,6 +978,8 @@ body.demo-activo{padding-top:40px;}
         </div>
         <!-- Panel pedido -->
         <div class="pos-panel">
+          <!-- Pestañas cuentas -->
+          <div id="cuentas-tabs" style="display:flex;gap:4px;padding:8px 8px 0;flex-wrap:wrap;background:var(--sidebar)"></div>
           <div class="ped-hd" style="flex-direction:column;align-items:stretch;gap:6px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <span class="ped-num" id="ped-num">#0001</span>
@@ -2870,7 +2872,9 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════════
 // COMANDAS / TPV
 // ══════════════════════════════════════════════
-let pedidoActual={items:[]};
+let _cuentas=[{id:'c1',nombre:'Cuenta 1',items:[]}];
+let _cuentaIdx=0;
+let pedidoActual=_cuentas[0];
 let catActiva='todos';
 let _catAbierta=null; // null = vista carpetas, string = categoría abierta
 
@@ -2923,7 +2927,72 @@ function getCatProds(){
   });
 }
 
+// ══════════════════════════════════════════════
+// CUENTAS MÚLTIPLES
+// ══════════════════════════════════════════════
+function _syncCuentaActual(){
+  _cuentas[_cuentaIdx]=Object.assign(_cuentas[_cuentaIdx],{
+    items:pedidoActual.items,
+    mesa:document.getElementById('ped-mesa-sel')?.value||'',
+    descuento:document.getElementById('desc-input')?.value||''
+  });
+}
+function _loadCuentaActual(){
+  const c=_cuentas[_cuentaIdx];
+  pedidoActual=c;
+  const descEl=document.getElementById('desc-input');
+  if(descEl){descEl.value=c.descuento||'';onDescInput();}
+}
+function renderCuentasTabs(){
+  const cont=document.getElementById('cuentas-tabs');if(!cont) return;
+  cont.innerHTML=_cuentas.map((c,i)=>{
+    const activa=i===_cuentaIdx;
+    const tieneItems=c.items&&c.items.length>0;
+    return`<button onclick="switchCuenta(${i})" style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px 8px 0 0;border:none;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;background:${activa?'var(--surface)':'rgba(255,255,255,.08)'};color:${activa?'var(--text)':'rgba(255,255,255,.55)'};position:relative;bottom:${activa?'-1px':'0'}">
+      ${esc(c.nombre)}${tieneItems?`<span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;flex-shrink:0"></span>`:''}
+      ${_cuentas.length>1?`<span onclick="event.stopPropagation();cerrarCuenta(${i})" style="margin-left:2px;opacity:.6;font-size:14px;line-height:1;padding:0 2px;border-radius:3px" title="Cerrar cuenta">×</span>`:''}
+    </button>`;
+  }).join('')+`<button onclick="nuevaCuenta()" style="padding:5px 10px;border-radius:8px 8px 0 0;border:none;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.55);transition:all .12s" title="Nueva cuenta">＋</button>`;
+}
+function switchCuenta(i){
+  if(i===_cuentaIdx) return;
+  _syncCuentaActual();
+  _cuentaIdx=i;
+  _loadCuentaActual();
+  renderCuentasTabs();
+  renderPedido();
+}
+function nuevaCuenta(){
+  _syncCuentaActual();
+  const n=_cuentas.length+1;
+  _cuentas.push({id:uid(),nombre:'Cuenta '+n,items:[],mesa:'',descuento:''});
+  _cuentaIdx=_cuentas.length-1;
+  _loadCuentaActual();
+  renderCuentasTabs();
+  renderPedido();
+  toast('🆕 Cuenta '+n+' abierta');
+}
+function cerrarCuenta(i){
+  const c=_cuentas[i];
+  if((c.items||[]).length>0&&!confirm(`¿Cerrar "${c.nombre}"? Tiene ${c.items.length} producto${c.items.length!==1?'s':''} sin cobrar.`)) return;
+  _cuentas.splice(i,1);
+  if(!_cuentas.length) _cuentas.push({id:uid(),nombre:'Cuenta 1',items:[],mesa:'',descuento:''});
+  _cuentaIdx=Math.min(_cuentaIdx,_cuentas.length-1);
+  _loadCuentaActual();
+  renderCuentasTabs();
+  renderPedido();
+}
+function _cuentaCobroFin(){
+  _cuentas.splice(_cuentaIdx,1);
+  if(!_cuentas.length) _cuentas.push({id:uid(),nombre:'Cuenta 1',items:[],mesa:'',descuento:''});
+  _cuentaIdx=Math.min(_cuentaIdx,_cuentas.length-1);
+  _cuentas.forEach((c,i)=>{if(/^Cuenta \d+$/.test(c.nombre)) c.nombre='Cuenta '+(i+1);});
+  _loadCuentaActual();
+  renderCuentasTabs();
+}
+
 function renderPOS(){
+  renderCuentasTabs();
   renderStatsPos();
   renderMesasGrid();
   renderCatTabs();
@@ -3501,7 +3570,7 @@ function confirmarCobro(metodoPago){
   }
   comercio.ultimoPedido=(comercio.ultimoPedido||0)+1;
   comandas.push(comanda);save();
-  pedidoActual={items:[]};
+  _cuentaCobroFin();
   document.getElementById('desc-input').value='';
   onDescInput();
   const mesaSel=document.getElementById('ped-mesa-sel');
