@@ -1420,18 +1420,61 @@ if(LICENCIA_ID!=='__DEMO__'&&_qp.get('reset_session')==='1'){
   location.replace(location.pathname+'?'+_sp2.toString()+location.hash);
 }
 
+function getDeviceId(){
+  let id=localStorage.getItem('IF_DEVICE_ID');
+  if(!id){id=Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('IF_DEVICE_ID',id);}
+  return id;
+}
+function _mostrarBloqueoDispositivo(max){
+  document.body.innerHTML=`<div style="position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:system-ui,sans-serif;color:#f1f5f9"><div style="font-size:64px;margin-bottom:20px">🔒</div><div style="font-size:22px;font-weight:800;margin-bottom:14px">Dispositivo no autorizado</div><div style="font-size:15px;color:#94a3b8;max-width:380px;line-height:1.7;margin-bottom:32px">Tu plan permite <strong style="color:#f59e0b">${max} dispositivo${max!==1?'s':''}</strong>. Este dispositivo no está registrado y ya se ha alcanzado el límite del plan.<br><br>Contacta con soporte para ampliar tu plan.</div><a href="tel:699279994" style="background:#f59e0b;color:#000;font-weight:800;padding:14px 28px;border-radius:12px;font-size:15px;text-decoration:none;display:inline-block">📞 Llamar al soporte</a></div>`;
+}
+async function checkDispositivo(maxDisp){
+  if(maxDisp===null||maxDisp===undefined) return true;
+  const device_id=getDeviceId();
+  try{
+    const r=await fetch(
+      LIC_SB_URL+'/rest/v1/dispositivos?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=id,last_seen',
+      {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
+    );
+    if(!r.ok) return true;
+    const devs=await r.json();
+    const limite=new Date(Date.now()-45*24*60*60*1000).toISOString();
+    const activos=devs.filter(d=>d.last_seen>limite);
+    const yaRegistrado=activos.find(d=>d.id===device_id);
+    if(yaRegistrado){
+      fetch(LIC_SB_URL+'/rest/v1/dispositivos?id=eq.'+encodeURIComponent(device_id)+'&licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),{
+        method:'PATCH',
+        headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({last_seen:new Date().toISOString()})
+      }).catch(()=>{});
+      return true;
+    }
+    if(activos.length>=maxDisp){_mostrarBloqueoDispositivo(maxDisp);return false;}
+    await fetch(LIC_SB_URL+'/rest/v1/dispositivos',{
+      method:'POST',
+      headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({id:device_id,licencia_id:LICENCIA_ID,last_seen:new Date().toISOString()})
+    });
+    return true;
+  }catch(e){return true;}
+}
+
 async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
   const cache=loadJ('if_lic_cache',null);
   if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<5*60*1000){
     console.log('[Licencia] caché:',cache.activa);
+    if(cache.activa){
+      const devOk=await checkDispositivo(cache.max_dispositivos??null);
+      if(!devOk) return false;
+    }
     return cache.activa;
   }
 
   try{
     const res=await fetch(
-      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena,force_reset',
+      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena,force_reset,max_dispositivos',
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
     );
     if(!res.ok) throw new Error('http '+res.status);
@@ -1440,8 +1483,11 @@ async function checkLicencia(){
     const row=Array.isArray(data)&&data.length>0?data[0]:null;
     const activa=row?.activa===true;
     const forceReset=row?.force_reset===true;
-    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,force_reset:forceReset,ts:Date.now()});
+    const maxDisp=row?.max_dispositivos??null;
+    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,force_reset:forceReset,max_dispositivos:maxDisp,ts:Date.now()});
     if(activa){
+      const devOk=await checkDispositivo(maxDisp);
+      if(!devOk) return false;
       fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
         {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({ultimo_acceso:new Date().toISOString()})}).catch(()=>{});

@@ -184,6 +184,7 @@ tr:hover td{background:var(--surface2)}
           <th>ID Licencia</th>
           <th>Tipo</th>
           <th>Estado</th>
+          <th>Plan</th>
           <th>Usuario</th>
           <th>Notas</th>
           <th>Alta</th>
@@ -192,7 +193,7 @@ tr:hover td{background:var(--surface2)}
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="7" class="empty"><div class="spinner"></div></td></tr>
+        <tr><td colspan="10" class="empty"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -260,6 +261,15 @@ tr:hover td{background:var(--surface2)}
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('m-contrasena').value=genPass()" title="Generar">🔀</button>
         </div>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <select class="form-input" id="m-plan">
+        <option value="">— Sin plan (acceso ilimitado) —</option>
+        <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
+        <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
+        <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Notas</label>
@@ -398,6 +408,17 @@ async function cargar(){
   }
 }
 
+// ── PLANES ──
+function planToMaxDisp(plan){return {basico:1,pro:2,premium:3}[plan]??null;}
+function maxDispToPlan(n){return {1:'basico',2:'pro',3:'premium'}[n]||'';}
+function planBadge(r){
+  const n=r.max_dispositivos;
+  if(n===1) return '<span class="badge" style="background:#1e3a5f;color:#93c5fd">💻 Básico</span>';
+  if(n===2) return '<span class="badge" style="background:#451a03;color:#f59e0b">💻💻 Pro</span>';
+  if(n===3) return '<span class="badge" style="background:#14532d;color:#4ade80">💻💻💻 Premium</span>';
+  return '<span style="font-size:11px;color:var(--muted)">—</span>';
+}
+
 // ── TIPO ──
 function getTipo(row){
   const id=(row.licencia_id||'').toUpperCase();
@@ -441,7 +462,7 @@ function renderTabla(){
 
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
     return;
   }
 
@@ -456,6 +477,7 @@ function renderTabla(){
       <td><span class="lic-id">${esc(r.licencia_id||'')}</span></td>
       <td>${tipoBadge}</td>
       <td>${estadoBadge}</td>
+      <td>${planBadge(r)}</td>
       <td><span class="lic-id">${esc(r.usuario||'—')}</span></td>
       <td><div class="notas-text" title="${esc(notas)}">${esc(notas)||'—'}</div></td>
       <td><div class="fecha-text">${fecha}</div></td>
@@ -506,6 +528,7 @@ function abrirModalNuevo(){
   document.getElementById('m-cliente').value='';
   document.getElementById('m-notas').value='';
   document.getElementById('m-tipo').value='bar';
+  const mp=document.getElementById('m-plan');if(mp) mp.value='';
   const mLicId=document.getElementById('m-licencia-id');
   mLicId.value='';mLicId.readOnly=false;mLicId.style.opacity='1';
   document.getElementById('m-usuario').value='admin';
@@ -532,6 +555,7 @@ function abrirModalEditar(licenciaId){
   document.getElementById('m-usuario').value=r.usuario||'admin';
   document.getElementById('m-contrasena').value=r.contrasena||'';
   document.getElementById('m-notas').value=getNotas(r);
+  const mp2=document.getElementById('m-plan');if(mp2) mp2.value=maxDispToPlan(r.max_dispositivos);
   _modalActiva=r.activa;
   actualizarToggleModal();
   document.getElementById('modal-overlay').classList.remove('hidden');
@@ -573,6 +597,8 @@ async function guardarCliente(){
   const usuario=(document.getElementById('m-usuario').value||'admin').trim();
   const contrasena=(document.getElementById('m-contrasena').value||'').trim();
   const notasRaw=(document.getElementById('m-notas').value||'').trim();
+  const mPlan=(document.getElementById('m-plan')?.value)||'';
+  const mMaxDisp=planToMaxDisp(mPlan);
   const editando=!!document.getElementById('m-id').value;
 
   if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
@@ -586,13 +612,13 @@ async function guardarCliente(){
 
   try{
     if(editando){
-      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva});
+      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp});
       const idx=_datos.findIndex(x=>x.licencia_id===licenciaId);
-      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva};
+      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp};
       toast('✅ Cliente actualizado');
     }else{
       if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
-      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva});
+      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp});
       _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
       cerrarModal();
       renderStats();renderTabla();
@@ -650,12 +676,14 @@ async function crearYMostrarFicha(){
   const usuario=(document.getElementById('gen-usuario').value||'admin').trim();
   const pass=(document.getElementById('gen-pass').value||'').trim();
   const notas=(document.getElementById('gen-notas').value||'').trim();
+  const genPlan=(document.getElementById('gen-plan')?.value)||'';
+  const genMaxDisp=planToMaxDisp(genPlan);
   if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
   if(!pass){toast('⚠️ Genera o escribe una contraseña',true);return;}
   if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
   try{
     const notasGuardar=notas;
-    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true});
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true,max_dispositivos:genMaxDisp});
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasGuardar,activa:true,created_at:new Date().toISOString()});
     renderStats();renderTabla();
     cerrarGenerador();
