@@ -750,13 +750,20 @@ body.demo-activo{padding-top:40px;}
 
     <!-- ══ RESERVAS ══ -->
     <div class="page" id="page-reservas">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <input type="date" id="res-fecha-sel" style="font-family:var(--sans);font-size:14px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--fg);cursor:pointer"
-          onchange="renderReservas()">
-        <button class="btn btn-ghost btn-sm" onclick="resHoy()">Hoy</button>
-        <button class="btn btn-ghost btn-sm" onclick="resManana()">Mañana</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+        <!-- Date pill -->
+        <label style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:99px;padding:7px 16px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:15px">📅</span>
+          <input type="date" id="res-fecha-sel" style="font-family:var(--sans);font-size:13px;font-weight:600;background:none;border:none;outline:none;color:var(--text);cursor:pointer;min-width:120px" onchange="renderReservas()">
+        </label>
+        <!-- Hoy / Mañana pills -->
+        <button onclick="resHoy()" style="font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 18px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--amber)';this.style.borderColor='var(--amber)';this.style.color='#1A1F2E'" onmouseout="this.style.background='var(--surface)';this.style.borderColor='var(--border)';this.style.color='var(--text)'">Hoy</button>
+        <button onclick="resManana()" style="font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 18px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--amber)';this.style.borderColor='var(--amber)';this.style.color='#1A1F2E'" onmouseout="this.style.background='var(--surface)';this.style.borderColor='var(--border)';this.style.color='var(--text)'">Mañana</button>
         <div style="flex:1"></div>
-        <button class="btn btn-primary btn-sm" onclick="abrirModalReserva()">＋ Nueva reserva</button>
+        <!-- Nueva reserva CTA -->
+        <button onclick="abrirModalReserva()" style="font-family:var(--sans);font-size:13px;font-weight:700;padding:9px 20px;border-radius:99px;border:none;background:var(--amber);color:#1A1F2E;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .15s;box-shadow:0 2px 8px rgba(245,158,11,.35)" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:17px;line-height:1">＋</span> Nueva reserva
+        </button>
       </div>
       <div id="res-body"></div>
     </div>
@@ -965,6 +972,14 @@ body.demo-activo{padding-top:40px;}
             <button class="btn-save" onclick="guardarMenuDia()">💾 Guardar menú del día</button>
           </div>
         </div>
+        <div class="aj-panel" id="panel-hora-feliz">
+          <div class="aj-head">🍺 Hora feliz</div>
+          <div class="aj-body">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Define tramos horarios con descuento automático. El precio se aplica solo mientras estés en ese tramo.</p>
+            <div id="hf-lista" style="margin-bottom:16px"></div>
+            <button class="btn-save" onclick="abrirModalHoraFeliz()">＋ Añadir tramo</button>
+          </div>
+        </div>
         <div class="aj-panel" id="panel-notif">
           <div class="aj-head">🔔 Notificaciones push</div>
           <div class="aj-body">
@@ -1032,6 +1047,8 @@ body.demo-activo{padding-top:40px;}
             <input class="form-input" id="pos-search" type="text" placeholder="🔍 Buscar producto..." autocomplete="off" oninput="buscarPOS(this.value)" style="padding-right:32px">
             <button onclick="buscarPOS('');document.getElementById('pos-search').value=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);display:none" id="pos-search-clear">✕</button>
           </div>
+          <!-- Banner hora feliz -->
+          <div id="hf-banner-pos" style="display:none;align-items:center;gap:10px;background:var(--amber);color:#1A1F2E;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:600"></div>
           <div class="cat-tabs" id="pos-cat-tabs" style="display:none"></div>
           <div class="prd-grid" id="pos-grid"></div>
         </div>
@@ -1435,6 +1452,44 @@ body.demo-activo{padding-top:40px;}
     </div>
     <div class="modal-body" id="modal-detalle-comanda-body"></div>
     <div class="modal-ft" id="modal-detalle-comanda-ft"></div>
+  </div>
+</div>
+
+<!-- MODAL HORA FELIZ -->
+<div class="modal-overlay" id="modal-hora-feliz">
+  <div class="modal" style="max-width:420px;width:95%">
+    <div class="modal-hd">
+      <h3 id="modal-hf-titulo">🍺 Nuevo tramo</h3>
+      <button class="modal-x" onclick="cerrarModalHoraFeliz()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre del tramo</label>
+        <input id="hf-nombre" class="form-input" type="text" placeholder="Ej: Hora feliz tarde">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Hora inicio</label>
+          <input id="hf-inicio" class="form-input" type="time" value="17:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora fin</label>
+          <input id="hf-fin" class="form-input" type="time" value="20:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descuento (%)</label>
+        <input id="hf-descuento" class="form-input" type="number" min="1" max="99" step="1" placeholder="Ej: 30">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Se aplica a todos los productos con precio</div>
+      </div>
+    </div>
+    <div class="modal-ft" style="display:flex;gap:8px;justify-content:space-between">
+      <button id="hf-del-btn" class="btn btn-ghost btn-sm" style="color:var(--red,#e53935);display:none" onclick="eliminarHoraFeliz()">🗑️ Eliminar</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn-cancel" onclick="cerrarModalHoraFeliz()">Cancelar</button>
+        <button class="btn-save" onclick="guardarHoraFeliz()">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1995,6 +2050,7 @@ const _AJ_PANELES=[
   {id:'panel-ingredientes',ico:'🥗',lbl:'Ingredientes'},
   {id:'panel-carta-qr',  ico:'📱', lbl:'Carta QR'},
   {id:'panel-menu-dia',  ico:'🍽️', lbl:'Menú del día'},
+  {id:'panel-hora-feliz',ico:'🍺', lbl:'Hora feliz'},
   {id:'panel-notif',     ico:'🔔', lbl:'Notificaciones'},
   {id:'panel-seguridad', ico:'🔐', lbl:'Seguridad'},
   {id:'panel-peligro',   ico:'🗑️', lbl:'Peligro',   soporteOnly:true, danger:true},
@@ -2021,6 +2077,7 @@ function abrirPanelAj(id){
   if(id==='panel-impresora') _renderPanelImpresora();
   if(id==='panel-notif') _renderNotifPanel();
   if(id==='panel-usuarios') renderAjustesUsuarios();
+  if(id==='panel-hora-feliz') renderAjustesHoraFeliz();
   if(id==='panel-ingredientes') renderIngrMasterList();
   const segAdmin=document.getElementById('seg-admin-section');
   if(segAdmin){const isAdmin=_modoSoporte||(_usuarioActivo&&_usuarioActivo.rol==='admin');segAdmin.style.display=isAdmin?'':'none';}
@@ -2037,6 +2094,7 @@ function renderAjustes(){
   if(_pcQR) _pcQR.style.display='none'; // siempre oculto aquí; solo abrirPanelAj lo muestra si hay rol
   _renderAjHome();
   renderAjustesUsuarios();
+  renderAjustesHoraFeliz();
   document.getElementById('aj-nombre').value=comercio.nombre||'';
   const _nifEl=document.getElementById('aj-nif');if(_nifEl)_nifEl.value=comercio.nif||'';
   const _dirEl=document.getElementById('aj-dir');if(_dirEl)_dirEl.value=comercio.dir||'';
@@ -2982,6 +3040,7 @@ function getCatProds(){
 }
 
 function renderPOS(){
+  _renderBannerHF();
   renderStatsPos();
   renderMesasGrid();
   renderCatTabs();
@@ -3164,11 +3223,16 @@ function renderCatalogo(){
   if(_posSearch){
     const res=productos.filter(p=>p.nombre.toLowerCase().includes(_posSearch)||(p.categoria||'').toLowerCase().includes(_posSearch));
     if(!res.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:32px;font-size:14px">Sin resultados para "<strong>${esc(_posSearch)}</strong>"</div>`;return;}
-    grid.innerHTML=res.map(p=>`<div class="prd-card${p.favorito?' fav':''}" onclick="addProd('${esc(p.id)}')" data-id="${esc(p.id)}">
-      ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
-      <div class="prd-name">${esc(p.nombre)}</div>
-      <div class="prd-price">${p.precio!=null?fmtEuro(p.precio):''}</div>
-    </div>`).join('');
+    const _hf=_horaFelizActiva();
+    grid.innerHTML=res.map(p=>{
+      const pHF=_hf&&p.precio?precioHF(p.precio):null;
+      const precioHTML=p.precio!=null?(pHF&&pHF!==p.precio?`<span style="text-decoration:line-through;color:var(--muted);font-size:11px">${fmtEuro(p.precio)}</span> <span style="color:var(--amber)">${fmtEuro(pHF)}</span>`:fmtEuro(p.precio)):'';
+      return`<div class="prd-card${p.favorito?' fav':''}" onclick="addProd('${esc(p.id)}')" data-id="${esc(p.id)}">
+        ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
+        <div class="prd-name">${esc(p.nombre)}</div>
+        <div class="prd-price">${precioHTML}</div>
+      </div>`;
+    }).join('');
     return;
   }
   const todosProds=getCatProds();
@@ -3248,12 +3312,14 @@ function renderCatalogo(){
     return;
   }
 
+  const _hfAct=_horaFelizActiva();
   grid.innerHTML=backBtn+prods.map(p=>{
     const conLotes=lotes.some(l=>l.productoId===p.id);
     const sinStock=conLotes&&p.stockTotal===0;
     const stockBajo=!sinStock&&p.stockMinimo>0&&p.stockTotal<p.stockMinimo;
     const badge=sinStock?'<span class="prd-badge sin">Sin stock</span>':stockBajo?'<span class="prd-badge bajo">Stock bajo</span>':'';
-    const precio=p.precio?fmtEuro(p.precio):'—';
+    const pHF=_hfAct&&p.precio?precioHF(p.precio):null;
+    const precio=p.precio?(pHF&&pHF!==p.precio?`<span style="text-decoration:line-through;color:var(--muted);font-size:10px">${fmtEuro(p.precio)}</span> <span style="color:var(--amber)">${fmtEuro(pHF)}</span>`:fmtEuro(p.precio)):'—';
     return`<div class="prd-card${sinStock?' sin-stock':''}"
       data-id="${esc(p.id)}" draggable="true"
       ondragstart="dragStart(event,'${esc(p.id)}')"
@@ -3323,7 +3389,8 @@ function añadirAlPedido(prodId){
   if(ex){ex.cantidad++;renderPedido();return;}
   const prod=productos.find(p=>p.id===prodId);
   if(!prod) return;
-  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:prod.precio||0,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10});
+  const precioFinal=precioHF(prod.precio||0);
+  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10});
   renderPedido();
 }
 function editarNotaItem(prodId){
@@ -6098,6 +6165,94 @@ renderMenu();
 <\/script>
 </body>
 </html>`;
+}
+
+// ══════════════════════════════════════════════
+// HORA FELIZ
+// ══════════════════════════════════════════════
+function _horaFelizActiva(){
+  if(!(comercio.horasFelices||[]).length) return null;
+  const ahora=new Date();
+  const hhmm=ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
+  return (comercio.horasFelices).find(h=>h.activa&&hhmm>=h.inicio&&hhmm<=h.fin)||null;
+}
+function precioHF(precio){
+  const hf=_horaFelizActiva();
+  if(!hf||!precio) return precio;
+  return Math.round(precio*(1-hf.descuento/100)*100)/100;
+}
+function _renderBannerHF(){
+  const contenedor=document.getElementById('hf-banner-pos');
+  if(!contenedor) return;
+  const hf=_horaFelizActiva();
+  if(!hf){contenedor.style.display='none';return;}
+  contenedor.style.display='flex';
+  contenedor.innerHTML=`<span style="font-size:18px">🍺</span><span><strong>${esc(hf.nombre)}</strong> · ${hf.descuento}% dto hasta las ${hf.fin}</span>`;
+}
+let _hfEditId=null;
+function abrirModalHoraFeliz(id){
+  _hfEditId=id||null;
+  const hf=id?(comercio.horasFelices||[]).find(h=>h.id===id):null;
+  document.getElementById('modal-hf-titulo').textContent=id?'✏️ Editar tramo':'🍺 Nuevo tramo';
+  document.getElementById('hf-nombre').value=hf?.nombre||'';
+  document.getElementById('hf-inicio').value=hf?.inicio||'17:00';
+  document.getElementById('hf-fin').value=hf?.fin||'20:00';
+  document.getElementById('hf-descuento').value=hf?.descuento||'';
+  document.getElementById('hf-del-btn').style.display=id?'inline-flex':'none';
+  document.getElementById('modal-hora-feliz').classList.add('open');
+  setTimeout(()=>document.getElementById('hf-nombre').focus(),100);
+}
+function cerrarModalHoraFeliz(){document.getElementById('modal-hora-feliz').classList.remove('open');}
+function guardarHoraFeliz(){
+  const nombre=(document.getElementById('hf-nombre').value||'').trim();
+  const inicio=document.getElementById('hf-inicio').value;
+  const fin=document.getElementById('hf-fin').value;
+  const descuento=parseFloat(document.getElementById('hf-descuento').value);
+  if(!nombre){toast('⚠️ Escribe un nombre');return;}
+  if(!inicio||!fin){toast('⚠️ Define el horario');return;}
+  if(isNaN(descuento)||descuento<=0||descuento>=100){toast('⚠️ Descuento entre 1 y 99%');return;}
+  if(inicio>=fin){toast('⚠️ La hora de inicio debe ser antes que la de fin');return;}
+  if(!comercio.horasFelices) comercio.horasFelices=[];
+  const datos={nombre,inicio,fin,descuento,activa:true};
+  if(_hfEditId){
+    const idx=comercio.horasFelices.findIndex(h=>h.id===_hfEditId);
+    if(idx>=0) comercio.horasFelices[idx]={...comercio.horasFelices[idx],...datos};
+  } else {
+    comercio.horasFelices.push({id:uid(),...datos});
+  }
+  save();cerrarModalHoraFeliz();renderAjustesHoraFeliz();renderCatalogo();_renderBannerHF();
+  toast('✅ Tramo guardado');
+}
+function eliminarHoraFeliz(){
+  if(!_hfEditId) return;
+  if(!confirm('¿Eliminar este tramo?')) return;
+  comercio.horasFelices=(comercio.horasFelices||[]).filter(h=>h.id!==_hfEditId);
+  save();cerrarModalHoraFeliz();renderAjustesHoraFeliz();renderCatalogo();_renderBannerHF();
+  toast('🗑️ Tramo eliminado');
+}
+function toggleHoraFeliz(id){
+  const hf=(comercio.horasFelices||[]).find(h=>h.id===id);
+  if(!hf) return;
+  hf.activa=!hf.activa;
+  save();renderAjustesHoraFeliz();renderCatalogo();_renderBannerHF();
+  toast(hf.activa?'🍺 Tramo activado':'Tramo desactivado');
+}
+function renderAjustesHoraFeliz(){
+  const lista=document.getElementById('hf-lista');if(!lista) return;
+  const hfs=comercio.horasFelices||[];
+  if(!hfs.length){
+    lista.innerHTML=`<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Sin tramos. Añade tu primera hora feliz.</div>`;
+    return;
+  }
+  lista.innerHTML=hfs.map(h=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg);border-radius:10px;border:1.5px solid ${h.activa?'var(--amber)':'var(--border)'};margin-bottom:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${esc(h.nombre)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">🕐 ${h.inicio} – ${h.fin} · <strong style="color:var(--amber)">${h.descuento}% dto</strong></div>
+      </div>
+      <button onclick="toggleHoraFeliz('${esc(h.id)}')" style="padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid ${h.activa?'var(--amber)':'var(--border)'};background:${h.activa?'var(--amber)':'var(--surface2)'};color:${h.activa?'#1A1F2E':'var(--muted)'};cursor:pointer;font-family:var(--sans)">${h.activa?'Activo':'Inactivo'}</button>
+      <button onclick="abrirModalHoraFeliz('${esc(h.id)}')" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px" title="Editar">✏️</button>
+    </div>`).join('');
 }
 
 // ══════════════════════════════════════════════
