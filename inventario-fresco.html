@@ -1557,7 +1557,7 @@ function save(){
 
 let _syncTimer=null;
 function _autoSyncSupabase(){
-  if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__'||_modoSoporte) return;
+  if(!LIC_SB_URL||!LIC_SB_KEY||_modoSoporte) return;
   clearTimeout(_syncTimer);
   _syncTimer=setTimeout(()=>{
     const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,usuarios};
@@ -5241,7 +5241,7 @@ function arrancarApp(){
   // Sincronizar datos al arrancar para que carta-publica tenga productos
   _autoSyncSupabase();
   // Polling pedidos QR
-  if(LIC_SB_URL&&LIC_SB_KEY&&LICENCIA_ID!=='__DEMO__'){
+  if(LIC_SB_URL&&LIC_SB_KEY){
     _pollPedidosQR();
     setInterval(_pollPedidosQR,10000);
   }
@@ -5468,7 +5468,7 @@ function crearComandaDesdeSupabase(pedido){
 // CARTA QR
 // ══════════════════════════════════════════════
 function _getCartaUrl(){
-  if(!LIC_SB_URL||LICENCIA_ID==='__DEMO__') return '';
+  if(!LIC_SB_URL) return '';
   return 'https://koke46.github.io/inventario-app/carta-publica.html?lic='+encodeURIComponent(LICENCIA_ID);
 }
 
