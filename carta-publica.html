@@ -160,7 +160,8 @@ const MESA_URL=qp.get('mesa')||'';
 let productos=[];
 let comercioData={};
 let carrito={};
-let catActiva='';
+let cats=[];
+let catIdx=0;
 
 function fmt(v){return Number(v||0).toFixed(2).replace('.',',');}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -204,32 +205,27 @@ function renderCarta(){
   document.getElementById('hdr-nombre').textContent=comercioData.nombre||'Carta digital';
   if(MESA_URL) document.getElementById('hdr-sub').textContent='📍 '+MESA_URL;
 
-  // Obtener categorías únicas respetando orden de aparición
-  const cats=[...new Set(productos.map(p=>p.categoria||'Otros'))];
-  catActiva=cats[0]||'';
+  cats=[...new Set(productos.map(p=>p.categoria||'Otros'))];
+  catIdx=0;
 
-  // Nav de categorías
   const nav=document.getElementById('cat-nav');
-  nav.innerHTML=cats.map(c=>`<button class="cat-btn${c===catActiva?' active':''}" onclick="selCat('${esc(c)}')">${esc(c)}</button>`).join('');
+  nav.innerHTML=cats.map((c,i)=>`<button class="cat-btn${i===0?' active':''}" onclick="selCat(${i})">${esc(c)}</button>`).join('');
 
   renderProductos();
 }
 
-function selCat(cat){
-  catActiva=cat;
-  // Actualizar botones activos
-  document.querySelectorAll('.cat-btn').forEach(b=>{
-    b.classList.toggle('active', b.textContent===cat);
-  });
-  // Hacer scroll del nav para que el botón activo sea visible
-  const activeBtn=document.querySelector('.cat-btn.active');
-  if(activeBtn) activeBtn.scrollIntoView({inline:'center',block:'nearest'});
+function selCat(idx){
+  catIdx=idx;
+  document.querySelectorAll('.cat-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  const btn=document.querySelectorAll('.cat-btn')[idx];
+  if(btn) btn.scrollIntoView({inline:'center',block:'nearest'});
   renderProductos();
   window.scrollTo({top:0});
 }
 
 function renderProductos(){
-  const prods=productos.filter(p=>(p.categoria||'Otros')===catActiva);
+  const catNombre=cats[catIdx]||'';
+  const prods=productos.filter(p=>(p.categoria||'Otros')===catNombre);
   const lista=document.getElementById('productos-lista');
   if(!prods.length){
     lista.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--muted);font-size:14px">Sin productos en esta categoría</div>';
