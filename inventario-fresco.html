@@ -6180,7 +6180,9 @@ function guardarReserva(){
   } else {
     reservas.push({id:uid(),...datos});
   }
-  save();cerrarModalReserva();renderReservas();
+  save();cerrarModalReserva();
+  document.getElementById('res-fecha-sel').value=datos.fecha;
+  renderReservas();
   toast(_resEditId?'✅ Reserva actualizada':'✅ Reserva creada');
 }
 function eliminarReserva(){
