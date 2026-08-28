@@ -900,7 +900,7 @@ body.demo-activo{padding-top:40px;}
             <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">Tus clientes escanean el QR con el móvil, eligen lo que quieren y el pedido llega directamente a tus comandas.</div>
             <div id="aj-carta-qr-preview" style="text-align:center;margin-bottom:16px"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn-save" onclick="abrirModalQR()">📱 Ver QR y mesas</button>
+              <button class="btn-save" onclick="abrirModalQR()">📱 Ver QR</button>
               <button class="btn-save" style="background:var(--surface2)" onclick="copiarEnlaceCarta()">📋 Copiar enlace</button>
             </div>
           </div>
@@ -5658,17 +5658,8 @@ function renderModalQR(){
       <img src="${qrSrc}" width="220" height="220" alt="QR carta">
     </div>`;
     html+=`<div style="font-size:11px;color:var(--muted);margin-bottom:4px;word-break:break-all">${esc(url)}</div>`;
-    html+=`<p style="font-size:12px;color:var(--muted);margin-bottom:12px">QR general — el cliente escribe su mesa al pedir.</p>`;
+    html+=`<p style="font-size:12px;color:var(--muted);margin-bottom:12px">El cliente escanea el QR para ver tu catálogo.</p>`;
     html+=`<button class="btn-save" onclick="navigator.clipboard.writeText('${url.replace(/'/g,"\\'")}').then(()=>toast('✓ Enlace copiado'))" style="width:100%;margin-bottom:16px">📋 Copiar enlace</button>`;
-    html+=`<div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">QR por mesa (el cliente no escribe nada)</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-        <label style="font-size:12px;color:var(--muted);white-space:nowrap">Mesas del 1 al</label>
-        <input type="number" id="qr-nmesas" min="1" max="50" value="${comercio.numMesas||10}" style="width:60px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);text-align:center">
-        <button class="btn-save" style="flex:1;padding:8px" onclick="generarQRMesas()">Generar QRs</button>
-      </div>
-      <div id="qr-mesas-list"></div>
-    </div>`;
   } else {
     html+=`<div style="font-size:40px;margin:16px 0">📵</div>`;
     html+=`<div style="font-size:14px;font-weight:600;margin-bottom:8px">Solo disponible con licencia activa</div>`;
