@@ -1092,6 +1092,7 @@ body.demo-activo{padding-top:40px;}
           <select id="informe-mes-sel" class="search-input" style="max-width:160px;cursor:pointer"></select>
           <button class="btn-save" style="white-space:nowrap;background:var(--green)" onclick="generarInformeMensualPDF()">📄 Informe PDF</button>
           <button class="btn-save" style="white-space:nowrap" onclick="exportarVentasCSV()">📥 CSV</button>
+          <button class="btn-save" style="white-space:nowrap;background:#1d4ed8" onclick="enviarInformeEmail()">📧 Email hoy</button>
         </div>
       </div>
       <div id="ventas-resumen" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 0 12px"></div>
@@ -4000,6 +4001,42 @@ ${cierresMes.length?`<h2>Cierres de caja del mes (${cierresMes.length})</h2>
 
   const w=window.open('','_blank','width=900,height=820');
   if(w){w.document.write(html);w.document.close();}
+}
+function enviarInformeEmail(){
+  const hoy=new Date().toISOString().slice(0,10);
+  const hoyStr=new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const cobradas=comandas.filter(c=>c.cobrada&&(c.fecha||'').slice(0,10)===hoy);
+  if(!cobradas.length){toast('⚠️ No hay ventas hoy todavía');return;}
+  const total=cobradas.reduce((s,c)=>s+(c.total||0),0);
+  const efectivo=cobradas.filter(c=>c.metodoPago==='efectivo').reduce((s,c)=>s+(c.total||0),0);
+  const tarjeta=cobradas.filter(c=>c.metodoPago==='tarjeta').reduce((s,c)=>s+(c.total||0),0);
+  const medio=total/cobradas.length;
+  const prodCount={};
+  cobradas.forEach(c=>(c.items||[]).forEach(i=>{
+    if(!prodCount[i.nombre])prodCount[i.nombre]={qty:0,total:0};
+    prodCount[i.nombre].qty+=(i.cantidad||1);
+    prodCount[i.nombre].total+=(i.precio||0)*(i.cantidad||1);
+  }));
+  const top=Object.entries(prodCount).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+  const asunto=`Resumen ventas ${new Date().toLocaleDateString('es-ES')} — ${comercio.nombre||'Mi negocio'}`;
+  const cuerpo=[
+    `RESUMEN DE VENTAS — ${hoyStr}`,
+    `${comercio.nombre||'Mi negocio'}`,
+    '',
+    `Total del día:    ${fmtEuro(total)}`,
+    `Nº de tickets:    ${cobradas.length}`,
+    `Ticket medio:     ${fmtEuro(medio)}`,
+    '',
+    '— DESGLOSE POR MÉTODO DE PAGO —',
+    efectivo>0?`💵 Efectivo: ${fmtEuro(efectivo)}`:'',
+    tarjeta>0?`💳 Tarjeta:  ${fmtEuro(tarjeta)}`:'',
+    '',
+    '— TOP PRODUCTOS —',
+    ...top.map(([n,d],i)=>`${i+1}. ${n} — ${d.qty} uds — ${fmtEuro(d.total)}`),
+    '',
+    'Generado por Inventario Fresco',
+  ].filter(l=>l!==undefined&&l!=='').join('\n');
+  window.open('mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo));
 }
 function exportarVentasCSV(){
   const dias=parseInt(document.getElementById('ventas-filtro')?.value??'7')||7;

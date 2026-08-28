@@ -29,9 +29,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 #error-screen p{font-size:14px;color:var(--muted);line-height:1.6}
 
 /* HEADER */
-.header{background:var(--accent);color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header{background:var(--accent);color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.header-info{flex:1;min-width:0}
 .header-nombre{font-size:20px;font-weight:800;letter-spacing:-.3px}
 .header-sub{font-size:12px;opacity:.75;margin-top:2px}
+.lang-btn{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;font-family:inherit;flex-shrink:0;transition:background .15s}
+.lang-btn:hover{background:rgba(255,255,255,.35)}
 
 /* CATEGORÍAS (pestañas) */
 .cat-nav{background:var(--surface);border-bottom:2px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:62px;z-index:99}
@@ -49,6 +52,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .prod-nombre{font-size:15px;font-weight:600;line-height:1.3}
 .prod-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
 .prod-precio{font-size:15px;font-weight:700;color:var(--accent);margin-top:3px}
+.alerg-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.alerg-tag-pub{font-size:10px;background:var(--border);color:var(--muted);border-radius:5px;padding:2px 5px;display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.aviso-alerg{text-align:center;font-size:11px;color:var(--muted);padding:16px;line-height:1.5;border-top:1px solid var(--border);margin-top:8px}
 .prod-ctrl{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .ctrl-btn{width:34px;height:34px;border-radius:50%;border:none;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--sans);transition:.1s;-webkit-tap-highlight-color:transparent}
 .ctrl-btn.minus{background:var(--border);color:var(--text)}
@@ -128,16 +134,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
 <div id="carta-screen" style="display:none">
   <div class="header">
-    <div class="header-nombre" id="hdr-nombre">Mi Comercio</div>
-    <div class="header-sub" id="hdr-sub">Toca un producto para añadirlo</div>
+    <div class="header-info">
+      <div class="header-nombre" id="hdr-nombre">Mi Comercio</div>
+      <div class="header-sub" id="hdr-sub">Toca un producto para añadirlo</div>
+    </div>
+    <button class="lang-btn" id="lang-btn" onclick="toggleLang()">🇬🇧 EN</button>
   </div>
   <nav class="cat-nav" id="cat-nav"></nav>
   <div id="productos-lista"></div>
+  <div class="aviso-alerg">⚠️ Si tienes alguna alergia o intolerancia alimentaria, consulta con el personal antes de pedir.<br>Los alérgenos indicados son orientativos y pueden variar por elaboración.</div>
 </div>
 
 <div class="carrito-bar" id="carrito-bar">
   <button class="carrito-btn" onclick="abrirPedido()">
-    <span>🛒 Ver pedido</span>
+    <span id="carrito-label">🛒 Ver pedido</span>
     <span class="car-badge" id="car-count">0</span>
     <span id="car-total">0,00 €</span>
   </button>
@@ -198,6 +208,41 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const qp=new URLSearchParams(location.search);
 const LICENCIA_ID=qp.get('lic')||'';
 const MESA_URL=qp.get('mesa')||'';
+
+const ALERGENOS=[
+  {id:'gluten',     e:'🌾',l:'Gluten',     lEn:'Gluten'},
+  {id:'lacteos',    e:'🥛',l:'Lácteos',    lEn:'Dairy'},
+  {id:'huevos',     e:'🥚',l:'Huevos',     lEn:'Eggs'},
+  {id:'pescado',    e:'🐟',l:'Pescado',    lEn:'Fish'},
+  {id:'crustaceos', e:'🦐',l:'Crustáceos', lEn:'Crustaceans'},
+  {id:'moluscos',   e:'🦑',l:'Moluscos',   lEn:'Molluscs'},
+  {id:'cacahuetes', e:'🥜',l:'Cacahuetes', lEn:'Peanuts'},
+  {id:'frutosSecos',e:'🌰',l:'Frutos secos',lEn:'Tree nuts'},
+  {id:'soja',       e:'🫘',l:'Soja',       lEn:'Soya'},
+  {id:'apio',       e:'🌿',l:'Apio',       lEn:'Celery'},
+  {id:'mostaza',    e:'🟡',l:'Mostaza',    lEn:'Mustard'},
+  {id:'sesamo',     e:'🌻',l:'Sésamo',     lEn:'Sesame'},
+  {id:'sulfitos',   e:'🍷',l:'Sulfitos',   lEn:'Sulphites'},
+  {id:'altramuz',   e:'🌱',l:'Altramuz',   lEn:'Lupin'},
+];
+
+let _lang='es';
+function toggleLang(){
+  _lang=_lang==='es'?'en':'es';
+  const btn=document.getElementById('lang-btn');
+  if(btn) btn.textContent=_lang==='es'?'🇬🇧 EN':'🇪🇸 ES';
+  document.getElementById('hdr-sub').textContent=_lang==='es'?'Toca un producto para añadirlo':'Tap a product to add it';
+  const cl=document.getElementById('carrito-label');
+  if(cl) cl.textContent=_lang==='es'?'🛒 Ver pedido':'🛒 View order';
+  document.querySelector('.aviso-alerg').innerHTML=_lang==='es'
+    ?'⚠️ Si tienes alguna alergia o intolerancia alimentaria, consulta con el personal antes de pedir.<br>Los alérgenos indicados son orientativos y pueden variar por elaboración.'
+    :'⚠️ If you have any food allergy or intolerance, please ask our staff before ordering.<br>Allergens shown are indicative and may vary.';
+  renderProductos();
+}
+function fmtAlerg(ids){
+  if(!ids||!ids.length) return '';
+  return `<div class="alerg-row">${ids.map(id=>{const a=ALERGENOS.find(x=>x.id===id);return a?`<span class="alerg-tag-pub">${a.e} ${_lang==='en'?a.lEn:a.l}</span>`:''}).join('')}</div>`;
+}
 
 let productos=[];
 let comercioData={};
@@ -278,12 +323,16 @@ function renderProductos(){
     const qty=cntProd(p.id);
     const plusAction=tieneIngr?`abrirModalIngr('${p.id}')`:`añadirUno('${p.id}')`;
     const minusAction=tieneIngr?`quitarUnoCustom('${p.id}')`:`quitarUno('${p.id}')`;
+    const nombre=(_lang==='en'&&p.nombreEn)||p.nombre;
+    const desc=(_lang==='en'&&p.descripcionEn)||p.descripcion;
+    const personLabel=_lang==='en'?'Customizable 🥗':'Personalizable 🥗';
     return `<div class="producto">
       <div class="prod-ico">${p.emoji||'📦'}</div>
       <div class="prod-info">
-        <div class="prod-nombre">${esc(p.nombre)}</div>
-        ${p.descripcion?`<div class="prod-desc">${esc(p.descripcion)}</div>`:''}
-        ${tieneIngr?'<div style="font-size:11px;color:var(--muted);margin-top:2px">Personalizable 🥗</div>':''}
+        <div class="prod-nombre">${esc(nombre)}</div>
+        ${desc?`<div class="prod-desc">${esc(desc)}</div>`:''}
+        ${tieneIngr?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${personLabel}</div>`:''}
+        ${fmtAlerg(p.alergenos)}
         <div class="prod-precio">${fmt(p.precio)} €</div>
       </div>
       <div class="prod-ctrl">
