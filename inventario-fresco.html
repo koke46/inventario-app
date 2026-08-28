@@ -1852,7 +1852,7 @@ const _AJ_PANELES=[
   {id:'panel-categorias',ico:'🏷️', lbl:'Categorías'},
   {id:'panel-productos', ico:'🗂️', lbl:'Productos'},
   {id:'panel-ingredientes',ico:'🥗',lbl:'Ingredientes'},
-  {id:'panel-carta-qr',  ico:'📱', lbl:'Carta QR',   soporteOnly:true},
+  {id:'panel-carta-qr',  ico:'📱', lbl:'Carta QR'},
   {id:'panel-menu-dia',  ico:'🍽️', lbl:'Menú del día'},
   {id:'panel-notif',     ico:'🔔', lbl:'Notificaciones'},
   {id:'panel-seguridad', ico:'🔐', lbl:'Seguridad'},
@@ -3265,7 +3265,6 @@ function _renderModalCobro(){
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="confirmarCobro('efectivo')">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
-      <button class="cobro-btn" onclick="confirmarCobro('bizum')">📱 Bizum</button>
     </div>`;
 }
 function _cambiarPersonas(d){
@@ -3900,7 +3899,7 @@ th{text-align:left;padding:5px 8px;background:#f0f0f0;font-size:10px;text-transf
 <table><tbody class="pago">
   <tr><td>💵 Efectivo</td><td style="text-align:right;font-weight:600">${fmt(ef)} €</td><td style="text-align:right;color:#666">${total?((ef/total)*100).toFixed(1):'0'}%</td></tr>
   <tr><td>💳 Tarjeta</td><td style="text-align:right;font-weight:600">${fmt(tj)} €</td><td style="text-align:right;color:#666">${total?((tj/total)*100).toFixed(1):'0'}%</td></tr>
-  <tr><td>📱 Bizum</td><td style="text-align:right;font-weight:600">${fmt(bz)} €</td><td style="text-align:right;color:#666">${total?((bz/total)*100).toFixed(1):'0'}%</td></tr>
+  ${bz>0.01?`<tr><td>📱 Bizum</td><td style="text-align:right;font-weight:600">${fmt(bz)} €</td><td style="text-align:right;color:#666">${total?((bz/total)*100).toFixed(1):'0'}%</td></tr>`:''}
   ${sd>0.01?`<tr><td>Sin especificar</td><td style="text-align:right;font-weight:600">${fmt(sd)} €</td><td></td></tr>`:''}
   <tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(total)} €</td><td></td></tr>
 </tbody></table>

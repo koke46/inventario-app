@@ -1790,7 +1790,7 @@ const _AJ_PANELES=[
   {id:'panel-categorias',ico:'🏷️',lbl:'Categorías'},
   {id:'panel-productos',ico:'🗂️',lbl:'Productos'},
   {id:'panel-ingredientes',ico:'🥗',lbl:'Ingredientes'},
-  {id:'panel-carta-qr',ico:'📱',lbl:'Carta QR',soporteOnly:true},
+  {id:'panel-carta-qr',ico:'📱',lbl:'Carta QR'},
   {id:'panel-notif',ico:'🔔',lbl:'Notificaciones'},
   {id:'panel-seguridad',ico:'🔐',lbl:'Seguridad'},
   {id:'panel-peligro',ico:'🗑️',lbl:'Peligro',soporteOnly:true,danger:true},
@@ -3262,7 +3262,6 @@ function _renderModalCobro(){
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="confirmarCobro('efectivo')">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
-      <button class="cobro-btn" onclick="confirmarCobro('bizum')">📱 Bizum</button>
     </div>`;
 }
 function _cambiarPersonas(d){
@@ -3807,7 +3806,7 @@ function generarInformeMensualPDF(){
 <h1>${nombre}</h1><div class="sub">Informe mensual de ventas · ${mesLabelCap} · Generado el ${new Date().toLocaleDateString('es-ES')}</div>
 <div class="kpi-grid"><div class="kpi"><div class="kpi-val">${fmt(total)} €</div><div class="kpi-label">Facturación total</div><div class="cmp">${diffStr}</div></div><div class="kpi"><div class="kpi-val">${hoyC.length}</div><div class="kpi-label">Pedidos cobrados</div></div><div class="kpi"><div class="kpi-val">${fmt(ticketMedio)} €</div><div class="kpi-label">Ticket medio</div></div><div class="kpi"><div class="kpi-val">${diasArr.length}</div><div class="kpi-label">Días con venta</div></div></div>
 <div style="font-size:11px;color:#555;margin-bottom:18px">📅 Mejor día: ${mejorDiaStr}</div>
-<h2>Métodos de pago</h2><table><tbody class="pago"><tr><td>💵 Efectivo</td><td style="text-align:right;font-weight:600">${fmt(ef)} €</td><td style="text-align:right;color:#666">${total?((ef/total)*100).toFixed(1):'0'}%</td></tr><tr><td>💳 Tarjeta</td><td style="text-align:right;font-weight:600">${fmt(tj)} €</td><td style="text-align:right;color:#666">${total?((tj/total)*100).toFixed(1):'0'}%</td></tr><tr><td>📱 Bizum</td><td style="text-align:right;font-weight:600">${fmt(bz)} €</td><td style="text-align:right;color:#666">${total?((bz/total)*100).toFixed(1):'0'}%</td></tr>${sd>0.01?`<tr><td>Sin especificar</td><td style="text-align:right;font-weight:600">${fmt(sd)} €</td><td></td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(total)} €</td><td></td></tr></tbody></table>
+<h2>Métodos de pago</h2><table><tbody class="pago"><tr><td>💵 Efectivo</td><td style="text-align:right;font-weight:600">${fmt(ef)} €</td><td style="text-align:right;color:#666">${total?((ef/total)*100).toFixed(1):'0'}%</td></tr><tr><td>💳 Tarjeta</td><td style="text-align:right;font-weight:600">${fmt(tj)} €</td><td style="text-align:right;color:#666">${total?((tj/total)*100).toFixed(1):'0'}%</td></tr>${bz>0.01?`<tr><td>📱 Bizum</td><td style="text-align:right;font-weight:600">${fmt(bz)} €</td><td style="text-align:right;color:#666">${total?((bz/total)*100).toFixed(1):'0'}%</td></tr>`:''}${sd>0.01?`<tr><td>Sin especificar</td><td style="text-align:right;font-weight:600">${fmt(sd)} €</td><td></td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right">${fmt(total)} €</td><td></td></tr></tbody></table>
 <h2>Desglose de IVA</h2><table><thead><tr><th>Tipo IVA</th><th style="text-align:right">Base imponible</th><th style="text-align:right">Cuota IVA</th><th style="text-align:right">Total</th></tr></thead><tbody>${ivaGlobal.map(g=>`<tr class="pago"><td>${g.tasa}% — ${g.tasa===10?'Alimentación/Restauración':g.tasa===21?'General':g.tasa===4?'Superreducido':'Exento'}</td><td style="text-align:right">${fmt(g.base)} €</td><td style="text-align:right">${fmt(g.cuota)} €</td><td style="text-align:right;font-weight:600">${fmt(g.total)} €</td></tr>`).join('')}<tr class="total-row"><td>TOTALES</td><td style="text-align:right">${fmt(total-ivaTotalCuota)} €</td><td style="text-align:right">${fmt(ivaTotalCuota)} €</td><td style="text-align:right">${fmt(total)} €</td></tr></tbody></table>
 <h2>Top 10 productos más vendidos</h2>${topProds.map(([n,v])=>`<div class="bar-row"><div class="bar-label" title="${n}">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.euros/maxEuros*100)}%"></div></div><div class="bar-val">${v.q} ud · ${fmt(v.euros)} €</div></div>`).join('')}
 ${topCam.length>1?`<h2>Ventas por usuario</h2><table><thead><tr><th>Usuario</th><th style="text-align:right">Pedidos</th><th style="text-align:right">Total</th></tr></thead><tbody>${topCam.map(([n,v])=>`<tr class="pago"><td>${n}</td><td style="text-align:right">${v.n}</td><td style="text-align:right;font-weight:600">${fmt(v.euros)} €</td></tr>`).join('')}</tbody></table>`:''}
