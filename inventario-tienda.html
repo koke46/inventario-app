@@ -1625,7 +1625,11 @@ async function cargarDatosSupabase(){
     );
     if(!r.ok) return;
     const d=await r.json();
-    if(!d.length||!d[0].datos) return;
+    if(!d.length||!d[0].datos){
+      comercio={nombre:'',umbral:7};productos=[];lotes=[];movimientos=[];almacen=[];
+      comandas=[];cierresCaja=[];proveedores=[];pedidosCompra=[];usuarios=[];
+      return;
+    }
     const sd=d[0].datos;
     if(sd.comercio)      comercio=sd.comercio;
     if(sd.productos)     productos=sd.productos;
