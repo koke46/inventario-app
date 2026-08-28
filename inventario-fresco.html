@@ -3104,17 +3104,26 @@ function renderMesasGrid(){
   if(!wrap) return;
   const mesas=comercio.mesas||[];
   if(!mesas.length){wrap.innerHTML='';return;}
+  const isAdmin=_modoSoporte||(_usuarioActivo&&_usuarioActivo.rol==='admin');
   wrap.innerHTML=`<div class="mesa-grid-wrap">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">🏠 Mesas</div>
     <div class="mesa-grid">${mesas.map(m=>{
       const enCocina=comandas.some(c=>c.nombre===m&&!c.cobrada&&c.estado==='cocina');
       const cls=enCocina?'cocina':'libre';
-      return`<div class="mesa-tile ${cls}" onclick="seleccionarMesa('${esc(m)}')">
+      const btnElim=isAdmin?`<span onclick="event.stopPropagation();eliminarMesa('${esc(m)}')" title="Eliminar mesa" style="position:absolute;top:2px;right:4px;font-size:13px;line-height:1;color:rgba(255,255,255,.45);cursor:pointer;font-weight:900" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(255,255,255,.45)'">×</span>`:'';
+      return`<div class="mesa-tile ${cls}" onclick="seleccionarMesa('${esc(m)}')" style="position:relative">
+        ${btnElim}
         <div>${esc(m)}</div>
         <div style="font-size:9px;margin-top:2px;font-weight:600">${enCocina?'⏳ En cocina':'✓ Libre'}</div>
       </div>`;
     }).join('')}</div>
   </div>`;
+}
+function eliminarMesa(nombre){
+  if(!confirm(`¿Eliminar la mesa "${nombre}"?\n\nSolo se elimina la mesa del listado. Los pedidos ya guardados no se borran.`)) return;
+  comercio.mesas=(comercio.mesas||[]).filter(m=>m!==nombre);
+  save();renderMesasGrid();renderMesaSelect();
+  toast('✓ Mesa "'+nombre+'" eliminada');
 }
 function seleccionarMesa(nombre){
   const sel=document.getElementById('ped-mesa-sel');
