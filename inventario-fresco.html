@@ -1014,6 +1014,10 @@ body.demo-activo{padding-top:40px;}
           </div>
           <div id="mesas-grid-section"></div>
           <div id="pos-cocina-section"></div>
+          <div style="position:relative;margin-bottom:10px">
+            <input class="form-input" id="pos-search" type="text" placeholder="🔍 Buscar producto..." autocomplete="off" oninput="buscarPOS(this.value)" style="padding-right:32px">
+            <button onclick="buscarPOS('');document.getElementById('pos-search').value=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);display:none" id="pos-search-clear">✕</button>
+          </div>
           <div class="cat-tabs" id="pos-cat-tabs" style="display:none"></div>
           <div class="prd-grid" id="pos-grid"></div>
         </div>
@@ -3067,8 +3071,27 @@ function _reordenarProductos(fromId,toId){
   save();renderCatalogo();
 }
 
+let _posSearch='';
+function buscarPOS(q){
+  _posSearch=q.trim().toLowerCase();
+  const clearBtn=document.getElementById('pos-search-clear');
+  if(clearBtn) clearBtn.style.display=_posSearch?'block':'none';
+  const catTabs=document.getElementById('pos-cat-tabs');
+  if(catTabs) catTabs.style.display=_posSearch?'none':'';
+  renderCatalogo();
+}
 function renderCatalogo(){
   const grid=document.getElementById('pos-grid');
+  if(_posSearch){
+    const res=productos.filter(p=>p.nombre.toLowerCase().includes(_posSearch)||(p.categoria||'').toLowerCase().includes(_posSearch));
+    if(!res.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:32px;font-size:14px">Sin resultados para "<strong>${esc(_posSearch)}</strong>"</div>`;return;}
+    grid.innerHTML=res.map(p=>`<div class="prd-card${p.favorito?' fav':''}" onclick="addProd('${esc(p.id)}')" data-id="${esc(p.id)}">
+      ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
+      <div class="prd-name">${esc(p.nombre)}</div>
+      <div class="prd-price">${p.precio!=null?fmtEuro(p.precio):''}</div>
+    </div>`).join('');
+    return;
+  }
   const todosProds=getCatProds();
 
   // ── VISTA CARPETAS ──
