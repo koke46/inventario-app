@@ -325,7 +325,7 @@ async function confirmarPedido(){
       headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({licencia_id:LICENCIA_ID,mesa,items,total})
     });
-    if(!r.ok) throw new Error('http '+r.status);
+    if(!r.ok){const txt=await r.text();throw new Error('HTTP '+r.status+': '+txt.slice(0,120));}
     document.getElementById('pedido-screen').classList.remove('open');
     document.getElementById('carta-screen').style.display='none';
     document.getElementById('carrito-bar').classList.remove('visible');
@@ -333,7 +333,7 @@ async function confirmarPedido(){
     document.getElementById('conf-screen').classList.add('visible');
   }catch(e){
     btn.disabled=false;btn.textContent='Confirmar pedido';
-    toast('❌ Error al enviar. Inténtalo de nuevo.',3500);
+    toast('❌ '+e.message,4000);
   }
 }
 
