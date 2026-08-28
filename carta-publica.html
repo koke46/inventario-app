@@ -350,8 +350,10 @@ function abrirModalIngr(id){
       <label class="ingr-check-label" for="chk-b-${ing.id}">${esc(ing.nombre)}</label>
     </div>`).join('');
   }else baseSec.style.display='none';
-  // Extras (para añadir)
-  const extIngrs=extraIds.map(eid=>master.find(m=>m.id===eid)).filter(Boolean);
+  // Extras (para añadir): si hay extras configurados usar esos, si no usar todos los del master que no sean base
+  const extIngrs=extraIds.length>0
+    ? extraIds.map(eid=>master.find(m=>m.id===eid)).filter(Boolean)
+    : master.filter(m=>!baseIds.includes(m.id));
   const extSec=document.getElementById('ingr-m-extra-sec');
   if(extIngrs.length){
     extSec.style.display='block';
@@ -366,8 +368,12 @@ function abrirModalIngr(id){
 function calcTotalIngr(id){
   const p=productos.find(x=>x.id===id);if(!p) return;
   const master=comercioData.ingredientes||[];
-  const sup=(p.extras||[]).map(eid=>master.find(m=>m.id===eid)).filter(Boolean)
-    .filter(ing=>document.getElementById('chk-e-'+ing.id)?.checked)
+  const baseIds=p.ingredientes||[];
+  const extraIds=p.extras||[];
+  const extIngrs=extraIds.length>0
+    ? extraIds.map(eid=>master.find(m=>m.id===eid)).filter(Boolean)
+    : master.filter(m=>!baseIds.includes(m.id));
+  const sup=extIngrs.filter(ing=>document.getElementById('chk-e-'+ing.id)?.checked)
     .reduce((s,ing)=>s+(ing.suplemento||0),0);
   document.getElementById('ingr-m-total').textContent=fmt((p.precio||0)+sup)+' €';
 }
@@ -375,8 +381,12 @@ function confirmarIngredientes(){
   const id=_ingrProdId;if(!id) return;
   const p=productos.find(x=>x.id===id);if(!p) return;
   const master=comercioData.ingredientes||[];
-  const baseIngrs=(p.ingredientes||[]).map(bid=>master.find(m=>m.id===bid)).filter(Boolean);
-  const extIngrs=(p.extras||[]).map(eid=>master.find(m=>m.id===eid)).filter(Boolean);
+  const baseIds2=p.ingredientes||[];
+  const baseIngrs=baseIds2.map(bid=>master.find(m=>m.id===bid)).filter(Boolean);
+  const extraIds2=p.extras||[];
+  const extIngrs=extraIds2.length>0
+    ? extraIds2.map(eid=>master.find(m=>m.id===eid)).filter(Boolean)
+    : master.filter(m=>!baseIds2.includes(m.id));
   const sinIngredientes=baseIngrs.filter(ing=>!document.getElementById('chk-b-'+ing.id)?.checked).map(ing=>ing.nombre);
   const extrasSelec=extIngrs.filter(ing=>document.getElementById('chk-e-'+ing.id)?.checked);
   const sup=extrasSelec.reduce((s,ing)=>s+(ing.suplemento||0),0);
