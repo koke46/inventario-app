@@ -896,14 +896,11 @@ body.demo-activo{padding-top:40px;}
         <div class="aj-panel" id="panel-carta-qr" style="display:none">
           <div class="aj-head">📱 Carta pública (QR)</div>
           <div class="aj-body">
-            <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px">Descarga la carta, súbela a internet (GitHub Pages, Netlify…) y pega aquí la URL para generar el QR.</div>
-            <div class="form-group">
-              <label class="form-label">URL de tu carta pública</label>
-              <input class="form-input" id="aj-carta-url" type="url" placeholder="https://mi-bar.github.io/carta.html" autocomplete="off">
-            </div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">Tus clientes escanean el QR con el móvil, eligen lo que quieren y el pedido llega directamente a tus comandas.</div>
+            <div id="aj-carta-qr-preview" style="text-align:center;margin-bottom:16px"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn-save" onclick="guardarCartaUrl()">Guardar URL</button>
-              <button class="btn-save" style="background:var(--surface2)" onclick="descargarCarta()">⬇️ Descargar carta.html</button>
+              <button class="btn-save" onclick="abrirModalQR()">📱 Ver QR y mesas</button>
+              <button class="btn-save" style="background:var(--surface2)" onclick="copiarEnlaceCarta()">📋 Copiar enlace</button>
             </div>
           </div>
         </div>
@@ -1841,8 +1838,16 @@ function renderAjustes(){
   const _ciudadEl=document.getElementById('aj-ciudad');if(_ciudadEl)_ciudadEl.value=comercio.ciudad||'';
   const pinEl=document.getElementById('aj-pin-caja-estado');
   if(pinEl) pinEl.textContent=loadJ('if_pin_caja',null)?'✅ PIN activado':'Sin PIN — cualquiera puede cerrar caja';
-  const cartaUrlEl=document.getElementById('aj-carta-url');
-  if(cartaUrlEl) cartaUrlEl.value=comercio.cartaUrl||'';
+  const ajQrPrev=document.getElementById('aj-carta-qr-preview');
+  if(ajQrPrev){
+    const _qrUrl=_getCartaUrl();
+    if(_qrUrl){
+      const qrSrc='https://api.qrserver.com/v1/create-qr-code/?data='+encodeURIComponent(_qrUrl)+'&size=150x150&margin=8';
+      ajQrPrev.innerHTML=`<div style="background:#fff;display:inline-block;border-radius:10px;padding:6px;margin-bottom:8px"><img src="${qrSrc}" width="150" height="150" loading="lazy"></div><div style="font-size:11px;color:var(--muted);word-break:break-all">${_qrUrl}</div>`;
+    } else {
+      ajQrPrev.innerHTML='<div style="font-size:13px;color:var(--muted)">Disponible con licencia activa</div>';
+    }
+  }
   const sbCfg=comercio.supabase||{};
   const sbUrlEl=document.getElementById('aj-sb-url');
   if(sbUrlEl){sbUrlEl.value=sbCfg.url||'';document.getElementById('aj-sb-key').value=sbCfg.key||'';}
@@ -4964,6 +4969,11 @@ function arrancarApp(){
   renderPOS();
   document.getElementById('aj-nombre').value=comercio.nombre||'';
   if(comercio.supabase?.url) conectarSupabase();
+  // Polling pedidos QR
+  if(LIC_SB_URL&&LIC_SB_KEY&&LICENCIA_ID!=='__DEMO__'){
+    _pollPedidosQR();
+    setInterval(_pollPedidosQR,10000);
+  }
   // Mostrar selector de usuario si hay usuarios configurados
   if(usuarios.length){
     mostrarSelectorUsuario();
@@ -5184,11 +5194,15 @@ function crearComandaDesdeSupabase(pedido){
 // ══════════════════════════════════════════════
 // CARTA QR
 // ══════════════════════════════════════════════
-function guardarCartaUrl(){
-  const url=(document.getElementById('aj-carta-url')?.value||'').trim();
-  comercio.cartaUrl=url;
-  save();
-  toast(url?'✓ URL guardada':'✓ URL borrada');
+function _getCartaUrl(){
+  if(!LIC_SB_URL||LICENCIA_ID==='__DEMO__') return '';
+  return 'https://koke46.github.io/inventario-app/carta-publica.html?lic='+encodeURIComponent(LICENCIA_ID);
+}
+
+function copiarEnlaceCarta(){
+  const url=_getCartaUrl();
+  if(!url){toast('⚠️ Solo disponible con licencia activa');return;}
+  navigator.clipboard.writeText(url).then(()=>toast('✓ Enlace copiado')).catch(()=>toast('❌ No se pudo copiar'));
 }
 
 function abrirModalQR(){
@@ -5201,15 +5215,16 @@ function cerrarModalQR(){
 }
 
 function renderModalQR(){
-  const url=comercio.cartaUrl||'';
+  const url=_getCartaUrl();
   let html='';
   if(url){
     const qrSrc=`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=220x220&margin=10`;
     html+=`<div style="background:#fff;display:inline-block;border-radius:12px;padding:8px;margin-bottom:8px">
       <img src="${qrSrc}" width="220" height="220" alt="QR carta">
     </div>`;
-    html+=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;word-break:break-all">${esc(url)}</div>`;
+    html+=`<div style="font-size:11px;color:var(--muted);margin-bottom:4px;word-break:break-all">${esc(url)}</div>`;
     html+=`<p style="font-size:12px;color:var(--muted);margin-bottom:12px">QR general — el cliente escribe su mesa al pedir.</p>`;
+    html+=`<button class="btn-save" onclick="navigator.clipboard.writeText('${url.replace(/'/g,"\\'")}').then(()=>toast('✓ Enlace copiado'))" style="width:100%;margin-bottom:16px">📋 Copiar enlace</button>`;
     html+=`<div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px">QR por mesa (el cliente no escribe nada)</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
@@ -5221,28 +5236,20 @@ function renderModalQR(){
     </div>`;
   } else {
     html+=`<div style="font-size:40px;margin:16px 0">📵</div>`;
-    html+=`<div style="font-size:14px;font-weight:600;margin-bottom:8px">Sin URL configurada</div>`;
-    html+=`<p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-      1. Descarga la carta con el botón de abajo<br>
-      2. Súbela a internet (GitHub Pages, Netlify…)<br>
-      3. Pega la URL en Ajustes → Carta pública<br>
-      4. Vuelve aquí para ver el QR
-    </p>`;
+    html+=`<div style="font-size:14px;font-weight:600;margin-bottom:8px">Solo disponible con licencia activa</div>`;
+    html+=`<p style="font-size:13px;color:var(--muted);line-height:1.6">En modo demo no se pueden recibir pedidos QR.</p>`;
   }
-  html+=`<button class="btn-save" onclick="descargarCarta()" style="width:100%;margin-bottom:8px">⬇️ Descargar carta.html</button>`;
-  if(url) html+=`<button class="btn-save" style="width:100%;background:var(--surface2)" onclick="showPage('ajustes',document.getElementById('nav-ajustes'));cerrarModalQR()">⚙️ Cambiar URL</button>`;
   document.getElementById('modal-qr-body').innerHTML=html;
 }
 
 function generarQRMesas(){
-  const url=comercio.cartaUrl||'';
-  if(!url){toast('⚠️ Configura la URL de la carta primero');return;}
+  const url=_getCartaUrl();
+  if(!url){toast('⚠️ Solo disponible con licencia activa');return;}
   const n=parseInt(document.getElementById('qr-nmesas')?.value)||10;
   comercio.numMesas=n;save();
-  const sep=url.includes('?')?'&':'?';
   let html='<div style="display:flex;flex-direction:column;gap:16px;margin-top:8px">';
   for(let i=1;i<=n;i++){
-    const mesaUrl=url+sep+'mesa='+encodeURIComponent('Mesa '+i);
+    const mesaUrl=url+'&mesa='+encodeURIComponent('Mesa '+i);
     const qrSrc=`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(mesaUrl)}&size=180x180&margin=8`;
     html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
       <div style="font-size:14px;font-weight:700;margin-bottom:10px">Mesa ${i}</div>
@@ -5254,6 +5261,49 @@ function generarQRMesas(){
   }
   html+='</div>';
   document.getElementById('qr-mesas-list').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════
+// POLLING PEDIDOS QR
+// ══════════════════════════════════════════════
+async function _pollPedidosQR(){
+  if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return;
+  try{
+    const r=await fetch(
+      LIC_SB_URL+'/rest/v1/pedidos_qr?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+
+      '&estado=eq.pendiente&select=id,mesa,items,total,created_at&order=created_at.asc&limit=20',
+      {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
+    );
+    if(!r.ok) return;
+    const pedidos=await r.json();
+    let nuevos=0;
+    for(const p of pedidos){
+      if(comandas.find(c=>c.id===p.id)) continue;
+      const comanda={
+        id:p.id,
+        nombre:(p.mesa||'QR')+'  📱',
+        items:(p.items||[]),
+        estado:'cocina',cobrada:false,
+        total:p.total||0,
+        camarero:null,
+        fecha:p.created_at||new Date().toISOString(),
+        origenQR:true
+      };
+      comercio.ultimoPedido=(comercio.ultimoPedido||0)+1;
+      comandas.push(comanda);
+      nuevos++;
+      fetch(LIC_SB_URL+'/rest/v1/pedidos_qr?id=eq.'+p.id,{
+        method:'PATCH',
+        headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({estado:'visto'})
+      }).catch(()=>{});
+    }
+    if(nuevos>0){
+      save();updateStats();renderPOS();
+      _sonarNotif();
+      toast('🛎️ '+nuevos+' pedido'+(nuevos>1?'s':'')+(nuevos>1?' nuevos':' nuevo')+' por QR',5000);
+    }
+  }catch(e){}
 }
 
 function descargarCarta(){
