@@ -1230,6 +1230,7 @@ body.demo-activo{padding-top:40px;}
 <!-- ── MODAL PIN CAJA ── -->
 <div id="ticket-float" style="display:none;position:fixed;bottom:80px;right:16px;z-index:9000;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
   <button onclick="imprimirTicketBT(_ultimaComanda)" style="background:#1a73e8;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">🖨️ Ticket</button>
+  <button onclick="enviarTicketWhatsApp(_ultimaComanda)" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📱 WhatsApp</button>
   <button onclick="abrirModalFactura()" style="background:#6a1b9a;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📄 Factura</button>
   <button onclick="document.getElementById('ticket-float').style.display='none'" style="background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;line-height:1;padding:0">×</button>
 </div>
@@ -4341,6 +4342,27 @@ function imprimirTicket(com){
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr><tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
   const w=window.open('','_blank','width=360,height=680');
   if(w){w.document.write(html);w.document.close();}
+}
+function enviarTicketWhatsApp(com){
+  if(!com){toast('⚠️ No hay ticket reciente');return;}
+  const fmt=v=>(v||0).toFixed(2).replace('.',',');
+  const nombre=comercio.nombre||'El Miarma';
+  const fecha=new Date(com.fecha||Date.now()).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const metodos={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta',bizum:'📱 Bizum'};
+  const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
+  const lineas=(com.items||[]).map(i=>`  ${i.cantidad}x ${i.nombre}  ${fmt((i.precio||0)*(i.cantidad||1))} €`).join('\n');
+  const texto=[
+    `🧾 *${nombre}*`,
+    `📅 ${fecha}`,
+    `─────────────────`,
+    lineas,
+    `─────────────────`,
+    `*TOTAL: ${fmt(com.total||0)} €*`,
+    metodo,
+    `─────────────────`,
+    `¡Gracias por su visita! 🙏`,
+  ].join('\n');
+  window.open('https://wa.me/?text='+encodeURIComponent(texto),'_blank');
 }
 function mostrarBtnTicket(){
   const el=document.getElementById('ticket-float');

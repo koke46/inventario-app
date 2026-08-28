@@ -1300,6 +1300,7 @@ body.demo-activo{padding-top:40px;}
 <!-- ── MODAL CIERRE DE CAJA ── -->
 <div id="ticket-float" style="display:none;position:fixed;bottom:80px;right:16px;z-index:9000;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
   <button onclick="imprimirTicketBT(_ultimaComanda)" style="background:#1a73e8;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">🖨️ Ticket</button>
+  <button onclick="enviarTicketWhatsApp(_ultimaComanda)" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📱 WhatsApp</button>
   <button onclick="abrirModalFactura()" style="background:#6a1b9a;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📄 Factura</button>
   <button onclick="document.getElementById('ticket-float').style.display='none'" style="background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;line-height:1;padding:0">×</button>
 </div>
@@ -4319,6 +4320,27 @@ function mostrarBtnTicket(){
   clearTimeout(el._to);
   el.style.display='flex';
   el._to=setTimeout(()=>{el.style.display='none';},8000);
+}
+function enviarTicketWhatsApp(com){
+  if(!com){toast('⚠️ No hay ticket reciente');return;}
+  const fmt=v=>(v||0).toFixed(2).replace('.',',');
+  const nombre=comercio.nombre||'El Miarma';
+  const fecha=new Date(com.fecha||Date.now()).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const metodos={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta',bizum:'📱 Bizum'};
+  const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
+  const lineas=(com.items||[]).map(i=>`  ${i.cantidad}x ${i.nombre}  ${fmt((i.precio||0)*(i.cantidad||1))} €`).join('\n');
+  const texto=[
+    `🧾 *${nombre}*`,
+    `📅 ${fecha}`,
+    `─────────────────`,
+    lineas,
+    `─────────────────`,
+    `*TOTAL: ${fmt(com.total||0)} €*`,
+    metodo,
+    `─────────────────`,
+    `¡Gracias por su visita! 🙏`,
+  ].join('\n');
+  window.open('https://wa.me/?text='+encodeURIComponent(texto),'_blank');
 }
 function imprimirCierreGestoria(){
   const hoyStr=new Date().toISOString().slice(0,10);
