@@ -1495,6 +1495,45 @@ function save(){
   saveJ('if_proveedores',proveedores);
   saveJ('if_pedidos',pedidosCompra);
   saveJ('if_usuarios',usuarios);
+  _autoSyncSupabase();
+}
+
+let _syncTimer=null;
+function _autoSyncSupabase(){
+  if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__'||_modoSoporte) return;
+  clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(()=>{
+    const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,usuarios};
+    fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
+      method:'POST',
+      headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({licencia_id:LICENCIA_ID,datos,actualizado_en:new Date().toISOString()})
+    }).catch(()=>{});
+  },3000);
+}
+
+async function cargarDatosSupabase(){
+  if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return;
+  try{
+    const r=await fetch(
+      LIC_SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=datos&limit=1',
+      {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
+    );
+    if(!r.ok) return;
+    const d=await r.json();
+    if(!d.length||!d[0].datos) return;
+    const sd=d[0].datos;
+    if(sd.comercio)      comercio=sd.comercio;
+    if(sd.productos)     productos=sd.productos;
+    if(sd.lotes)         lotes=sd.lotes;
+    if(sd.movimientos)   movimientos=sd.movimientos;
+    if(sd.almacen)       almacen=sd.almacen;
+    if(sd.comandas)      comandas=sd.comandas;
+    if(sd.cierresCaja)   cierresCaja=sd.cierresCaja;
+    if(sd.proveedores)   proveedores=sd.proveedores;
+    if(sd.pedidosCompra) pedidosCompra=sd.pedidosCompra;
+    if(sd.usuarios)      usuarios=sd.usuarios;
+  }catch(e){}
 }
 
 // ══════════════════════════════════════════════
@@ -4953,9 +4992,10 @@ function arrancarApp(){
     const _clienteNombre=_hp.get('cliente');
     history.replaceState(null,'',location.pathname+location.search);
     _modoSoporte=true;
-    if(_clienteNombre) comercio.nombre=_clienteNombre;
     _sesion={user:'soporte',ts:Date.now()};
     saveJ('if_sesion',null);
+    await cargarDatosSupabase();
+    if(_clienteNombre&&!comercio.nombre) comercio.nombre=_clienteNombre;
     arrancarApp();
     return;
   }
