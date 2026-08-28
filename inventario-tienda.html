@@ -4329,8 +4329,14 @@ function enviarTicketWhatsApp(com){
   const metodos={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta',bizum:'📱 Bizum'};
   const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
   const lineas=(com.items||[]).map(i=>`  ${i.cantidad}x ${i.nombre}  ${fmt((i.precio||0)*(i.cantidad||1))} €`).join('\n');
-  const texto=[
+  const dir=[comercio.dir,comercio.cp&&comercio.ciudad?`${comercio.cp} ${comercio.ciudad}`:comercio.cp||comercio.ciudad].filter(Boolean).join(', ');
+  const cabecera=[
     `🧾 *${nombre}*`,
+    dir?`📍 ${dir}`:'',
+    comercio.nif?`NIF: ${comercio.nif}`:'',
+  ].filter(Boolean);
+  const texto=[
+    ...cabecera,
     `📅 ${fecha}`,
     `─────────────────`,
     lineas,
