@@ -527,21 +527,24 @@ async function toggleActiva(licenciaId,activa){
 async function limpiarCaja(licenciaId,cliente){
   if(!confirm(`¿Limpiar los datos de caja de "${cliente}"?\n\nSe borrarán las comandas y los cierres de caja guardados en la nube.\n\nEsta acción no se puede deshacer.`)) return;
   try{
-    const r=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId)+'&select=datos&limit=1',{headers:sbHeaders()});
-    if(!r.ok) throw new Error('Error '+r.status);
+    const h={...sbHeaders(),'Prefer':'return=minimal'};
+    // leer datos actuales
+    const r=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId)+'&select=datos&limit=1',{headers:h});
+    if(!r.ok) throw new Error('Lectura fallida: '+r.status);
     const rows=await r.json();
     let datos=rows.length&&rows[0].datos?{...rows[0].datos}:{};
     datos.comandas=[];
     datos.cierresCaja=[];
-    const p=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),{
-      method:'PATCH',
-      headers:{...sbHeaders(),'Prefer':'return=minimal'},
-      body:JSON.stringify({datos,actualizado_en:new Date().toISOString()})
+    // upsert: crea la fila si no existe, la actualiza si existe
+    const p=await fetch(SB_URL+'/rest/v1/sincronizaciones',{
+      method:'POST',
+      headers:{...h,'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({licencia_id:licenciaId,datos,actualizado_en:new Date().toISOString()})
     });
-    if(!p.ok) throw new Error('Error '+p.status);
+    if(!p.ok){const t=await p.text();throw new Error('Escritura fallida: '+p.status+' '+t);}
     toast('🧹 Caja limpiada — el cliente verá 0 al recargar');
   }catch(e){
-    toast('❌ Error: '+e.message,true);
+    toast('❌ '+e.message,true);
   }
 }
 
