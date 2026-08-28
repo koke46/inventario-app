@@ -1459,19 +1459,26 @@ if(LICENCIA_ID==='__DEMO__'&&location.hash.includes('soporte='+MASTER_PASS)){
   const _licHash=_hp2.get('lic');
   if(_licHash) location.replace(location.pathname+'?lic='+encodeURIComponent(_licHash)+location.hash);
 }
+// Reset de sesión: cuando el link lleva ?reset_session=1, borra sesión y nombre de negocio y recarga limpio
+if(LICENCIA_ID!=='__DEMO__'&&_qp.get('reset_session')==='1'){
+  saveJ('if_sesion',null);
+  const _co=loadJ('if_comercio',null);if(_co){_co.nombre='';saveJ('if_comercio',_co);}
+  const _sp2=new URLSearchParams(location.search);_sp2.delete('reset_session');
+  location.replace(location.pathname+'?'+_sp2.toString()+location.hash);
+}
 
 async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
   const cache=loadJ('if_lic_cache',null);
-  if(cache&&cache.contrasena&&(Date.now()-cache.ts)<5*60*1000){
+  if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<5*60*1000){
     console.log('[Licencia] caché:',cache.activa);
     return cache.activa;
   }
 
   try{
     const res=await fetch(
-      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena',
+      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena,force_reset',
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
     );
     if(!res.ok) throw new Error('http '+res.status);
@@ -1479,11 +1486,21 @@ async function checkLicencia(){
     console.log('[Licencia] Supabase respondió:',JSON.stringify(data));
     const row=Array.isArray(data)&&data.length>0?data[0]:null;
     const activa=row?.activa===true;
-    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,ts:Date.now()});
+    const forceReset=row?.force_reset===true;
+    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,force_reset:forceReset,ts:Date.now()});
     if(activa){
       fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
         {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({ultimo_acceso:new Date().toISOString()})}).catch(()=>{});
+    }
+    if(forceReset){
+      const _pfx=LICENCIA_ID.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_';
+      Object.keys(localStorage).filter(k=>k.startsWith(_pfx)).forEach(k=>localStorage.removeItem(k));
+      fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
+        {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({force_reset:false})}).catch(()=>{});
+      location.reload();
+      return false;
     }
     return activa;
   }catch(e){
@@ -5207,6 +5224,7 @@ function arrancarApp(){
     _modoSoporte=true;
     if(_clienteNombre) comercio.nombre=_clienteNombre;
     _sesion={user:'soporte',ts:Date.now()};
+    saveJ('if_sesion',null);
     arrancarApp();
     return;
   }
