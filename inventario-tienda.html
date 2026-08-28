@@ -1576,7 +1576,7 @@ function save(){
 
 let _syncTimer=null;
 function _autoSyncSupabase(){
-  if(!LIC_SB_URL||!LIC_SB_KEY||_modoSoporte) return;
+  if(!LIC_SB_URL||!LIC_SB_KEY) return;
   clearTimeout(_syncTimer);
   _syncTimer=setTimeout(()=>{
     const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,usuarios};
