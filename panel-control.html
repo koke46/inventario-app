@@ -501,6 +501,7 @@ function renderTabla(){
           <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
           <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${esc(r.licencia_id)}')">✏️</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
+          <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
       </td>
@@ -517,6 +518,28 @@ async function toggleActiva(licenciaId,activa){
     if(row) row.activa=nuevo;
     renderStats();renderTabla();
     toast(nuevo?'✅ Licencia activada':'🔴 Licencia bloqueada');
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+  }
+}
+
+// ── LIMPIAR CAJA ──
+async function limpiarCaja(licenciaId,cliente){
+  if(!confirm(`¿Limpiar los datos de caja de "${cliente}"?\n\nSe borrarán las comandas y los cierres de caja guardados en la nube.\n\nEsta acción no se puede deshacer.`)) return;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId)+'&select=datos&limit=1',{headers:sbHeaders()});
+    if(!r.ok) throw new Error('Error '+r.status);
+    const rows=await r.json();
+    let datos=rows.length&&rows[0].datos?{...rows[0].datos}:{};
+    datos.comandas=[];
+    datos.cierresCaja=[];
+    const p=await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),{
+      method:'PATCH',
+      headers:{...sbHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify({datos,actualizado_en:new Date().toISOString()})
+    });
+    if(!p.ok) throw new Error('Error '+p.status);
+    toast('🧹 Caja limpiada — el cliente verá 0 al recargar');
   }catch(e){
     toast('❌ Error: '+e.message,true);
   }
