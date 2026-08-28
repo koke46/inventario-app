@@ -1459,6 +1459,18 @@ async function checkDispositivo(maxDisp){
   }catch(e){return true;}
 }
 
+function _checkExpiracion(fechaExp){
+  if(!fechaExp) return;
+  const dias=Math.ceil((new Date(fechaExp)-new Date())/86400000);
+  if(dias<=0){
+    setTimeout(()=>toast('🔴 Tu licencia ha expirado — contacta con soporte para renovar',8000),2000);
+  } else if(dias<=7){
+    setTimeout(()=>toast('⚠️ Tu licencia expira en '+dias+' día'+(dias!==1?'s':'')+' — contacta con soporte para renovar',7000),2000);
+  } else if(dias<=30){
+    setTimeout(()=>toast('📅 Tu licencia expira el '+new Date(fechaExp).toLocaleDateString('es-ES'),5000),3000);
+  }
+}
+
 async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
@@ -1468,13 +1480,14 @@ async function checkLicencia(){
     if(cache.activa){
       const devOk=await checkDispositivo(cache.max_dispositivos??null);
       if(!devOk) return false;
+      _checkExpiracion(cache.fecha_expiracion??null);
     }
     return cache.activa;
   }
 
   try{
     const res=await fetch(
-      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena,force_reset,max_dispositivos',
+      LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=activa,usuario,contrasena,force_reset,max_dispositivos,fecha_expiracion',
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}}
     );
     if(!res.ok) throw new Error('http '+res.status);
@@ -1484,10 +1497,12 @@ async function checkLicencia(){
     const activa=row?.activa===true;
     const forceReset=row?.force_reset===true;
     const maxDisp=row?.max_dispositivos??null;
-    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,force_reset:forceReset,max_dispositivos:maxDisp,ts:Date.now()});
+    const fechaExp=row?.fecha_expiracion??null;
+    saveJ('if_lic_cache',{activa,usuario:row?.usuario||null,contrasena:row?.contrasena||null,force_reset:forceReset,max_dispositivos:maxDisp,fecha_expiracion:fechaExp,ts:Date.now()});
     if(activa){
       const devOk=await checkDispositivo(maxDisp);
       if(!devOk) return false;
+      _checkExpiracion(fechaExp);
       fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
         {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({ultimo_acceso:new Date().toISOString()})}).catch(()=>{});

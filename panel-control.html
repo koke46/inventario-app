@@ -185,6 +185,7 @@ tr:hover td{background:var(--surface2)}
           <th>Tipo</th>
           <th>Estado</th>
           <th>Plan</th>
+          <th>Expira</th>
           <th>Usuario</th>
           <th>Notas</th>
           <th>Alta</th>
@@ -193,7 +194,7 @@ tr:hover td{background:var(--surface2)}
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="10" class="empty"><div class="spinner"></div></td></tr>
+        <tr><td colspan="11" class="empty"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -270,6 +271,10 @@ tr:hover td{background:var(--surface2)}
         <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
         <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
       </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha de expiración de licencia</label>
+      <input class="form-input" id="m-expiracion" type="date" placeholder="AAAA-MM-DD">
     </div>
     <div class="form-group">
       <label class="form-label">Notas</label>
@@ -418,6 +423,14 @@ function planBadge(r){
   if(n===3) return '<span class="badge" style="background:#14532d;color:#4ade80">💻💻💻 Premium</span>';
   return '<span style="font-size:11px;color:var(--muted)">—</span>';
 }
+function expiraBadge(r){
+  if(!r.fecha_expiracion) return '<span style="font-size:11px;color:var(--muted)">—</span>';
+  const dias=Math.ceil((new Date(r.fecha_expiracion)-new Date())/86400000);
+  if(dias<0) return '<span class="badge" style="background:#450a0a;color:#fca5a5">⚠️ Expirada</span>';
+  if(dias<=7) return '<span class="badge" style="background:#451a03;color:#f59e0b">⚡ '+dias+'d</span>';
+  if(dias<=30) return '<span class="badge" style="background:#1e3a5f;color:#93c5fd">📅 '+dias+'d</span>';
+  return '<span style="font-size:11px;color:var(--muted)">'+new Date(r.fecha_expiracion).toLocaleDateString('es-ES')+'</span>';
+}
 
 // ── TIPO ──
 function getTipo(row){
@@ -462,7 +475,7 @@ function renderTabla(){
 
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
     return;
   }
 
@@ -478,6 +491,7 @@ function renderTabla(){
       <td>${tipoBadge}</td>
       <td>${estadoBadge}</td>
       <td>${planBadge(r)}</td>
+      <td>${expiraBadge(r)}</td>
       <td><span class="lic-id">${esc(r.usuario||'—')}</span></td>
       <td><div class="notas-text" title="${esc(notas)}">${esc(notas)||'—'}</div></td>
       <td><div class="fecha-text">${fecha}</div></td>
@@ -529,6 +543,7 @@ function abrirModalNuevo(){
   document.getElementById('m-notas').value='';
   document.getElementById('m-tipo').value='bar';
   const mp=document.getElementById('m-plan');if(mp) mp.value='';
+  const mExp=document.getElementById('m-expiracion');if(mExp) mExp.value='';
   const mLicId=document.getElementById('m-licencia-id');
   mLicId.value='';mLicId.readOnly=false;mLicId.style.opacity='1';
   document.getElementById('m-usuario').value='admin';
@@ -556,6 +571,7 @@ function abrirModalEditar(licenciaId){
   document.getElementById('m-contrasena').value=r.contrasena||'';
   document.getElementById('m-notas').value=getNotas(r);
   const mp2=document.getElementById('m-plan');if(mp2) mp2.value=maxDispToPlan(r.max_dispositivos);
+  const mExp2=document.getElementById('m-expiracion');if(mExp2) mExp2.value=r.fecha_expiracion||'';
   _modalActiva=r.activa;
   actualizarToggleModal();
   document.getElementById('modal-overlay').classList.remove('hidden');
@@ -599,6 +615,7 @@ async function guardarCliente(){
   const notasRaw=(document.getElementById('m-notas').value||'').trim();
   const mPlan=(document.getElementById('m-plan')?.value)||'';
   const mMaxDisp=planToMaxDisp(mPlan);
+  const mFechaExp=(document.getElementById('m-expiracion')?.value)||null;
   const editando=!!document.getElementById('m-id').value;
 
   if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
@@ -612,13 +629,13 @@ async function guardarCliente(){
 
   try{
     if(editando){
-      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp});
+      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null});
       const idx=_datos.findIndex(x=>x.licencia_id===licenciaId);
-      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp};
+      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null};
       toast('✅ Cliente actualizado');
     }else{
       if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
-      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp});
+      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null});
       _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
       cerrarModal();
       renderStats();renderTabla();
