@@ -93,6 +93,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 /* TOAST */
 #toast-c{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#1C1B18;color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}
 #toast-c.show{opacity:1}
+
+/* MODAL INGREDIENTES */
+#modal-ingr{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;align-items:flex-end}
+#modal-ingr.open{display:flex}
+.ingr-card{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-height:88dvh;overflow-y:auto;padding:20px 16px 36px}
+.ingr-hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.ingr-ico{font-size:40px;flex-shrink:0}
+.ingr-meta{flex:1}
+.ingr-nombre{font-size:17px;font-weight:800;line-height:1.3}
+.ingr-precio-lbl{font-size:14px;color:var(--accent);font-weight:700;margin-top:2px}
+.ingr-sec-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px}
+.ingr-check-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.ingr-check-row:last-child{border-bottom:none}
+.ingr-check-row input[type=checkbox]{width:22px;height:22px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.ingr-check-label{flex:1;font-size:15px}
+.ingr-sup{font-size:13px;font-weight:700;color:var(--accent)}
+.ingr-total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin:18px 0 14px}
+.ingr-add-btn{width:100%;padding:15px;border-radius:14px;background:var(--accent);color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--sans)}
 </style>
 </head>
 <body>
@@ -148,6 +166,30 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   <button class="btn-nuevo" onclick="nuevoPedido()">Hacer otro pedido</button>
 </div>
 
+<div id="modal-ingr">
+  <div class="ingr-card">
+    <div class="ped-handle"></div>
+    <div class="ingr-hd">
+      <div class="ingr-ico" id="ingr-m-ico">🥖</div>
+      <div class="ingr-meta">
+        <div class="ingr-nombre" id="ingr-m-nombre">Bocadillo</div>
+        <div class="ingr-precio-lbl" id="ingr-m-precio">0,00 €</div>
+      </div>
+    </div>
+    <div id="ingr-m-base-sec" style="display:none">
+      <div class="ingr-sec-title">Quitar ingredientes</div>
+      <div id="ingr-m-base"></div>
+    </div>
+    <div id="ingr-m-extra-sec" style="display:none">
+      <div class="ingr-sec-title">Añadir extras</div>
+      <div id="ingr-m-extras"></div>
+    </div>
+    <div class="ingr-total-row"><span>Total</span><span id="ingr-m-total">0,00 €</span></div>
+    <button class="ingr-add-btn" onclick="confirmarIngredientes()">Añadir al pedido</button>
+    <button class="btn-volver" onclick="cerrarModalIngr()">← Cancelar</button>
+  </div>
+</div>
+
 <div id="toast-c"></div>
 
 <script>
@@ -159,9 +201,11 @@ const MESA_URL=qp.get('mesa')||'';
 
 let productos=[];
 let comercioData={};
-let carrito={};
+let carrito={};        // {productoId:qty} — productos sin ingredientes configurados
+let carritoCustom=[];  // [{_cid,productoId,nombre,emoji,precio,unidad,cantidad}] — personalizados
 let cats=[];
 let catIdx=0;
+let _ingrProdId=null;
 
 function fmt(v){return Number(v||0).toFixed(2).replace('.',',');}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -170,6 +214,7 @@ function toast(msg,ms=2500){
   t.textContent=msg;t.classList.add('show');
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);
 }
+function cntProd(id){return (carrito[id]||0)+carritoCustom.filter(i=>i.productoId===id).length;}
 
 // ── CARGAR DATOS ──
 async function init(){
@@ -204,13 +249,10 @@ function renderCarta(){
   document.getElementById('carta-screen').style.display='block';
   document.getElementById('hdr-nombre').textContent=comercioData.nombre||'Carta digital';
   if(MESA_URL) document.getElementById('hdr-sub').textContent='📍 '+MESA_URL;
-
   cats=[...new Set(productos.map(p=>p.categoria||'Otros'))];
   catIdx=0;
-
   const nav=document.getElementById('cat-nav');
   nav.innerHTML=cats.map((c,i)=>`<button class="cat-btn${i===0?' active':''}" onclick="selCat(${i})">${esc(c)}</button>`).join('');
-
   renderProductos();
 }
 
@@ -231,93 +273,172 @@ function renderProductos(){
     lista.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--muted);font-size:14px">Sin productos en esta categoría</div>';
     return;
   }
-  lista.innerHTML=prods.map(p=>`
-    <div class="producto">
+  lista.innerHTML=prods.map(p=>{
+    const tieneIngr=(p.ingredientes&&p.ingredientes.length>0)||(p.extras&&p.extras.length>0);
+    const qty=cntProd(p.id);
+    const plusAction=tieneIngr?`abrirModalIngr('${p.id}')`:`añadirUno('${p.id}')`;
+    const minusAction=tieneIngr?`quitarUnoCustom('${p.id}')`:`quitarUno('${p.id}')`;
+    return `<div class="producto">
       <div class="prod-ico">${p.emoji||'📦'}</div>
       <div class="prod-info">
         <div class="prod-nombre">${esc(p.nombre)}</div>
         ${p.descripcion?`<div class="prod-desc">${esc(p.descripcion)}</div>`:''}
+        ${tieneIngr?'<div style="font-size:11px;color:var(--muted);margin-top:2px">Personalizable 🥗</div>':''}
         <div class="prod-precio">${fmt(p.precio)} €</div>
       </div>
       <div class="prod-ctrl">
-        <button class="ctrl-btn minus" id="minus-${p.id}" onclick="quitarUno('${p.id}')" style="display:${carrito[p.id]?'flex':'none'}">−</button>
-        <div class="ctrl-qty" id="qty-${p.id}" style="display:${carrito[p.id]?'block':'none'}">${carrito[p.id]||0}</div>
-        <button class="ctrl-btn plus" onclick="añadirUno('${p.id}')">+</button>
+        <button class="ctrl-btn minus" id="minus-${p.id}" onclick="${minusAction}" style="display:${qty?'flex':'none'}">−</button>
+        <div class="ctrl-qty" id="qty-${p.id}" style="display:${qty?'block':'none'}">${qty}</div>
+        <button class="ctrl-btn plus" onclick="${plusAction}">+</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── CARRITO ──
 function añadirUno(id){
   carrito[id]=(carrito[id]||0)+1;
-  actualizarUI(id);
-  actualizarBarra();
+  actualizarUI(id);actualizarBarra();
 }
-
 function quitarUno(id){
   if((carrito[id]||0)>0) carrito[id]--;
   if(!carrito[id]) delete carrito[id];
-  actualizarUI(id);
-  actualizarBarra();
+  actualizarUI(id);actualizarBarra();
 }
-
+function quitarUnoCustom(id){
+  const idx=carritoCustom.map(i=>i.productoId).lastIndexOf(id);
+  if(idx>=0) carritoCustom.splice(idx,1);
+  actualizarUI(id);actualizarBarra();
+}
 function actualizarUI(id){
-  const qty=carrito[id]||0;
+  const qty=cntProd(id);
   const qEl=document.getElementById('qty-'+id);
   const mEl=document.getElementById('minus-'+id);
   if(qEl){qEl.textContent=qty;qEl.style.display=qty?'block':'none';}
   if(mEl) mEl.style.display=qty?'flex':'none';
 }
-
 function actualizarBarra(){
-  const entries=Object.entries(carrito);
-  const totalUds=entries.reduce((s,[,q])=>s+q,0);
-  const totalEur=entries.reduce((s,[id,q])=>{const p=productos.find(x=>x.id===id);return s+(p?p.precio*q:0);},0);
+  const totalUds=Object.values(carrito).reduce((s,q)=>s+q,0)+carritoCustom.length;
+  const totalEur=Object.entries(carrito).reduce((s,[id,q])=>{const p=productos.find(x=>x.id===id);return s+(p?p.precio*q:0);},0)
+    +carritoCustom.reduce((s,i)=>s+i.precio,0);
   const bar=document.getElementById('carrito-bar');
   if(totalUds>0){
     bar.classList.add('visible');
     document.getElementById('car-count').textContent=totalUds+' artículo'+(totalUds!==1?'s':'');
     document.getElementById('car-total').textContent=fmt(totalEur)+' €';
-  } else {
-    bar.classList.remove('visible');
-  }
+  }else bar.classList.remove('visible');
+}
+
+// ── MODAL INGREDIENTES ──
+function abrirModalIngr(id){
+  const p=productos.find(x=>x.id===id);if(!p) return;
+  const master=comercioData.ingredientes||[];
+  const baseIds=p.ingredientes||[];
+  const extraIds=p.extras||[];
+  _ingrProdId=id;
+  document.getElementById('ingr-m-ico').textContent=p.emoji||'🥖';
+  document.getElementById('ingr-m-nombre').textContent=p.nombre;
+  document.getElementById('ingr-m-precio').textContent=fmt(p.precio)+' €';
+  document.getElementById('ingr-m-total').textContent=fmt(p.precio)+' €';
+  // Ingredientes base (para quitar)
+  const baseIngrs=baseIds.map(bid=>master.find(m=>m.id===bid)).filter(Boolean);
+  const baseSec=document.getElementById('ingr-m-base-sec');
+  if(baseIngrs.length){
+    baseSec.style.display='block';
+    document.getElementById('ingr-m-base').innerHTML=baseIngrs.map(ing=>`<div class="ingr-check-row">
+      <input type="checkbox" id="chk-b-${ing.id}" checked onchange="calcTotalIngr('${esc(id)}')">
+      <label class="ingr-check-label" for="chk-b-${ing.id}">${esc(ing.nombre)}</label>
+    </div>`).join('');
+  }else baseSec.style.display='none';
+  // Extras (para añadir)
+  const extIngrs=extraIds.map(eid=>master.find(m=>m.id===eid)).filter(Boolean);
+  const extSec=document.getElementById('ingr-m-extra-sec');
+  if(extIngrs.length){
+    extSec.style.display='block';
+    document.getElementById('ingr-m-extras').innerHTML=extIngrs.map(ing=>`<div class="ingr-check-row">
+      <input type="checkbox" id="chk-e-${ing.id}" onchange="calcTotalIngr('${esc(id)}')">
+      <label class="ingr-check-label" for="chk-e-${ing.id}">${esc(ing.nombre)}</label>
+      ${ing.suplemento>0?`<span class="ingr-sup">+${fmt(ing.suplemento)} €</span>`:'<span style="font-size:11px;color:var(--muted)">gratis</span>'}
+    </div>`).join('');
+  }else extSec.style.display='none';
+  document.getElementById('modal-ingr').classList.add('open');
+}
+function calcTotalIngr(id){
+  const p=productos.find(x=>x.id===id);if(!p) return;
+  const master=comercioData.ingredientes||[];
+  const sup=(p.extras||[]).map(eid=>master.find(m=>m.id===eid)).filter(Boolean)
+    .filter(ing=>document.getElementById('chk-e-'+ing.id)?.checked)
+    .reduce((s,ing)=>s+(ing.suplemento||0),0);
+  document.getElementById('ingr-m-total').textContent=fmt((p.precio||0)+sup)+' €';
+}
+function confirmarIngredientes(){
+  const id=_ingrProdId;if(!id) return;
+  const p=productos.find(x=>x.id===id);if(!p) return;
+  const master=comercioData.ingredientes||[];
+  const baseIngrs=(p.ingredientes||[]).map(bid=>master.find(m=>m.id===bid)).filter(Boolean);
+  const extIngrs=(p.extras||[]).map(eid=>master.find(m=>m.id===eid)).filter(Boolean);
+  const sinIngredientes=baseIngrs.filter(ing=>!document.getElementById('chk-b-'+ing.id)?.checked).map(ing=>ing.nombre);
+  const extrasSelec=extIngrs.filter(ing=>document.getElementById('chk-e-'+ing.id)?.checked);
+  const sup=extrasSelec.reduce((s,ing)=>s+(ing.suplemento||0),0);
+  let displayNombre=p.nombre;
+  if(sinIngredientes.length) displayNombre+=' · Sin '+sinIngredientes.join(', ');
+  if(extrasSelec.length) displayNombre+=' · Extra '+extrasSelec.map(i=>i.nombre).join(', ');
+  carritoCustom.push({
+    _cid:Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    productoId:id,nombre:displayNombre,emoji:p.emoji||'🥖',
+    precio:(p.precio||0)+sup,unidad:p.unidad||'ud',cantidad:1
+  });
+  cerrarModalIngr();actualizarUI(id);actualizarBarra();
+}
+function cerrarModalIngr(){
+  document.getElementById('modal-ingr').classList.remove('open');
+  _ingrProdId=null;
 }
 
 // ── PEDIDO ──
 function abrirPedido(){
-  const entries=Object.entries(carrito).filter(([,q])=>q>0);
-  if(!entries.length) return;
-
-  const html=entries.map(([id,q])=>{
-    const p=productos.find(x=>x.id===id);if(!p) return '';
-    return `<div class="ped-item">
+  const simpleEntries=Object.entries(carrito).filter(([,q])=>q>0);
+  if(!simpleEntries.length&&!carritoCustom.length) return;
+  let html='';
+  simpleEntries.forEach(([id,q])=>{
+    const p=productos.find(x=>x.id===id);if(!p) return;
+    html+=`<div class="ped-item">
       <span class="ped-ico">${p.emoji||'📦'}</span>
       <span class="ped-nombre">${esc(p.nombre)}</span>
       <span class="ped-qty">×${q}</span>
       <span class="ped-precio">${fmt(p.precio*q)} €</span>
     </div>`;
-  }).join('');
+  });
+  carritoCustom.forEach(i=>{
+    html+=`<div class="ped-item">
+      <span class="ped-ico">${i.emoji}</span>
+      <span class="ped-nombre" style="font-size:13px">${esc(i.nombre)}</span>
+      <span class="ped-qty">×1</span>
+      <span class="ped-precio">${fmt(i.precio)} €</span>
+    </div>`;
+  });
   document.getElementById('ped-items').innerHTML=html;
-
-  const total=entries.reduce((s,[id,q])=>{const p=productos.find(x=>x.id===id);return s+(p?p.precio*q:0);},0);
-  document.getElementById('ped-total-val').textContent=fmt(total)+' €';
+  const totalEur=simpleEntries.reduce((s,[id,q])=>{const p=productos.find(x=>x.id===id);return s+(p?p.precio*q:0);},0)
+    +carritoCustom.reduce((s,i)=>s+i.precio,0);
+  document.getElementById('ped-total-val').textContent=fmt(totalEur)+' €';
   document.getElementById('mesa-wrap').style.display=MESA_URL?'none':'block';
   document.getElementById('pedido-screen').classList.add('open');
 }
-
 function cerrarPedido(){
   document.getElementById('pedido-screen').classList.remove('open');
 }
-
 async function confirmarPedido(){
   const mesa=MESA_URL||(document.getElementById('mesa-input')?.value||'').trim();
   if(!mesa){toast('⚠️ Escribe tu nombre o número de mesa');return;}
   const btn=document.getElementById('btn-confirmar');
   btn.disabled=true;btn.textContent='Enviando…';
-  const items=Object.entries(carrito).filter(([,q])=>q>0).map(([id,q])=>{
-    const p=productos.find(x=>x.id===id);
-    return {productoId:p.id,nombre:p.nombre,emoji:p.emoji||'📦',precio:p.precio,unidad:p.unidad||'ud',cantidad:q};
-  });
+  const items=[
+    ...Object.entries(carrito).filter(([,q])=>q>0).map(([id,q])=>{
+      const p=productos.find(x=>x.id===id);
+      return {productoId:p.id,nombre:p.nombre,emoji:p.emoji||'📦',precio:p.precio,unidad:p.unidad||'ud',cantidad:q};
+    }),
+    ...carritoCustom.map(i=>({productoId:i.productoId,nombre:i.nombre,emoji:i.emoji,precio:i.precio,unidad:i.unidad,cantidad:1}))
+  ];
   const total=items.reduce((s,i)=>s+i.precio*i.cantidad,0);
   try{
     const r=await fetch(SB_URL+'/rest/v1/pedidos_qr',{
@@ -336,14 +457,12 @@ async function confirmarPedido(){
     toast('❌ '+e.message,4000);
   }
 }
-
 function nuevoPedido(){
-  carrito={};
+  carrito={};carritoCustom=[];
   document.getElementById('mesa-input').value='';
   document.getElementById('conf-screen').classList.remove('visible');
   document.getElementById('carta-screen').style.display='block';
-  renderProductos();
-  actualizarBarra();
+  renderProductos();actualizarBarra();
 }
 
 init();

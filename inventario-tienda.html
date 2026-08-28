@@ -1368,6 +1368,22 @@ body.demo-activo{padding-top:40px;}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-ingr-cfg">
+  <div class="modal" style="max-width:480px;width:95%">
+    <div class="modal-hd">
+      <h3 id="ingr-cfg-title">🥗 Ingredientes del producto</h3>
+      <button class="modal-x" onclick="cerrarConfigIngredientes()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;max-height:65vh;overflow-y:auto">
+      <div id="ingr-cfg-body"></div>
+    </div>
+    <div class="modal-ft" style="padding:12px 20px;display:flex;gap:8px">
+      <button class="btn-save" onclick="guardarConfigIngredientes()">✓ Guardar</button>
+      <button class="btn-save" style="background:var(--surface2);color:var(--fg);border-color:var(--border)" onclick="cerrarConfigIngredientes()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1900,12 +1916,17 @@ function renderAjustes(){
   if(!productos.length){lista.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">No hay productos</div>';return;}
   lista.innerHTML=productos.map(p=>{
     const nLotes=lotes.filter(l=>l.productoId===p.id&&l.cantidad>0).length;
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+    const nIngr=(p.ingredientes||[]).length;
+    const nExt=(p.extras||[]).length;
+    const hayMaster=(comercio.ingredientes||[]).length>0;
+    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
       <span style="font-size:20px;flex-shrink:0">${prodIco(p,28)}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}</div>
         <div style="font-size:11px;color:var(--muted)">${p.categoria||'Sin categoría'} · ${nLotes} lote${nLotes!==1?'s':''} · ${p.precio?fmtEuro(p.precio):'sin precio'}${p.precioCoste&&p.precio?` · <span style="color:var(--green)">Margen ${((p.precio-p.precioCoste)/p.precio*100).toFixed(1)}%</span>`:''}</div>
+        ${(nIngr>0||nExt>0)?`<div style="font-size:11px;color:var(--amber);margin-top:2px">🥗 ${nIngr} ingrediente${nIngr!==1?'s':''} base · ${nExt} extra${nExt!==1?'s':''}</div>`:''}
       </div>
+      ${hayMaster?`<button style="width:34px;height:34px;border-radius:8px;border:1.5px solid var(--amber);background:${(nIngr>0||nExt>0)?'rgba(245,158,11,.12)':'var(--surface)'};color:var(--amber);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" onclick="abrirConfigIngredientes('${esc(p.id)}')" title="Configurar ingredientes">🥗</button>`:''}
       <button class="del-btn" onclick="eliminarProducto('${esc(p.id)}')" title="Eliminar producto">✕</button>
     </div>`;
   }).join('');
@@ -1929,6 +1950,49 @@ function eliminarProducto(id){
   productos=productos.filter(x=>x.id!==id);
   save();renderAjustes();
   toast(`✓ "${p.nombre}" eliminado`);
+}
+let _ingrCfgId=null;
+function abrirConfigIngredientes(id){
+  const p=productos.find(x=>x.id===id);if(!p) return;
+  const ings=comercio.ingredientes||[];
+  if(!ings.length){toast('⚠️ Añade ingredientes primero en la sección "Ingredientes"');return;}
+  _ingrCfgId=id;
+  document.getElementById('ingr-cfg-title').textContent='🥗 '+p.nombre;
+  const pIngr=p.ingredientes||[];
+  const pExtras=p.extras||[];
+  document.getElementById('ingr-cfg-body').innerHTML=`
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Ingredientes base (los que lleva)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">El cliente podrá quitarlos al pedir.</div>
+      ${ings.map(ing=>`<label style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:var(--bg);border:1px solid var(--border)">
+        <input type="checkbox" id="ingr-base-${ing.id}" ${pIngr.includes(ing.id)?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--amber)">
+        <span style="flex:1;font-size:14px">${esc(ing.nombre)}</span>
+        ${ing.suplemento>0?`<span style="font-size:11px;color:var(--amber)">sup +${fmtEuro(ing.suplemento)}</span>`:''}
+      </label>`).join('')}
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Extras disponibles (opcionales)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">El cliente podrá añadirlos al pedir.</div>
+      ${ings.map(ing=>`<label style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:var(--bg);border:1px solid var(--border)">
+        <input type="checkbox" id="ingr-extra-${ing.id}" ${pExtras.includes(ing.id)?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+        <span style="flex:1;font-size:14px">${esc(ing.nombre)}</span>
+        ${ing.suplemento>0?`<span style="font-size:12px;color:var(--amber);font-weight:700">+${fmtEuro(ing.suplemento)}</span>`:'<span style="font-size:11px;color:var(--muted)">gratis</span>'}
+      </label>`).join('')}
+    </div>`;
+  document.getElementById('modal-ingr-cfg').classList.add('open');
+}
+function cerrarConfigIngredientes(){
+  document.getElementById('modal-ingr-cfg').classList.remove('open');
+  _ingrCfgId=null;
+}
+function guardarConfigIngredientes(){
+  if(!_ingrCfgId) return;
+  const p=productos.find(x=>x.id===_ingrCfgId);if(!p) return;
+  const ings=comercio.ingredientes||[];
+  p.ingredientes=ings.filter(ing=>document.getElementById('ingr-base-'+ing.id)?.checked).map(ing=>ing.id);
+  p.extras=ings.filter(ing=>document.getElementById('ingr-extra-'+ing.id)?.checked).map(ing=>ing.id);
+  save();cerrarConfigIngredientes();renderAjustes();
+  toast('✓ Ingredientes guardados');
 }
 function renderIngrMasterList(){
   const lista=document.getElementById('ingr-master-list');if(!lista)return;
