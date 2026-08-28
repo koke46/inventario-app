@@ -3308,9 +3308,10 @@ function renderPedido(){
 }
 
 let _cobroPersonas=1;
+let _propina=0;
 function abrirModalCobro(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
-  _cobroPersonas=1;
+  _cobroPersonas=1;_propina=0;
   _renderModalCobro();
   document.getElementById('modal-cobro').classList.add('open');
 }
@@ -3330,6 +3331,15 @@ function _renderModalCobro(){
       <span style="font-size:13px;color:var(--muted)">persona${n!==1?'s':''}</span>
     </div>
     ${porPersona?`<div style="text-align:center;margin-bottom:14px"><span style="font-size:13px;color:var(--muted)">Cada persona paga </span><span style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--amber)">${fmtEuro(porPersona)}</span></div>`:''}
+    <div style="padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">💰 Propina <span style="font-weight:400;color:var(--muted)">(opcional)</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${[1,2,5].map(v=>`<button onclick="_setPropina(${v})" id="prop-btn-${v}" style="padding:5px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--fg);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">+${v} €</button>`).join('')}
+        <button onclick="_setPropina(0)" id="prop-btn-0" style="padding:5px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--sans)">Sin propina</button>
+      </div>
+      <input class="form-input" id="propina-input" type="number" min="0" step="0.01" placeholder="Otro importe..." inputmode="decimal" oninput="_propina=parseFloat(this.value)||0;_actualizarPropina()" style="margin-bottom:6px">
+      <div id="propina-preview" style="font-size:13px;color:var(--green);font-weight:600;min-height:18px"></div>
+    </div>
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="confirmarCobro('efectivo')">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
@@ -3340,6 +3350,16 @@ function _cambiarPersonas(d){
   _renderModalCobro();
 }
 function cerrarModalCobro(){document.getElementById('modal-cobro').classList.remove('open');}
+function _setPropina(v){
+  _propina=v;
+  const inp=document.getElementById('propina-input');
+  if(inp) inp.value=v>0?v:'';
+  _actualizarPropina();
+}
+function _actualizarPropina(){
+  const el=document.getElementById('propina-preview');
+  if(el) el.textContent=_propina>0?'💰 Propina: '+fmtEuro(_propina):'';
+}
 function confirmarCobro(metodoPago){
   cerrarModalCobro();
   const mesa=getMesaNombre();guardarMesaNueva(mesa);
@@ -3353,6 +3373,7 @@ function confirmarCobro(metodoPago){
     items:pedidoActual.items.map(i=>({...i})),
     estado:'cerrada',cobrada:true,total,subtotal,
     descuento:desc||null,metodoPago,personas,camarero,
+    propina:_propina>0?_propina:null,
     fecha:new Date().toISOString(),fechaCierre:new Date().toISOString()};
   const warnings=[];
   if(comercio.descontarStock!==false){
@@ -3728,11 +3749,13 @@ function renderVentas(){
   const numHoy=byDay[hoyStr]?.count||0;
 
   const totalLibres=cobradas.reduce((s,c)=>s+((c.items||[]).filter(i=>String(i.productoId).startsWith('__libre__')).reduce((a,i)=>a+(i.precio||0)*(i.cantidad||1),0)),0);
+  const totalPropinas=cobradas.filter(c=>c.fecha&&c.fecha.slice(0,10)===hoyStr).reduce((s,c)=>s+(c.propina||0),0);
   document.getElementById('ventas-resumen').innerHTML=`
     <div class="stat-card"><div><div class="stat-val" style="color:var(--green);font-size:26px">${fmtEuro(totalHoy)}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Hoy (${numHoy} pedido${numHoy!==1?'s':''})</div></div></div>
     <div class="stat-card"><div><div class="stat-val" style="font-size:26px">${fmtEuro(totalGeneral)}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Total periodo</div></div></div>
     <div class="stat-card"><div><div class="stat-val" style="font-size:26px">${cobradas.length}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Comandas cobradas</div></div></div>
     <div class="stat-card"><div><div class="stat-val" style="font-size:26px;color:var(--amber)">${fmtEuro(totalLibres)}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Ventas libres</div></div></div>
+    ${totalPropinas>0?`<div class="stat-card"><div><div class="stat-val" style="font-size:26px;color:#e91e63">${fmtEuro(totalPropinas)}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">💰 Propinas hoy</div></div></div>`:''}
     ${(()=>{const c=cierresCaja.filter(x=>x.fecha===hoyStr).sort((a,b)=>b.hora.localeCompare(a.hora))[0];return c?`<div class="stat-card"><div><div class="stat-val" style="font-size:26px;color:var(--green)">${fmtEuro(c.total)}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Cierre de hoy · ${new Date(c.hora).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`:'';})()}
   `;
 
@@ -4365,9 +4388,10 @@ function enviarTicketWhatsApp(com){
     `─────────────────`,
     `*TOTAL: ${fmt(com.total||0)} €*`,
     metodo,
+    com.propina?`💰 Propina: ${fmt(com.propina)} €`:'',
     `─────────────────`,
     `¡Gracias por su visita! 🙏`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
   window.open('https://wa.me/?text='+encodeURIComponent(texto),'_blank');
 }
 function mostrarBtnTicket(){
