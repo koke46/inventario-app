@@ -6355,8 +6355,9 @@ function _qrProcesar(modo,code){
       setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando siguiente código...';e.style.color='';}},2000);
     }else{
       const estado=document.getElementById('qr-estado');
-      if(estado){estado.textContent='⚠️ Código no encontrado';estado.style.color='#f87171';}
-      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},2000);
+      if(estado){estado.textContent='⚠️ Código sin asignar — selecciona el producto';estado.style.color='#f87171';}
+      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},3000);
+      _mostrarAsignarBarcode(code);
     }
   }else{
     const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
@@ -6483,6 +6484,56 @@ if('serviceWorker' in navigator){
       .catch(e=>console.warn('SW tienda error',e));
   });
 }
+
+// ── ASIGNAR BARCODE A PRODUCTO DE VENTA ─────────────────
+let _pendingBarcode=null;
+function _mostrarAsignarBarcode(code){
+  _pendingBarcode=code;
+  const m=document.getElementById('modal-asignar-bc');
+  document.getElementById('asignar-bc-codigo').textContent=code;
+  document.getElementById('asignar-bc-search').value='';
+  _renderAsignarLista('');
+  m.style.display='flex';
+  setTimeout(()=>document.getElementById('asignar-bc-search').focus(),100);
+}
+function _renderAsignarLista(q){
+  const lista=document.getElementById('asignar-bc-lista');
+  const filtro=q.trim().toLowerCase();
+  const prods=filtro?productos.filter(p=>(p.nombre||'').toLowerCase().includes(filtro)):productos;
+  lista.innerHTML=prods.slice(0,20).map(p=>`
+    <div onclick="_asignarBarcodeAProd('${p.id}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;transition:.1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <span style="font-size:22px">${prodIco(p,28)}</span>
+      <div>
+        <div style="font-size:13px;font-weight:600">${esc(p.nombre)}</div>
+        <div style="font-size:11px;color:var(--muted)">${fmtEuro(p.precio||0)}${p.categoria?' · '+esc(p.categoria):''}</div>
+      </div>
+    </div>`).join('')||'<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">Sin resultados</div>';
+}
+function _asignarBarcodeAProd(prodId){
+  const p=productos.find(x=>x.id===prodId);
+  if(!p||!_pendingBarcode) return;
+  p.barcode=_pendingBarcode.trim();
+  save();
+  document.getElementById('modal-asignar-bc').style.display='none';
+  añadirAlPedido(p.id);
+  toast('✓ '+p.nombre+' añadido · código guardado para siempre');
+  _pendingBarcode=null;
+}
 </script>
+
+<!-- Modal asignar barcode a producto de venta -->
+<div id="modal-asignar-bc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9100;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:18px;width:min(95vw,380px);display:flex;flex-direction:column;max-height:85vh;overflow:hidden">
+    <div style="padding:18px 18px 12px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-weight:700;font-size:15px">🔖 Asignar código</span>
+        <button onclick="document.getElementById('modal-asignar-bc').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">×</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Código <strong id="asignar-bc-codigo" style="color:var(--amber);font-family:var(--mono)"></strong> no está asignado.<br>Elige a qué producto de venta corresponde:</div>
+      <input id="asignar-bc-search" class="form-input" type="text" placeholder="🔍 Buscar producto..." oninput="_renderAsignarLista(this.value)" autocomplete="off">
+    </div>
+    <div id="asignar-bc-lista" style="overflow-y:auto;flex:1"></div>
+  </div>
+</div>
 </body>
 </html>
