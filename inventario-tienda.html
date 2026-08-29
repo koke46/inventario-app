@@ -6304,7 +6304,13 @@ async function _qrPoll(){
 }
 function _qrProcesar(modo,code){
   if(modo==='venta'){
-    const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
+    // Busca primero en el catálogo de venta por barcode
+    let prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
+    // Si no está, busca en almacén y cruza por nombre con el catálogo
+    if(!prod){
+      const inv=almacen.find(a=>a.barcode&&a.barcode.trim()===code.trim());
+      if(inv) prod=productos.find(p=>p.nombre&&inv.nombre&&p.nombre.trim().toLowerCase()===inv.nombre.trim().toLowerCase());
+    }
     if(prod){
       añadirAlPedido(prod.id);
       const estado=document.getElementById('qr-estado');
