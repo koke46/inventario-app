@@ -6315,14 +6315,23 @@ function _qrProcesar(modo,code){
   }
 }
 async function _crearInventarioDesdeBarcode(code){
-  let nombre='';
+  let nombre='',imagen='';
   try{
     const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json');
-    if(r.ok){const d=await r.json();if(d.status===1)nombre=d.product.product_name_es||d.product.product_name||'';}
+    if(r.ok){const d=await r.json();if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=d.product.image_front_small_url||d.product.image_url||'';}}
   }catch(e){}
   abrirAnadirInventario();
   setTimeout(()=>{
     const bc=document.getElementById('p1-barcode');if(bc)bc.value=code;
+    if(imagen){
+      imagenActiva=imagen;
+      const prev=document.getElementById('img-preview');
+      const ico=document.getElementById('img-ico');
+      const txt=document.getElementById('img-txt');
+      if(prev){prev.src=imagen;prev.style.display='block';}
+      if(ico)ico.style.display='none';
+      if(txt)txt.textContent='Foto del producto';
+    }
     if(nombre){const nm=document.getElementById('p1-nombre');if(nm){nm.value=nombre;nm.dispatchEvent(new Event('input'));}toast('✓ '+nombre+' — revisa y guarda');}
     else{document.getElementById('p1-nombre')?.focus();toast('Nuevo producto — rellena nombre y guarda');}
   },350);
@@ -6373,18 +6382,27 @@ function _onBarcodeDetected(code){
   _crearProductoDesdeBarcode(code);
 }
 async function _crearProductoDesdeBarcode(code){
-  let nombre='';
+  let nombre='',imagen='';
   try{
     const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json');
     if(r.ok){
       const d=await r.json();
-      if(d.status===1) nombre=d.product.product_name_es||d.product.product_name||'';
+      if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=d.product.image_front_small_url||d.product.image_url||'';}
     }
   }catch(e){}
   abrirModalAnadir();
   setTimeout(()=>{
     const bc=document.getElementById('p1-barcode');
     if(bc) bc.value=code;
+    if(imagen){
+      imagenActiva=imagen;
+      const prev=document.getElementById('img-preview');
+      const ico=document.getElementById('img-ico');
+      const txt=document.getElementById('img-txt');
+      if(prev){prev.src=imagen;prev.style.display='block';}
+      if(ico)ico.style.display='none';
+      if(txt)txt.textContent='Foto del producto';
+    }
     if(nombre){
       const nm=document.getElementById('p1-nombre');
       if(nm){nm.value=nombre;nm.dispatchEvent(new Event('input'));}
