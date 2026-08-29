@@ -2085,13 +2085,19 @@ function renderAjustes(){
     const nIngr=(p.ingredientes||[]).length;
     const nExt=(p.extras||[]).length;
     const hayMaster=(comercio.ingredientes||[]).length>0;
-    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border);opacity:${p.activo===false?.45:1}">
       <span style="font-size:20px;flex-shrink:0">${prodIco(p,28)}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}</div>
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}${p.activo===false?' <span style="font-size:10px;background:#374151;color:#9ca3af;padding:1px 6px;border-radius:4px;font-weight:500">Inactivo</span>':''}</div>
         <div style="font-size:11px;color:var(--muted)">${p.categoria||'Sin categoría'} · ${nLotes} lote${nLotes!==1?'s':''} · ${p.precio?fmtEuro(p.precio):'sin precio'}${p.precioCoste&&p.precio?` · <span style="color:var(--green)">Margen ${((p.precio-p.precioCoste)/p.precio*100).toFixed(1)}%</span>`:''}</div>
+        ${p.barcode?`<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)">🔖 ${esc(p.barcode)}</div>`:`<div style="font-size:10px;color:var(--muted);opacity:.5;margin-top:2px">🔖 Sin código de barras</div>`}
+        ${p.sku?`<div style="font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono)">🏷️ ${esc(p.sku)}</div>`:''}
+        ${!p.imagen?`<div style="font-size:10px;color:#f59e0b;margin-top:2px">⚠️ Sin foto</div>`:''}
+        ${(p.precioHistorial&&p.precioHistorial.length>1)?`<div style="font-size:10px;color:var(--muted);margin-top:1px">📈 ${p.precioHistorial.length} cambios de precio</div>`:''}
         ${(nIngr>0||nExt>0)?`<div style="font-size:11px;color:var(--amber);margin-top:2px">🥗 ${nIngr} ingrediente${nIngr!==1?'s':''} base · ${nExt} extra${nExt!==1?'s':''}</div>`:''}
       </div>
+      <button style="width:34px;height:34px;border-radius:8px;border:1.5px solid ${p.activo===false?'#6b7280':'#22c55e'};background:${p.activo===false?'var(--surface)':'rgba(34,197,94,.1)'};font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" onclick="toggleActivoProd('${esc(p.id)}')" title="${p.activo===false?'Activar en carta':'Ocultar de carta'}">${p.activo===false?'🔴':'🟢'}</button>
+      <button style="width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" onclick="verHistorialPrecio('${esc(p.id)}')" title="Historial de precios">📈</button>
       ${hayMaster?`<button style="width:34px;height:34px;border-radius:8px;border:1.5px solid var(--amber);background:${(nIngr>0||nExt>0)?'rgba(245,158,11,.12)':'var(--surface)'};color:var(--amber);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" onclick="abrirConfigIngredientes('${esc(p.id)}')" title="Configurar ingredientes">🥗</button>`:''}
       <button class="del-btn" onclick="eliminarProducto('${esc(p.id)}')" title="Eliminar producto">✕</button>
     </div>`;
@@ -2108,6 +2114,108 @@ function eliminarCategoria(cat){
   if(comercio.categorias) comercio.categorias=comercio.categorias.filter(c=>c!==cat);
   save();renderAjustes();
   toast(`✓ Categoría "${cat}" eliminada`);
+}
+function toggleActivoProd(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  p.activo=p.activo===false?true:false;
+  save();renderAjustes();
+  toast(p.activo===false?`"${p.nombre}" ocultado de la carta`:`"${p.nombre}" visible en la carta`);
+}
+function _renderVariantesForm(){
+  const list=document.getElementById('p1-var-list');
+  if(!list) return;
+  if(!_variantesSel.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">Sin variantes — se usa el precio principal del producto.</div>';
+    return;
+  }
+  list.innerHTML=_variantesSel.map((v,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <input class="form-input" style="flex:2" placeholder="Nombre (ej: Grande)" value="${esc(v.nombre||'')}" oninput="_variantesSel[${i}].nombre=this.value">
+      <input class="form-input" style="flex:1;max-width:90px" type="number" min="0" step="0.01" placeholder="Precio" value="${v.precio||''}" oninput="_variantesSel[${i}].precio=parseFloat(this.value)||0" inputmode="decimal">
+      <button type="button" onclick="_quitarVariante(${i})" style="width:32px;height:32px;border:none;background:#ef4444;color:#fff;border-radius:6px;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+    </div>`).join('');
+}
+function _añadirVariante(){
+  _variantesSel.push({nombre:'',precio:0});
+  _renderVariantesForm();
+  const inputs=document.querySelectorAll('#p1-var-list input');
+  if(inputs.length) inputs[inputs.length-2]?.focus();
+}
+function _quitarVariante(i){
+  _variantesSel.splice(i,1);
+  _renderVariantesForm();
+}
+function abrirModalVariantes(prodId){
+  const prod=productos.find(p=>p.id===prodId);
+  if(!prod||!prod.variantes?.length) return;
+  let el=document.getElementById('_modal-variantes');
+  if(el) el.remove();
+  el=document.createElement('div');
+  el.id='_modal-variantes';
+  el.style.cssText='position:fixed;inset:0;z-index:9980;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:16px;margin-bottom:4px">${esc(prod.nombre)}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Elige el tamaño:</div>
+    ${prod.variantes.map(v=>`<button onclick="_selVariante('${esc(prodId)}','${esc(v.nombre)}',${v.precio||prod.precio||0})"
+      style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:13px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans);color:var(--text);margin-bottom:8px">
+      <span>${esc(v.nombre)}</span><span style="font-weight:700;color:var(--amber)">${fmtEuro(v.precio||prod.precio||0)}</span>
+    </button>`).join('')}
+    <button onclick="document.getElementById('_modal-variantes').remove()" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;color:var(--muted);font-family:var(--sans)">Cancelar</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+function _selVariante(prodId,nombreVariante,precio){
+  const prod=productos.find(p=>p.id===prodId);
+  if(!prod) return;
+  document.getElementById('_modal-variantes')?.remove();
+  const varKey=prodId+'__'+nombreVariante;
+  const ex=pedidoActual.items.find(i=>i.productoId===varKey);
+  if(ex){ex.cantidad++;renderPedido();_restarStockInventario(prod.nombre);return;}
+  pedidoActual.items.push({productoId:varKey,nombre:prod.nombre+' ('+nombreVariante+')',emoji:prod.emoji||'📦',precio,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||21});
+  renderPedido();
+  _restarStockInventario(prod.nombre);
+}
+function verHistorialPrecio(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  const hist=p.precioHistorial||[];
+  const filas=hist.length
+    ?hist.slice().reverse().map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--muted)">${h.fecha}</span><span style="font-weight:700">${fmtEuro(h.precio)}</span></div>`).join('')
+    :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Sin historial registrado</div>`;
+  let el=document.getElementById('_hist-precio-panel');
+  if(el) el.remove();
+  el=document.createElement('div');
+  el.id='_hist-precio-panel';
+  el.style.cssText='position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:20px;width:min(95vw,340px);max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-weight:700;font-size:15px">📈 Historial de precios</div>
+      <button onclick="document.getElementById('_hist-precio-panel').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${esc(p.nombre)}</div>
+    <div style="margin-bottom:16px">${filas}</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="_cambiarPrecioProducto('${esc(id)}')" style="flex:1;padding:10px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">✏️ Cambiar precio</button>
+      <button onclick="document.getElementById('_hist-precio-panel').remove()" style="flex:1;padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px">Cerrar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+}
+function _cambiarPrecioProducto(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  const nv=prompt(`Nuevo precio para "${p.nombre}" (actual: ${fmtEuro(p.precio||0)}):`,p.precio||'');
+  if(nv===null) return;
+  const precio=parseFloat((nv+'').replace(',','.'));
+  if(isNaN(precio)||precio<0){toast('⚠️ Precio no válido');return;}
+  if(precio===p.precio){toast('El precio no ha cambiado');return;}
+  p.precio=precio;
+  if(!p.precioHistorial) p.precioHistorial=[];
+  p.precioHistorial.push({fecha:new Date().toISOString().slice(0,10),precio});
+  save();renderAjustes();
+  document.getElementById('_hist-precio-panel')?.remove();
+  toast(`✓ Precio actualizado a ${fmtEuro(precio)}`);
 }
 function eliminarProducto(id){
   const p=productos.find(x=>x.id===id);
@@ -2451,6 +2559,7 @@ function toggleIngrChip(id){
 let productoActivo=null;
 let imagenActiva=null;
 let _anadirConLote=false;
+let _variantesSel=[];
 
 function abrirModalAnadir(){
   _anadirConLote=false;
@@ -2473,6 +2582,8 @@ function modalAnadirOk(){
 }
 
 function renderModalP1(barcode){
+  const p=productoActivo;
+  _variantesSel=p?.variantes?JSON.parse(JSON.stringify(p.variantes)):[];
   document.getElementById('modal-anadir-titulo').textContent='Nuevo producto';
   document.getElementById('modal-anadir-ok').textContent='✓ Guardar producto';
   const cats=_anadirConLote
@@ -2516,11 +2627,42 @@ function renderModalP1(barcode){
         <input class="form-input" id="p1-categoria-nueva" type="text" placeholder="Nombre de la nueva categoría" maxlength="40" autocomplete="off" style="margin-top:6px;display:none">
       </div>
     </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Código de barras <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" id="p1-barcode" type="text" maxlength="50" placeholder="Ej: 8410076530201" autocomplete="off" inputmode="numeric" value="${barcode||''}">
+          <button type="button" onclick="abrirEscanerCodigo(c=>{const el=document.getElementById('p1-barcode');if(el)el.value=c;})" title="Escanear con cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer">📷</button>
+        </div>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Referencia / SKU <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <input class="form-input" id="p1-sku" type="text" maxlength="40" placeholder="Ej: REFCOLA001" autocomplete="off" style="text-transform:uppercase" value="${p?.sku||''}">
+      </div>
+    </div>
     <div class="form-group">
-      <label class="form-label">Código de barras <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input class="form-input" id="p1-barcode" type="text" maxlength="50" placeholder="Ej: 8410076530201" autocomplete="off" inputmode="numeric" value="${barcode||''}">
-        <button type="button" onclick="abrirEscanerCodigo(c=>{const el=document.getElementById('p1-barcode');if(el)el.value=c;})" title="Escanear con cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer">📷</button>
+      <label class="form-label">Unidad de medida</label>
+      <select class="form-input" id="p1-unidad" style="cursor:pointer">
+        <option value="ud" ${(p?.unidad||'ud')==='ud'?'selected':''}>ud — unidad</option>
+        <option value="kg" ${p?.unidad==='kg'?'selected':''}>kg — kilogramo</option>
+        <option value="g" ${p?.unidad==='g'?'selected':''}>g — gramo</option>
+        <option value="L" ${p?.unidad==='L'?'selected':''}>L — litro</option>
+        <option value="ml" ${p?.unidad==='ml'?'selected':''}>ml — mililitro</option>
+        <option value="ración" ${p?.unidad==='ración'?'selected':''}>ración</option>
+        <option value="copa" ${p?.unidad==='copa'?'selected':''}>copa</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Stock mínimo <span style="font-weight:400;color:var(--muted)">(alerta)</span></label>
+        <input class="form-input" id="p1-stock-min" type="number" min="0" step="1" placeholder="Ej: 5" inputmode="numeric" value="${p?.stockMinimo||''}">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Proveedor <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <select class="form-input" id="p1-proveedor" style="cursor:pointer">
+          <option value="">— Sin proveedor —</option>
+          ${proveedores.map(pv=>`<option value="${esc(pv.id)}" ${p?.proveedorId===pv.id?'selected':''}>${esc(pv.nombre)}</option>`).join('')}
+        </select>
       </div>
     </div>
     ${_anadirConLote?`
@@ -2581,8 +2723,14 @@ function renderModalP1(barcode){
       <div class="alerg-grid" id="alerg-grid">
         ${ALERGENOS.map(a=>`<button type="button" class="alerg-btn" id="alerg-${a.id}" onclick="toggleAlerg('${a.id}')">${a.e} ${a.l}</button>`).join('')}
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Variantes de tamaño <span style="font-weight:400;color:var(--muted)">(opcional — ej: Pequeño / Grande)</span></label>
+      <div id="p1-var-list"></div>
+      <button type="button" onclick="_añadirVariante()" style="width:100%;margin-top:6px;padding:8px;background:var(--surface);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);font-family:var(--sans)">+ Añadir variante</button>
     </div>`;
   filtrarProds();
+  if(!_anadirConLote) _renderVariantesForm();
 }
 
 function actualizarMargen(){
@@ -2711,7 +2859,10 @@ function crearProductoYContinuar(){
   _alergSel=new Set();_admiteNota=false;
   if(_anadirConLote){
     // Artículo de almacén/cocina — separado de los productos de venta
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad:'ud',barcode};
+    const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
+    const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
+    const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,stockMinimo,proveedorId,barcode};
     almacen.push(productoActivo);
     // Si hay barcode, sincronizarlo en el producto de venta con el mismo nombre
     if(barcode){const pv=productos.find(p=>(p.nombre||'').trim().toLowerCase()===(nombre||'').trim().toLowerCase());if(pv&&!pv.barcode){pv.barcode=barcode;}}
@@ -2735,7 +2886,13 @@ function crearProductoYContinuar(){
     const admiteNota=_admiteNota||undefined;
     const tipoIva=parseInt(document.getElementById('p1-iva')?.value??'21')||21;
     const ingredientes=_p1IngrSel.size?[..._p1IngrSel]:undefined;
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad:'ud',precio,precioCoste,tipoIva,stockMinimo:0,descripcion,nombreEn,descripcionEn,alergenos,admiteNota,ingredientes,barcode};
+    const sku=(document.getElementById('p1-sku')?.value||'').trim().toUpperCase()||undefined;
+    const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
+    const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
+    const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
+    const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
+    const variantes=_variantesSel.filter(v=>(v.nombre||'').trim()).map(v=>({nombre:v.nombre.trim(),precio:parseFloat(v.precio)||0}))||undefined;
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,stockMinimo,proveedorId,precioHistorial,variantes:variantes.length?variantes:undefined,descripcion,nombreEn,descripcionEn,alergenos,admiteNota,ingredientes,barcode,sku};
     productos.push(productoActivo);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
   }
@@ -3092,7 +3249,7 @@ function getPedidoNum(){
   return '#'+String((comercio.ultimoPedido||0)+1).padStart(4,'0');
 }
 function getCatProds(){
-  return productos.map(p=>{
+  return productos.filter(p=>p.activo!==false).map(p=>{
     const st=lotes.filter(l=>l.productoId===p.id&&l.cantidad>0).reduce((s,l)=>s+l.cantidad,0);
     return{...p,stockTotal:st};
   });
@@ -3358,13 +3515,16 @@ function buscarPOS(q){
 function renderCatalogo(){
   const grid=document.getElementById('pos-grid');
   if(_posSearch){
-    const res=productos.filter(p=>p.nombre.toLowerCase().includes(_posSearch)||(p.categoria||'').toLowerCase().includes(_posSearch));
+    const res=productos.filter(p=>p.activo!==false&&(p.nombre.toLowerCase().includes(_posSearch)||(p.categoria||'').toLowerCase().includes(_posSearch)));
     if(!res.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:32px;font-size:14px">Sin resultados para "<strong>${esc(_posSearch)}</strong>"</div>`;return;}
-    grid.innerHTML=res.map(p=>`<div class="prd-card${p.favorito?' fav':''}" onclick="addProd('${esc(p.id)}')" data-id="${esc(p.id)}">
+    grid.innerHTML=res.map(p=>{
+      const pMin=p.variantes?.length?Math.min(...p.variantes.map(v=>v.precio||0)):null;
+      const precioStr=p.variantes?.length?`desde ${fmtEuro(pMin)}`:(p.precio!=null?fmtEuro(p.precio):'');
+      return`<div class="prd-card${p.favorito?' fav':''}" onclick="añadirAlPedido('${esc(p.id)}')" data-id="${esc(p.id)}">
       ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:contain;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
       <div class="prd-name">${esc(p.nombre)}</div>
-      <div class="prd-price">${p.precio!=null?fmtEuro(p.precio):''}</div>
-    </div>`).join('');
+      <div class="prd-price">${precioStr}</div>
+    </div>`;}).join('');
     return;
   }
   const todosProds=getCatProds();
@@ -3439,7 +3599,8 @@ function renderCatalogo(){
     const sinStock=conLotes&&p.stockTotal===0;
     const stockBajo=!sinStock&&p.stockMinimo>0&&p.stockTotal<p.stockMinimo;
     const badge=sinStock?'<span class="prd-badge sin">Sin stock</span>':stockBajo?'<span class="prd-badge bajo">Stock bajo</span>':'';
-    const precio=p.precio?fmtEuro(p.precio):'—';
+    const pMin=p.variantes?.length?Math.min(...p.variantes.map(v=>v.precio||0)):null;
+    const precio=p.variantes?.length?`desde ${fmtEuro(pMin)}`:(p.precio?fmtEuro(p.precio):'—');
     return`<div class="prd-card${sinStock?' sin-stock':''}"
       data-id="${esc(p.id)}" draggable="true"
       ondragstart="dragStart(event,'${esc(p.id)}')"
@@ -3507,6 +3668,7 @@ function numAdd(){
 function añadirAlPedido(prodId){
   const prod=productos.find(p=>p.id===prodId);
   if(!prod) return;
+  if(prod.variantes?.length){abrirModalVariantes(prodId);return;}
   if(prod.ingredientes?.length){abrirModalPersonalizar(prodId);return;}
   const ex=pedidoActual.items.find(i=>i.productoId===prodId&&!i.nota);
   if(ex){ex.cantidad++;renderPedido();_restarStockInventario(prod.nombre);return;}

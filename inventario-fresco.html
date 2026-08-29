@@ -2274,7 +2274,11 @@ function renderAjustes(){
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}</div>
         <div style="font-size:11px;color:var(--muted)">${p.categoria||'Sin categoría'} · ${nLotes} lote${nLotes!==1?'s':''} · ${p.precio?fmtEuro(p.precio):'sin precio'}${p.precioCoste&&p.precio?` · <span style="color:var(--green)">Margen ${((p.precio-p.precioCoste)/p.precio*100).toFixed(1)}%</span>`:''}</div>
+        ${p.barcode?`<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)">🔖 ${esc(p.barcode)}</div>`:`<div style="font-size:10px;color:var(--muted);opacity:.5;margin-top:2px">🔖 Sin código de barras</div>`}
+        ${!p.imagen?`<div style="font-size:10px;color:#f59e0b;margin-top:2px">⚠️ Sin foto</div>`:''}
+        ${(p.precioHistorial&&p.precioHistorial.length>1)?`<div style="font-size:10px;color:var(--muted);margin-top:1px">📈 ${p.precioHistorial.length} cambios de precio</div>`:''}
       </div>
+      <button style="width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center" onclick="verHistorialPrecio('${esc(p.id)}')" title="Historial de precios">📈</button>
       <button class="del-btn" onclick="eliminarProducto('${esc(p.id)}')" title="Eliminar producto">✕</button>
     </div>`;
   }).join('');
@@ -2290,6 +2294,47 @@ function eliminarCategoria(cat){
   if(comercio.categorias) comercio.categorias=comercio.categorias.filter(c=>c!==cat);
   save();renderAjustes();
   toast(`✓ Categoría "${cat}" eliminada`);
+}
+function verHistorialPrecio(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  const hist=p.precioHistorial||[];
+  const filas=hist.length
+    ?hist.slice().reverse().map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--muted)">${h.fecha}</span><span style="font-weight:700">${fmtEuro(h.precio)}</span></div>`).join('')
+    :`<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Sin historial registrado</div>`;
+  let el=document.getElementById('_hist-precio-panel');
+  if(el) el.remove();
+  el=document.createElement('div');
+  el.id='_hist-precio-panel';
+  el.style.cssText='position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:20px;width:min(95vw,340px);max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-weight:700;font-size:15px">📈 Historial de precios</div>
+      <button onclick="document.getElementById('_hist-precio-panel').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${esc(p.nombre)}</div>
+    <div style="margin-bottom:16px">${filas}</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="_cambiarPrecioProducto('${esc(id)}')" style="flex:1;padding:10px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">✏️ Cambiar precio</button>
+      <button onclick="document.getElementById('_hist-precio-panel').remove()" style="flex:1;padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px">Cerrar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+}
+function _cambiarPrecioProducto(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  const nv=prompt(`Nuevo precio para "${p.nombre}" (actual: ${fmtEuro(p.precio||0)}):`,p.precio||'');
+  if(nv===null) return;
+  const precio=parseFloat((nv+'').replace(',','.'));
+  if(isNaN(precio)||precio<0){toast('⚠️ Precio no válido');return;}
+  if(precio===p.precio){toast('El precio no ha cambiado');return;}
+  p.precio=precio;
+  if(!p.precioHistorial) p.precioHistorial=[];
+  p.precioHistorial.push({fecha:new Date().toISOString().slice(0,10),precio});
+  save();renderAjustes();
+  document.getElementById('_hist-precio-panel')?.remove();
+  toast(`✓ Precio actualizado a ${fmtEuro(precio)}`);
 }
 function eliminarProducto(id){
   const p=productos.find(x=>x.id===id);
@@ -2656,6 +2701,31 @@ function renderModalP1(barcode){
         <button type="button" onclick="abrirEscanerCodigo(c=>{const el=document.getElementById('p1-barcode');if(el)el.value=c;})" title="Escanear con cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer">📷</button>
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Unidad de medida</label>
+      <select class="form-input" id="p1-unidad" style="cursor:pointer">
+        <option value="ud" ${(p?.unidad||'ud')==='ud'?'selected':''}>ud — unidad</option>
+        <option value="kg" ${p?.unidad==='kg'?'selected':''}>kg — kilogramo</option>
+        <option value="g" ${p?.unidad==='g'?'selected':''}>g — gramo</option>
+        <option value="L" ${p?.unidad==='L'?'selected':''}>L — litro</option>
+        <option value="ml" ${p?.unidad==='ml'?'selected':''}>ml — mililitro</option>
+        <option value="ración" ${p?.unidad==='ración'?'selected':''}>ración</option>
+        <option value="copa" ${p?.unidad==='copa'?'selected':''}>copa</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Stock mínimo <span style="font-weight:400;color:var(--muted)">(alerta)</span></label>
+        <input class="form-input" id="p1-stock-min" type="number" min="0" step="1" placeholder="Ej: 5" inputmode="numeric" value="${p?.stockMinimo||''}">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Proveedor <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <select class="form-input" id="p1-proveedor" style="cursor:pointer">
+          <option value="">— Sin proveedor —</option>
+          ${proveedores.map(pv=>`<option value="${esc(pv.id)}" ${p?.proveedorId===pv.id?'selected':''}>${esc(pv.nombre)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
     ${_anadirConLote?`
     <div class="form-row">
       <div class="form-group" style="flex:1">
@@ -2712,6 +2782,10 @@ function renderModalP1(barcode){
       </div>
       <button type="button" id="p1-nota-toggle" onclick="toggleAdmiteNota()" style="padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--sans);color:var(--muted)">No</button>
     </div>`}
+    <div class="form-group">
+      <label class="form-label">Tiempo de preparación <span style="font-weight:400;color:var(--muted)">(minutos, opcional)</span></label>
+      <input class="form-input" id="p1-tiempo" type="number" min="1" max="120" step="1" placeholder="Ej: 10" inputmode="numeric" value="${p?.tiempoPrep||''}">
+    </div>
     <div class="form-group">
       <label class="form-label">Alérgenos (opcional)</label>
       <div class="alerg-grid" id="alerg-grid">
@@ -2847,7 +2921,10 @@ function crearProductoYContinuar(){
   _alergSel=new Set();_admiteNota=false;
   if(_anadirConLote){
     // Artículo de almacén/cocina — separado de los productos de venta
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad:'ud',barcode};
+    const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
+    const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
+    const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,stockMinimo,proveedorId,barcode};
     almacen.push(productoActivo);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
     const stockVal=parseFloat(document.getElementById('p1-stock')?.value)||0;
@@ -2867,7 +2944,12 @@ function crearProductoYContinuar(){
     const admiteNota=_admiteNota||undefined;
     const tipoIva=parseInt(document.getElementById('p1-iva')?.value??'10')||10;
     const cursoVal=parseInt(document.getElementById('p1-curso')?.value)||null;
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad:'ud',precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo:0,descripcion,alergenos,admiteNota,barcode};
+    const tiempoPrep=parseInt(document.getElementById('p1-tiempo')?.value)||undefined;
+    const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
+    const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
+    const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
+    const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo,proveedorId,precioHistorial,tiempoPrep,descripcion,alergenos,admiteNota,barcode};
     productos.push(productoActivo);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
   }
@@ -3540,6 +3622,7 @@ function renderCatalogo(){
       <div class="prd-card-nombre">${esc(p.nombre)}</div>
       ${p.descripcion?`<div class="prd-card-desc">${esc(p.descripcion)}</div>`:''}
       <div class="prd-card-precio">${precio}</div>
+      ${p.alergenos?.length?`<div style="display:flex;flex-wrap:wrap;gap:1px;justify-content:center;margin-top:2px">${p.alergenos.map(id=>{const a=ALERGENOS.find(x=>x.id===id);return a?`<span title="${a.l}" style="font-size:10px">${a.e}</span>`:''}).join('')}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -3593,7 +3676,7 @@ function añadirAlPedido(prodId){
   const prod=productos.find(p=>p.id===prodId);
   if(!prod) return;
   const precioFinal=precioHF(prod.precio||0);
-  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null});
+  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null,tiempoPrep:prod.tiempoPrep||null});
   renderPedido();
 }
 function editarNotaItem(prodId){
@@ -5724,10 +5807,10 @@ function _ckCard(c){
     const yaServidos=(c.items||[]).filter(i=>i.curso&&i.curso<cursoActual);
     if(yaServidos.length) itemsHTML+=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:4px 8px;background:rgba(0,0,0,.15);border-radius:6px">✓ Cursos anteriores servidos (${yaServidos.length} ítem${yaServidos.length!==1?'s':''})</div>`;
     itemsHTML+=`<div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📋 ${CURSO_LABEL[cursoActual]||'Curso '+cursoActual}</div>`;
-    itemsHTML+=delCurso.map(i=>`<div><span class="ck-qty">${i.cantidad}×</span>${i.emoji||''} ${esc(i.nombre)}${i.nota?`<span class="ck-nota">📝 ${esc(i.nota)}</span>`:''}</div>`).join('');
+    itemsHTML+=delCurso.map(i=>`<div><span class="ck-qty">${i.cantidad}×</span>${i.emoji||''} ${esc(i.nombre)}${i.tiempoPrep?` <span style="font-size:11px;color:var(--muted)">⏱ ${i.tiempoPrep}min</span>`:''} ${i.nota?`<span class="ck-nota">📝 ${esc(i.nota)}</span>`:''}</div>`).join('');
     if(pendientes.length) itemsHTML+=`<div style="font-size:11px;color:var(--muted);margin-top:8px;padding:4px 8px;background:rgba(0,0,0,.1);border-radius:6px">⏳ Pendientes: ${pendientes.map(i=>`${i.cantidad}× ${esc(i.nombre)}`).join(', ')}</div>`;
   } else {
-    itemsHTML=(c.items||[]).map(i=>`<div><span class="ck-qty">${i.cantidad}×</span>${i.emoji||''} ${esc(i.nombre)}${i.nota?`<span class="ck-nota">📝 ${esc(i.nota)}</span>`:''}</div>`).join('');
+    itemsHTML=(c.items||[]).map(i=>`<div><span class="ck-qty">${i.cantidad}×</span>${i.emoji||''} ${esc(i.nombre)}${i.tiempoPrep?` <span style="font-size:11px;color:var(--muted)">⏱ ${i.tiempoPrep}min</span>`:''} ${i.nota?`<span class="ck-nota">📝 ${esc(i.nota)}</span>`:''}</div>`).join('');
   }
 
   const maxCurso=tienesCursos?Math.max(...(c.items||[]).filter(i=>i.curso).map(i=>i.curso)):1;
