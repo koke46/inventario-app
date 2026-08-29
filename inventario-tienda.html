@@ -6318,7 +6318,7 @@ async function _crearInventarioDesdeBarcode(code){
   let nombre='',imagen='';
   try{
     const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json');
-    if(r.ok){const d=await r.json();if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=d.product.image_front_small_url||d.product.image_url||'';}}
+    if(r.ok){const d=await r.json();if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=(d.product.image_front_small_url||d.product.image_front_url||d.product.image_url||'').replace('http://','https://');}}
   }catch(e){}
   abrirAnadirInventario();
   setTimeout(()=>{
@@ -6329,10 +6329,10 @@ async function _crearInventarioDesdeBarcode(code){
       const ico=document.getElementById('img-ico');
       const txt=document.getElementById('img-txt');
       if(prev){prev.src=imagen;prev.style.display='block';}
-      if(ico)ico.style.display='none';
-      if(txt)txt.textContent='Foto del producto';
+      if(ico)ico.textContent='✓';
+      if(txt)txt.textContent='Foto seleccionada · toca para cambiar';
     }
-    if(nombre){const nm=document.getElementById('p1-nombre');if(nm){nm.value=nombre;nm.dispatchEvent(new Event('input'));}toast('✓ '+nombre+' — revisa y guarda');}
+    if(nombre){const nm=document.getElementById('p1-nombre');if(nm){nm.value=nombre;nm.dispatchEvent(new Event('input'));}toast('✓ '+nombre+(imagen?' · con foto':'')+' — revisa y guarda');}
     else{document.getElementById('p1-nombre')?.focus();toast('Nuevo producto — rellena nombre y guarda');}
   },350);
 }
@@ -6387,7 +6387,7 @@ async function _crearProductoDesdeBarcode(code){
     const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json');
     if(r.ok){
       const d=await r.json();
-      if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=d.product.image_front_small_url||d.product.image_url||'';}
+      if(d.status===1){nombre=d.product.product_name_es||d.product.product_name||'';imagen=(d.product.image_front_small_url||d.product.image_front_url||d.product.image_url||'').replace('http://','https://');}
     }
   }catch(e){}
   abrirModalAnadir();
@@ -6400,13 +6400,13 @@ async function _crearProductoDesdeBarcode(code){
       const ico=document.getElementById('img-ico');
       const txt=document.getElementById('img-txt');
       if(prev){prev.src=imagen;prev.style.display='block';}
-      if(ico)ico.style.display='none';
-      if(txt)txt.textContent='Foto del producto';
+      if(ico)ico.textContent='✓';
+      if(txt)txt.textContent='Foto seleccionada · toca para cambiar';
     }
     if(nombre){
       const nm=document.getElementById('p1-nombre');
       if(nm){nm.value=nombre;nm.dispatchEvent(new Event('input'));}
-      toast('✓ Producto encontrado: '+nombre+'. Revisa y guarda.');
+      toast('✓ Producto encontrado: '+nombre+(imagen?' · con foto':'')+'. Revisa y guarda.');
     } else {
       toast('Rellena el nombre y el precio del nuevo producto.');
       document.getElementById('p1-nombre')?.focus();
