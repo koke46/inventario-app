@@ -164,15 +164,18 @@ if(currentMode==='inventario'){
 }
 
 let lastCode='',lastTs=0;
+const COOLDOWN=3000;
+let _bloqueado=false;
 
 function setStatus(msg,cls=''){statusEl.textContent=msg;statusEl.className=cls;}
 
 async function enviar(code){
   if(!SESSION){setStatus('⚠️ QR inválido — regenera el código desde la app','err');return;}
+  if(_bloqueado)return;
   const now=Date.now();
-  if(code===lastCode&&now-lastTs<2000)return;
+  if(code===lastCode&&now-lastTs<COOLDOWN)return;
   lastCode=code;lastTs=now;
-  // Enviar modo:codigo para que la app sepa cómo procesarlo
+  _bloqueado=true;
   const payload=currentMode+':'+code;
   try{
     const r=await fetch(SB_URL+'/rest/v1/escaneos',{
@@ -181,17 +184,24 @@ async function enviar(code){
     });
     if(r.ok||r.status===201){
       const isV=currentMode==='venta';
-      setStatus('✓ Enviado: '+code,'ok');
+      setStatus('✓ '+code,'ok');
       try{if(navigator.vibrate)navigator.vibrate(80);}catch(e){}
       frame.className='ok-'+(isV?'venta':'inventario');
-      setTimeout(()=>{frame.className='';},600);
       addRow(code,currentMode);
-      setTimeout(()=>setMode(currentMode),1800);
+      // Bloqueo visual de 3 segundos antes de permitir el siguiente escaneo
+      let t=3;
+      const iv=setInterval(()=>{
+        t--;
+        if(t>0){setStatus('⏳ Siguiente en '+t+'s...');}
+        else{clearInterval(iv);_bloqueado=false;frame.className='';setMode(currentMode);}
+      },1000);
     }else{
       setStatus('⚠️ Error al enviar ('+r.status+')','err');
+      _bloqueado=false;
     }
   }catch(e){
     setStatus('⚠️ Sin conexión','err');
+    _bloqueado=false;
   }
 }
 
