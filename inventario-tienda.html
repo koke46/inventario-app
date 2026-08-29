@@ -2713,6 +2713,8 @@ function crearProductoYContinuar(){
     // Artículo de almacén/cocina — separado de los productos de venta
     productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad:'ud',barcode};
     almacen.push(productoActivo);
+    // Si hay barcode, sincronizarlo en el producto de venta con el mismo nombre
+    if(barcode){const pv=productos.find(p=>(p.nombre||'').trim().toLowerCase()===(nombre||'').trim().toLowerCase());if(pv&&!pv.barcode){pv.barcode=barcode;}}
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
     const stockVal=parseFloat(document.getElementById('p1-stock')?.value)||0;
     if(stockVal>0){
@@ -6328,10 +6330,15 @@ function _qrProcesar(modo,code){
   if(modo==='venta'){
     // Busca primero en el catálogo de venta por barcode
     let prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
-    // Si no está, busca en almacén y cruza por nombre con el catálogo
+    // Si no está, busca en almacén por barcode y cruza con catálogo de venta por nombre
     if(!prod){
       const inv=almacen.find(a=>a.barcode&&a.barcode.trim()===code.trim());
-      if(inv) prod=productos.find(p=>p.nombre&&inv.nombre&&p.nombre.trim().toLowerCase()===inv.nombre.trim().toLowerCase());
+      if(inv){
+        const nombreInv=(inv.nombre||'').trim().toLowerCase();
+        prod=productos.find(p=>(p.nombre||'').trim().toLowerCase()===nombreInv);
+        // Guardar el barcode en el producto de venta para próximas veces
+        if(prod&&!prod.barcode){prod.barcode=code.trim();save();}
+      }
     }
     if(prod){
       añadirAlPedido(prod.id);
