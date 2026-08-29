@@ -265,8 +265,8 @@ body.demo-activo{padding-top:40px;}
 /* ── FOTO PRODUCTO ── */
 .img-upload-area{cursor:pointer;border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;background:var(--bg);transition:border-color .15s;}
 .img-upload-area:hover{border-color:var(--amber);}
-.img-upload-preview{width:80px;height:80px;object-fit:cover;border-radius:10px;border:2px solid var(--amber);display:none;margin:0 auto 10px;}
-.prd-card-img{width:48px;height:48px;object-fit:cover;border-radius:8px;margin:0 auto 5px;display:block;}
+.img-upload-preview{width:80px;height:80px;object-fit:contain;border-radius:10px;border:2px solid var(--amber);display:none;margin:0 auto 10px;}
+.prd-card-img{width:48px;height:48px;object-fit:contain;border-radius:8px;margin:0 auto 5px;display:block;}
 
 /* ── FORM SHARED ── */
 .form-group{display:flex;flex-direction:column;gap:5px;}
@@ -2664,7 +2664,7 @@ async function onImageSelect(input){
   if(txt) txt.textContent='Foto seleccionada · toca para cambiar';
 }
 function prodIco(p,size=28){
-  if(p&&p.imagen) return`<img src="${p.imagen}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:${size<=24?4:8}px;" alt="">`;
+  if(p&&p.imagen) return`<img src="${p.imagen}" style="width:${size}px;height:${size}px;object-fit:contain;border-radius:${size<=24?4:8}px;" alt="">`;
   return`<span style="font-size:${size}px">${(p&&p.emoji)||'📦'}</span>`;
 }
 
@@ -3367,7 +3367,7 @@ function renderCatalogo(){
     const res=productos.filter(p=>p.nombre.toLowerCase().includes(_posSearch)||(p.categoria||'').toLowerCase().includes(_posSearch));
     if(!res.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:32px;font-size:14px">Sin resultados para "<strong>${esc(_posSearch)}</strong>"</div>`;return;}
     grid.innerHTML=res.map(p=>`<div class="prd-card${p.favorito?' fav':''}" onclick="addProd('${esc(p.id)}')" data-id="${esc(p.id)}">
-      ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
+      ${p.imagen?`<img src="${p.imagen}" style="width:100%;height:64px;object-fit:contain;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:28px;text-align:center;margin-bottom:4px">${p.emoji||'🛒'}</div>`}
       <div class="prd-name">${esc(p.nombre)}</div>
       <div class="prd-price">${p.precio!=null?fmtEuro(p.precio):''}</div>
     </div>`).join('');
@@ -5950,7 +5950,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .cat-title{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;padding:14px 16px 8px;background:#fff}
 .p-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #f5f5f5}
 .p-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
-.p-img{width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0}
+.p-img{width:52px;height:52px;object-fit:contain;border-radius:10px;flex-shrink:0}
 .p-emoji{width:52px;height:52px;border-radius:10px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .p-info{flex:1;min-width:0}
 .p-nombre{font-size:15px;font-weight:600;color:#1a1a2e}
