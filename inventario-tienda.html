@@ -2812,7 +2812,7 @@ function abrirDetalleProd(prodId){
       <div>
         <div style="font-size:18px;font-weight:700">${esc(p.nombre)}</div>
         ${p.categoria?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(p.categoria)}</div>`:''}
-        ${p.barcode?`<div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)">🔖 ${esc(p.barcode)}</div>`:''}
+        ${p.barcode?`<div style="font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px"><span style="font-family:var(--mono)">🔖 ${esc(p.barcode)}</span><button onclick="event.stopPropagation();_quitarBarcodeAlmacen('${esc(p.id)}')" style="font-size:10px;background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;cursor:pointer;color:var(--muted)">✕ quitar</button></div>`:''}
         <div style="font-size:13px;font-weight:700;margin-top:6px;color:var(--amber)">Stock total: ${stockTotal} ${esc(p.unidad||'ud')}</div>
       </div>
     </div>
@@ -6485,6 +6485,15 @@ if('serviceWorker' in navigator){
   });
 }
 
+function _quitarBarcodeAlmacen(prodId){
+  const p=almacen.find(x=>x.id===prodId);
+  if(!p) return;
+  if(!confirm('¿Quitar el código de barras de "'+p.nombre+'"?')) return;
+  delete p.barcode;
+  save();
+  abrirDetalleProd(prodId);
+  toast('✓ Código de barras eliminado');
+}
 // ── ASIGNAR BARCODE A PRODUCTO ───────────────────────────
 let _pendingBarcode=null,_pendingBcModo='venta';
 function _mostrarAsignarBarcode(code,modo='venta'){
