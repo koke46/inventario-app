@@ -975,6 +975,7 @@ body.demo-activo{padding-top:40px;}
               <button onclick="buscarPOS('');document.getElementById('pos-search').value=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);display:none" id="pos-search-clear">✕</button>
             </div>
             <button onclick="abrirEscanerCodigo()" title="Escanear con esta cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:20px;cursor:pointer">📷</button>
+            <button onclick="abrirQR('venta')" title="Escáner con el móvil" style="flex-shrink:0;background:var(--surface);color:var(--amber);border:2px solid var(--amber);border-radius:10px;width:40px;height:40px;font-size:20px;cursor:pointer">📱</button>
           </div>
           <div class="cat-tabs" id="pos-cat-tabs" style="display:none"></div>
           <div class="prd-grid" id="pos-grid"></div>
@@ -1426,31 +1427,31 @@ body.demo-activo{padding-top:40px;}
   </div>
 </div>
 
-<!-- Modal QR Escáner móvil (dos QR) -->
-<div id="modal-qr-scanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9001;align-items:center;justify-content:center">
-  <div style="background:var(--card);border-radius:18px;padding:22px;width:min(95vw,480px);display:flex;flex-direction:column;gap:14px">
+<!-- Modal QR Escáner móvil -->
+<div id="modal-qr-scanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9001;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:18px;padding:20px;width:min(95vw,360px);display:flex;flex-direction:column;gap:12px">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <span style="font-weight:700;font-size:15px">📱 Escáner con el móvil</span>
+      <span style="font-weight:700;font-size:15px" id="qr-modal-titulo">📱 Escáner con el móvil</span>
       <button onclick="cerrarQR()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">×</button>
     </div>
-    <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.5">Escanea el QR con tu móvil. En el móvil elige si es para <strong>Venta</strong> o <strong>Inventario</strong> y apunta la cámara al código de barras.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-        <span style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:.5px;text-transform:uppercase">🛒 Venta</span>
-        <div style="padding:6px;background:#fff;border-radius:10px;border:2.5px solid #60a5fa">
-          <img id="qr-img-venta" src="" alt="QR Venta" style="width:150px;height:150px;display:block">
-        </div>
+    <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5" id="qr-modal-desc">Escanea este QR con el móvil y luego apunta la cámara al código de barras del producto.</p>
+    <!-- QR venta (modo principal) -->
+    <div id="qr-bloque-venta" style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div style="padding:8px;background:#fff;border-radius:12px;border:3px solid #60a5fa">
+        <img id="qr-img-venta" src="" alt="QR Venta" style="width:180px;height:180px;display:block">
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-        <span style="font-size:12px;font-weight:700;color:#4ade80;letter-spacing:.5px;text-transform:uppercase">📦 Inventario</span>
-        <div style="padding:6px;background:#fff;border-radius:10px;border:2.5px solid #4ade80">
-          <img id="qr-img-inv" src="" alt="QR Inventario" style="width:150px;height:150px;display:block">
-        </div>
-      </div>
+      <span style="font-size:11px;font-weight:700;color:#60a5fa;letter-spacing:.5px">🛒 ESCÁNER DE VENTA</span>
     </div>
-    <div id="qr-estado" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px">Esperando escaneo...</div>
-    <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:80px;overflow-y:auto"></div>
-    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:14px">Cerrar</button>
+    <!-- QR inventario (modo secundario, oculto por defecto) -->
+    <div id="qr-bloque-inv" style="display:none;flex-direction:column;align-items:center;gap:6px">
+      <div style="padding:8px;background:#fff;border-radius:12px;border:3px solid #4ade80">
+        <img id="qr-img-inv" src="" alt="QR Inventario" style="width:180px;height:180px;display:block">
+      </div>
+      <span style="font-size:11px;font-weight:700;color:#4ade80;letter-spacing:.5px">📦 ESCÁNER DE INVENTARIO</span>
+    </div>
+    <div id="qr-estado" style="text-align:center;font-size:13px;font-weight:600;color:var(--muted);min-height:18px">Esperando escaneo...</div>
+    <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:100px;overflow-y:auto"></div>
+    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:14px">Cerrar y finalizar</button>
   </div>
 </div>
 <!-- Escáner código de barras -->
@@ -6262,18 +6263,29 @@ document.getElementById('CK').onclick=function(){document.getElementById('CF').s
 
 // ── QR ESCÁNER MÓVIL ─────────────────────────────────────
 const _QR_BASE='https://koke46.github.io/inventario-app/scanner.html';
-let _qrSid=null,_qrTimer=null;
-function abrirQR(){
+let _qrSid=null,_qrTimer=null,_qrModo='venta';
+function abrirQR(modo='venta'){
   _qrSid=(crypto.randomUUID?crypto.randomUUID():(Date.now().toString(36)+Math.random().toString(36).slice(2)));
-  const urlV=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m=venta';
-  const urlI=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m=inventario';
-  const qrApi='https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=4&data=';
-  document.getElementById('qr-img-venta').src=qrApi+encodeURIComponent(urlV);
-  document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(urlI);
+  _qrModo=modo;
+  const url=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m='+modo;
+  const qrApi='https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=';
+  const esVenta=modo==='venta';
+  document.getElementById('qr-bloque-venta').style.display=esVenta?'flex':'none';
+  document.getElementById('qr-bloque-inv').style.display=esVenta?'none':'flex';
+  if(esVenta){
+    document.getElementById('qr-img-venta').src=qrApi+encodeURIComponent(url);
+    document.getElementById('qr-modal-titulo').textContent='🛒 Escáner de venta';
+    document.getElementById('qr-modal-desc').textContent='Escanea este QR con el móvil y apunta la cámara a los códigos de barras. Los productos se añaden solos a la cuenta.';
+  }else{
+    document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(url);
+    document.getElementById('qr-modal-titulo').textContent='📦 Escáner de inventario';
+    document.getElementById('qr-modal-desc').textContent='Escanea este QR con el móvil y apunta la cámara al código de barras del producto.';
+  }
   document.getElementById('qr-estado').textContent='Esperando escaneo...';
   document.getElementById('qr-lista').innerHTML='';
   document.getElementById('modal-qr-scanner').style.display='flex';
-  _qrTimer=setInterval(_qrPoll,2000);
+  if(_qrTimer)clearInterval(_qrTimer);
+  _qrTimer=setInterval(_qrPoll,1500);
 }
 function cerrarQR(){
   document.getElementById('modal-qr-scanner').style.display='none';
@@ -6315,8 +6327,24 @@ async function _qrPoll(){
 function _qrProcesar(modo,code){
   if(modo==='venta'){
     const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
-    if(prod){cerrarQR();añadirAlPedido(prod.id);toast('✓ '+prod.nombre+' añadido al pedido');}
-    else toast('⚠️ Código '+code+' no encontrado — añade el código de barras al producto');
+    if(prod){
+      añadirAlPedido(prod.id);
+      const estado=document.getElementById('qr-estado');
+      if(estado){estado.textContent='✓ '+prod.nombre;estado.style.color='#4ade80';}
+      const lista=document.getElementById('qr-lista');
+      if(lista){
+        const el=document.createElement('div');
+        el.style=`font-size:12px;padding:5px 8px;background:var(--surface2);border-radius:6px;display:flex;gap:6px;align-items:center`;
+        el.innerHTML=`<span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#1e3a5f;color:#60a5fa">✓</span><span style="color:#60a5fa;font-weight:600">${esc(prod.nombre)}</span><span style="color:var(--muted);font-size:11px;margin-left:auto">${fmtEuro(prod.precio||0)}</span>`;
+        lista.prepend(el);
+        if(lista.children.length>5)lista.lastChild.remove();
+      }
+      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando siguiente código...';e.style.color='';}},2000);
+    }else{
+      const estado=document.getElementById('qr-estado');
+      if(estado){estado.textContent='⚠️ Código no encontrado';estado.style.color='#f87171';}
+      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},2000);
+    }
   }else{
     const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
     if(prod){abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
