@@ -3509,9 +3509,10 @@ function añadirAlPedido(prodId){
   if(!prod) return;
   if(prod.ingredientes?.length){abrirModalPersonalizar(prodId);return;}
   const ex=pedidoActual.items.find(i=>i.productoId===prodId&&!i.nota);
-  if(ex){ex.cantidad++;renderPedido();return;}
+  if(ex){ex.cantidad++;renderPedido();_restarStockInventario(prod.nombre);return;}
   pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:prod.precio||0,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||21});
   renderPedido();
+  _restarStockInventario(prod.nombre);
 }
 
 let _persProductoId=null;
@@ -3587,9 +3588,11 @@ function editarNotaItem(prodId){
 function quitarDelPedido(prodId){
   const ex=pedidoActual.items.find(i=>i.productoId===prodId);
   if(!ex) return;
+  const prod=productos.find(p=>p.id===prodId);
   if(ex.cantidad>1) ex.cantidad--;
   else pedidoActual.items=pedidoActual.items.filter(i=>i.productoId!==prodId);
   renderPedido();
+  if(prod) _devolverStockInventario(prod.nombre);
 }
 let _descTipo='%';
 function setDescTipo(t){
@@ -6328,19 +6331,10 @@ async function _qrPoll(){
 }
 function _qrProcesar(modo,code){
   if(modo==='venta'){
-    // Busca primero en el catálogo de venta por barcode
-    let prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
-    // Si no está, busca en almacén por barcode y cruza con catálogo de venta por nombre
-    if(!prod){
-      const inv=almacen.find(a=>a.barcode&&a.barcode.trim()===code.trim());
-      if(inv){
-        const nombreInv=(inv.nombre||'').trim().toLowerCase();
-        prod=productos.find(p=>(p.nombre||'').trim().toLowerCase()===nombreInv);
-        // Guardar el barcode en el producto de venta para próximas veces
-        if(prod&&!prod.barcode){prod.barcode=code.trim();save();}
-      }
-    }
+    // Busca solo en el catálogo de venta por barcode
+    const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
     if(prod){
+      _beepScan(true);
       añadirAlPedido(prod.id);
       const estado=document.getElementById('qr-estado');
       if(estado){estado.textContent='✓ '+prod.nombre;estado.style.color='#4ade80';}
@@ -6355,6 +6349,7 @@ function _qrProcesar(modo,code){
       setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando siguiente código...';e.style.color='';}},2000);
     }else{
       const estado=document.getElementById('qr-estado');
+      _beepScan(false);
       if(estado){estado.textContent='⚠️ Código sin asignar — selecciona el producto';estado.style.color='#f87171';}
       setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},3000);
       // Si el código está en inventario, pre-filtrar por ese nombre en el modal de venta
@@ -6487,6 +6482,44 @@ if('serviceWorker' in navigator){
   });
 }
 
+function _beepScan(ok=true){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='sine';
+    o.frequency.value=ok?1200:400;
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+(ok?0.12:0.25));
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime+(ok?0.12:0.25));
+  }catch(e){}
+}
+function _restarStockInventario(nombre,cantidad=1){
+  const nombreN=(nombre||'').trim().toLowerCase();
+  const inv=almacen.find(a=>(a.nombre||'').trim().toLowerCase()===nombreN);
+  if(!inv) return;
+  const prodLotes=lotes.filter(l=>l.productoId===inv.id&&l.cantidad>0)
+    .sort((a,b)=>a.fechaCaducidad.localeCompare(b.fechaCaducidad));
+  let restante=cantidad;
+  for(const l of prodLotes){
+    if(restante<=0) break;
+    const descuento=Math.min(l.cantidad,restante);
+    l.cantidad-=descuento;
+    restante-=descuento;
+  }
+  save();
+}
+function _devolverStockInventario(nombre,cantidad=1){
+  const nombreN=(nombre||'').trim().toLowerCase();
+  const inv=almacen.find(a=>(a.nombre||'').trim().toLowerCase()===nombreN);
+  if(!inv) return;
+  const prodLotes=lotes.filter(l=>l.productoId===inv.id)
+    .sort((a,b)=>a.fechaCaducidad.localeCompare(b.fechaCaducidad));
+  if(prodLotes.length){prodLotes[0].cantidad+=cantidad;}
+  save();
+}
 function _quitarBarcodeAlmacen(prodId){
   const p=almacen.find(x=>x.id===prodId);
   if(!p) return;
