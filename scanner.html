@@ -159,6 +159,9 @@ function setMode(m){
   statusEl.className='';
 }
 setMode(currentMode);
+if(currentMode==='inventario'){
+  document.getElementById('btn-venta').style.display='none';
+}
 
 let lastCode='',lastTs=0;
 
