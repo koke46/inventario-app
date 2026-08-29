@@ -265,7 +265,7 @@ body.demo-activo{padding-top:40px;}
 /* ── FOTO PRODUCTO ── */
 .img-upload-area{cursor:pointer;border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;background:var(--bg);transition:border-color .15s;}
 .img-upload-area:hover{border-color:var(--amber);}
-.img-upload-preview{width:80px;height:80px;object-fit:contain;border-radius:10px;border:2px solid var(--amber);display:none;margin:0 auto 10px;}
+.img-upload-preview{width:140px;height:140px;object-fit:contain;border-radius:10px;border:2px solid var(--amber);display:none;margin:0 auto 10px;}
 .prd-card-img{width:48px;height:48px;object-fit:contain;border-radius:8px;margin:0 auto 5px;display:block;}
 
 /* ── FORM SHARED ── */
@@ -1410,7 +1410,7 @@ body.demo-activo{padding-top:40px;}
       <div class="form-group">
         <label class="form-label">Foto (opcional)</label>
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-          <img id="modal-cat-foto-preview" src="" alt="" style="display:none;width:100px;height:100px;object-fit:cover;border-radius:12px;border:2px solid var(--amber)">
+          <img id="modal-cat-foto-preview" src="" alt="" style="display:none;width:140px;height:140px;object-fit:contain;border-radius:12px;border:2px solid var(--amber)">
           <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px dashed var(--border);border-radius:10px;font-size:13px;color:var(--muted);font-weight:600;font-family:var(--sans);transition:.15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
             📷 Elegir foto
             <input type="file" accept="image/*" style="display:none" onchange="onCatFotoChange(this)">
@@ -1561,7 +1561,7 @@ async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
   const cache=loadJ('if_lic_cache',null);
-  if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<5*60*1000){
+  if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<60*1000){
     console.log('[Licencia] caché:',cache.activa);
     if(cache.activa){
       const devOk=await checkDispositivo(cache.max_dispositivos??null);
@@ -5484,8 +5484,18 @@ function doAuth(){
     requestAnimationFrame(()=>{card.style.animation='shake .35s ease';});
   }
 }
+let _licCheckTimer=null;
+function _iniciarCheckLicenciaActiva(){
+  if(_licCheckTimer)clearInterval(_licCheckTimer);
+  if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__'||_modoSoporte)return;
+  _licCheckTimer=setInterval(async()=>{
+    const ok=await checkLicencia();
+    if(!ok){clearInterval(_licCheckTimer);_licCheckTimer=null;mostrarBloqueo();}
+  },90*1000);
+}
 function cerrarSesion(){
   if(!confirm('¿Cerrar sesión?')) return;
+  if(_licCheckTimer){clearInterval(_licCheckTimer);_licCheckTimer=null;}
   _sesion=null;saveJ('if_sesion',null);
   location.reload();
 }
@@ -5561,6 +5571,8 @@ function arrancarApp(){
     _pollPedidosQR();
     setInterval(_pollPedidosQR,10000);
   }
+  // Check periódico de licencia para bloqueo inmediato
+  _iniciarCheckLicenciaActiva();
   // Mostrar selector de usuario si hay usuarios configurados
   if(usuarios.length){
     mostrarSelectorUsuario();
