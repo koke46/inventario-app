@@ -6315,8 +6315,8 @@ async function _qrPoll(){
 function _qrProcesar(modo,code){
   if(modo==='venta'){
     const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
-    if(prod){añadirAlPedido(prod.id);toast('✓ '+prod.nombre+' añadido al pedido');}
-    else _crearProductoDesdeBarcode(code);
+    if(prod){cerrarQR();añadirAlPedido(prod.id);toast('✓ '+prod.nombre+' añadido al pedido');}
+    else toast('⚠️ Código '+code+' no encontrado — añade el código de barras al producto');
   }else{
     const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
     if(prod){abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
