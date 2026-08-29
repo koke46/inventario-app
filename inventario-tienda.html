@@ -85,6 +85,7 @@ body.touch .stat-val{font-size:32px;}
 .cocina-item-row{display:flex;gap:8px;align-items:center;font-size:14px;}
 .cocina-qty{font-weight:800;font-family:var(--mono);color:var(--amber);min-width:24px;}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 /* ── AUTH ── */
 #auth-screen{position:fixed;inset:0;background:#16191E;z-index:10000;display:flex;align-items:center;justify-content:center;}
 #auth-screen.hidden{display:none;}
@@ -1440,7 +1441,10 @@ body.demo-activo{padding-top:40px;}
     </div>
     <div id="qr-estado" style="text-align:center;font-size:13px;font-weight:600;color:var(--muted);min-height:18px">Esperando escaneo...</div>
     <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:100px;overflow-y:auto;width:100%"></div>
-    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:14px">Cerrar</button>
+    <div style="display:flex;gap:8px;width:100%">
+      <button onclick="cerrarQR()" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:13px;font-weight:600">Ocultar QR</button>
+      <button onclick="detenerQR()" style="flex:1;padding:10px;border:1px solid var(--red,#e53935);border-radius:10px;background:none;color:var(--red,#e53935);cursor:pointer;font-size:13px;font-weight:600">⏹ Detener</button>
+    </div>
   </div>
 </div>
 <!-- Escáner código de barras -->
@@ -6266,7 +6270,25 @@ function abrirQR(){
   _qrTimer=setInterval(_qrPoll,1500);
 }
 function cerrarQR(){
+  // Solo oculta el modal — el escáner sigue activo en segundo plano
   document.getElementById('modal-qr-scanner').style.display='none';
+  if(_qrSid) _mostrarBadgeEscaner();
+}
+function _mostrarBadgeEscaner(){
+  let badge=document.getElementById('qr-activo-badge');
+  if(!badge){
+    badge=document.createElement('div');
+    badge.id='qr-activo-badge';
+    badge.style.cssText='position:fixed;bottom:80px;left:16px;z-index:8999;background:#1e3a5f;border:2px solid #60a5fa;color:#60a5fa;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+    badge.innerHTML='<span style="animation:pulse 1.2s infinite">📱</span> Escáner activo · <span style="text-decoration:underline;font-weight:400">Ver</span>';
+    badge.onclick=()=>{document.getElementById('modal-qr-scanner').style.display='flex';badge.remove();};
+    document.body.appendChild(badge);
+  }
+}
+function detenerQR(){
+  document.getElementById('modal-qr-scanner').style.display='none';
+  const badge=document.getElementById('qr-activo-badge');
+  if(badge) badge.remove();
   if(_qrTimer){clearInterval(_qrTimer);_qrTimer=null;}
   if(_qrSid){
     fetch(LIC_SB_URL+'/rest/v1/escaneos?session_id=eq.'+encodeURIComponent(_qrSid),
