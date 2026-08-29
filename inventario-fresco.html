@@ -6537,16 +6537,15 @@ async function _qrPoll(){
   try{
     const r=await fetch(LIC_SB_URL+'/rest/v1/escaneos?session_id=eq.'+encodeURIComponent(_qrSid)+'&order=created_at.asc&limit=1',
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
+    if(!r.ok)return;
     const rows=await r.json();
-    if(!rows.length)return;
+    if(!Array.isArray(rows)||!rows.length)return;
     const{id,barcode:raw}=rows[0];
+    if(!raw)return;
     await fetch(LIC_SB_URL+'/rest/v1/escaneos?id=eq.'+id,
       {method:'DELETE',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
     const sep=raw.indexOf(':');
     const barcode=(sep>0&&(raw.slice(0,sep)==='venta'||raw.slice(0,sep)==='inventario'))?raw.slice(sep+1):raw;
-    const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===barcode.trim());
-    if(prod){abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
-    else _crearInventarioDesdeBarcode(barcode);
     const estado=document.getElementById('qr-estado');
     if(estado)estado.textContent='✓ '+barcode;
     const lista=document.getElementById('qr-lista');
@@ -6556,7 +6555,19 @@ async function _qrPoll(){
       el.textContent=barcode;lista.prepend(el);
       if(lista.children.length>4)lista.lastChild.remove();
     }
-  }catch(e){}
+    const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===barcode.trim());
+    if(prod){
+      cerrarQR();
+      abrirDetalleProd(prod.id);
+      toast('✓ '+prod.nombre+' — añade el lote');
+    } else {
+      cerrarQR();
+      _crearInventarioDesdeBarcode(barcode);
+    }
+  }catch(e){
+    const estado=document.getElementById('qr-estado');
+    if(estado)estado.textContent='⚠️ Error: '+e.message;
+  }
 }
 async function _crearInventarioDesdeBarcode(code){
   let nombre='';
