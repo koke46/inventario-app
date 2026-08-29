@@ -3390,7 +3390,7 @@ function renderCatalogo(){
       const n=todosProds.filter(p=>p.categoria===cat).length;
       const foto=(comercio.catFotos||{})[cat];
       const icoHtml=foto
-        ?`<img src="${foto}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;margin-bottom:8px">`
+        ?`<img src="${foto}" style="width:100px;height:100px;object-fit:contain;border-radius:10px;margin-bottom:8px">`
         :`<div class="cat-folder-ico">${_catEmoji(cat,todosProds)}</div>`;
       html+=`<div class="cat-folder" onclick="abrirCarpeta('${esc(cat)}')">
         <button class="cat-folder-edit" onclick="event.stopPropagation();abrirEditarCategoria('${esc(cat)}')" title="Editar carpeta">✏️</button>
