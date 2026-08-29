@@ -6357,7 +6357,9 @@ function _qrProcesar(modo,code){
       const estado=document.getElementById('qr-estado');
       if(estado){estado.textContent='⚠️ Código sin asignar — selecciona el producto';estado.style.color='#f87171';}
       setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},3000);
-      _mostrarAsignarBarcode(code);
+      // Si el código está en inventario, pre-filtrar por ese nombre en el modal de venta
+      const invMatch=almacen.find(a=>a.barcode&&a.barcode.trim()===code.trim());
+      _mostrarAsignarBarcode(code,'venta',invMatch?invMatch.nombre:'');
     }
   }else{
     const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
@@ -6496,13 +6498,13 @@ function _quitarBarcodeAlmacen(prodId){
 }
 // ── ASIGNAR BARCODE A PRODUCTO ───────────────────────────
 let _pendingBarcode=null,_pendingBcModo='venta';
-function _mostrarAsignarBarcode(code,modo='venta'){
+function _mostrarAsignarBarcode(code,modo='venta',prefiltro=''){
   _pendingBarcode=code;
   _pendingBcModo=modo;
   document.getElementById('asignar-bc-codigo').textContent=code;
   document.getElementById('asignar-bc-modo-label').textContent=modo==='venta'?'venta':'inventario';
-  document.getElementById('asignar-bc-search').value='';
-  _renderAsignarLista('');
+  document.getElementById('asignar-bc-search').value=prefiltro;
+  _renderAsignarLista(prefiltro);
   document.getElementById('modal-asignar-bc').style.display='flex';
   setTimeout(()=>document.getElementById('asignar-bc-search').focus(),100);
 }
