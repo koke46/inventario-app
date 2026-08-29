@@ -978,7 +978,6 @@ body.demo-activo{padding-top:40px;}
               <button onclick="buscarPOS('');document.getElementById('pos-search').value=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);display:none" id="pos-search-clear">✕</button>
             </div>
             <button onclick="abrirEscanerCodigo()" title="Escanear con esta cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:20px;cursor:pointer">📷</button>
-            <button onclick="abrirQR('venta')" title="Escanear con el móvil (QR)" style="flex-shrink:0;background:var(--amber);color:#000;border:none;border-radius:10px;width:40px;height:40px;font-size:20px;cursor:pointer">📱</button>
           </div>
           <div class="cat-tabs" id="pos-cat-tabs" style="display:none"></div>
           <div class="prd-grid" id="pos-grid"></div>
@@ -1430,19 +1429,30 @@ body.demo-activo{padding-top:40px;}
   </div>
 </div>
 
-<!-- Modal QR Escáner móvil -->
+<!-- Modal QR Escáner móvil (dos QR) -->
 <div id="modal-qr" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9001;align-items:center;justify-content:center">
-  <div style="background:var(--card);border-radius:18px;padding:24px;width:min(95vw,340px);display:flex;flex-direction:column;gap:14px;align-items:center">
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-      <span style="font-weight:700;font-size:15px" id="qr-titulo">📱 Escáner móvil</span>
+  <div style="background:var(--card);border-radius:18px;padding:22px;width:min(95vw,480px);display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-weight:700;font-size:15px">📱 Escáner con el móvil</span>
       <button onclick="cerrarQR()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">×</button>
     </div>
-    <p style="text-align:center;font-size:13px;color:var(--muted);margin:0;line-height:1.5">Escanea este QR con el móvil y apunta la cámara al código de barras del producto</p>
-    <div style="padding:8px;background:#fff;border-radius:12px;border:3px solid var(--amber)">
-      <img id="qr-img" src="" alt="QR" style="width:200px;height:200px;display:block">
+    <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.5">Escanea el QR con tu móvil. En el móvil elige si es para <strong>Venta</strong> o <strong>Inventario</strong> y apunta la cámara al código de barras.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <span style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:.5px;text-transform:uppercase">🛒 Venta</span>
+        <div style="padding:6px;background:#fff;border-radius:10px;border:2.5px solid #60a5fa">
+          <img id="qr-img-venta" src="" alt="QR Venta" style="width:150px;height:150px;display:block">
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <span style="font-size:12px;font-weight:700;color:#4ade80;letter-spacing:.5px;text-transform:uppercase">📦 Inventario</span>
+        <div style="padding:6px;background:#fff;border-radius:10px;border:2.5px solid #4ade80">
+          <img id="qr-img-inv" src="" alt="QR Inventario" style="width:150px;height:150px;display:block">
+        </div>
+      </div>
     </div>
     <div id="qr-estado" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px">Esperando escaneo...</div>
-    <div id="qr-lista" style="width:100%;display:flex;flex-direction:column;gap:4px;max-height:88px;overflow-y:auto"></div>
+    <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:80px;overflow-y:auto"></div>
     <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:14px">Cerrar</button>
   </div>
 </div>
@@ -6239,15 +6249,16 @@ document.getElementById('CK').onclick=function(){document.getElementById('CF').s
 
 // ── QR ESCÁNER MÓVIL ─────────────────────────────────────
 const _QR_BASE='https://koke46.github.io/inventario-app/scanner.html';
-let _qrSid=null,_qrTimer=null,_qrModo=null;
-function abrirQR(modo){
-  _qrModo=modo;
+let _qrSid=null,_qrTimer=null;
+function abrirQR(){
   _qrSid=(crypto.randomUUID?crypto.randomUUID():(Date.now().toString(36)+Math.random().toString(36).slice(2)));
-  const url=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m='+modo;
-  document.getElementById('qr-titulo').textContent=modo==='venta'?'📱 Escáner — Venta':'📱 Escáner — Inventario';
+  const urlV=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m=venta';
+  const urlI=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m=inventario';
+  const qrApi='https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=4&data=';
+  document.getElementById('qr-img-venta').src=qrApi+encodeURIComponent(urlV);
+  document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(urlI);
   document.getElementById('qr-estado').textContent='Esperando escaneo...';
   document.getElementById('qr-lista').innerHTML='';
-  document.getElementById('qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data='+encodeURIComponent(url);
   document.getElementById('modal-qr').style.display='flex';
   _qrTimer=setInterval(_qrPoll,2000);
 }
@@ -6267,24 +6278,29 @@ async function _qrPoll(){
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
     const rows=await r.json();
     if(!rows.length)return;
-    const{id,barcode}=rows[0];
+    const{id,barcode:raw}=rows[0];
     await fetch(LIC_SB_URL+'/rest/v1/escaneos?id=eq.'+id,
       {method:'DELETE',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
-    _qrProcesar(barcode);
+    // Parsear prefijo modo:codigo
+    const sep=raw.indexOf(':');
+    const modo=(sep>0&&(raw.slice(0,sep)==='venta'||raw.slice(0,sep)==='inventario'))?raw.slice(0,sep):'venta';
+    const code=sep>0?raw.slice(sep+1):raw;
+    _qrProcesar(modo,code);
+    const isV=modo==='venta';
     const estado=document.getElementById('qr-estado');
-    if(estado)estado.textContent='✓ '+barcode;
+    if(estado)estado.textContent=(isV?'🛒':'📦')+' '+code;
     const lista=document.getElementById('qr-lista');
     if(lista){
       const el=document.createElement('div');
-      el.style='font-size:12px;padding:5px 8px;background:var(--surface2);border-radius:6px;font-family:monospace;color:var(--amber)';
-      el.textContent=barcode;
+      el.style=`font-size:12px;padding:5px 8px;background:var(--surface2);border-radius:6px;display:flex;gap:6px;align-items:center`;
+      el.innerHTML=`<span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:${isV?'#1e3a5f':'#14532d'};color:${isV?'#60a5fa':'#4ade80'}">${isV?'V':'I'}</span><span style="font-family:monospace;color:${isV?'#60a5fa':'#4ade80'}">${code}</span>`;
       lista.prepend(el);
       if(lista.children.length>4)lista.lastChild.remove();
     }
   }catch(e){}
 }
-function _qrProcesar(code){
-  if(_qrModo==='venta'){
+function _qrProcesar(modo,code){
+  if(modo==='venta'){
     const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
     if(prod){añadirAlPedido(prod.id);toast('✓ '+prod.nombre+' añadido al pedido');}
     else _crearProductoDesdeBarcode(code);

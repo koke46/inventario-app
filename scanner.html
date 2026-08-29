@@ -12,16 +12,22 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
 
 #header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 18px;background:#1a2235;
-  border-bottom:1px solid #263047;flex-shrink:0;
+  padding:12px 16px;background:#1a2235;border-bottom:1px solid #263047;flex-shrink:0;
 }
-#logo{font-weight:800;font-size:16px;color:#f59e0b;letter-spacing:-.3px}
-#mode-badge{
-  font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-  padding:5px 12px;border-radius:99px;
+#logo{font-weight:800;font-size:15px;color:#f59e0b}
+
+#mode-bar{
+  display:flex;gap:0;flex-shrink:0;
+  background:#0f1520;border-bottom:1px solid #263047;
 }
-#mode-badge.venta{background:#1e3a5f;color:#60a5fa}
-#mode-badge.inventario{background:#14532d;color:#4ade80}
+.mode-btn{
+  flex:1;padding:14px 8px;border:none;cursor:pointer;font-size:14px;font-weight:700;
+  background:transparent;color:#475569;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.mode-btn.active-venta{color:#60a5fa;border-bottom:3px solid #60a5fa;background:#1e3a5f22}
+.mode-btn.active-inventario{color:#4ade80;border-bottom:3px solid #4ade80;background:#14532d22}
+.mode-btn:not(.active-venta):not(.active-inventario){border-bottom:3px solid transparent}
 
 #cam-wrap{
   flex:1;position:relative;background:#000;overflow:hidden;
@@ -38,15 +44,10 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
   box-shadow:0 0 0 9999px rgba(0,0,0,.42);
   transition:border-color .15s,box-shadow .15s;
 }
-#scan-frame.ok{
-  border-color:#22c55e;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.42),0 0 24px rgba(34,197,94,.55);
-}
+#scan-frame.ok-venta{border-color:#60a5fa;box-shadow:0 0 0 9999px rgba(0,0,0,.42),0 0 24px rgba(96,165,250,.55)}
+#scan-frame.ok-inventario{border-color:#4ade80;box-shadow:0 0 0 9999px rgba(0,0,0,.42),0 0 24px rgba(74,222,128,.55)}
 #corners{position:absolute;inset:0;pointer-events:none}
-.corner{
-  position:absolute;width:22px;height:22px;
-  border-color:#f59e0b;border-style:solid;
-}
+.corner{position:absolute;width:22px;height:22px;border-color:#f59e0b;border-style:solid}
 .corner.tl{top:24%;left:13%;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
 .corner.tr{top:24%;right:13%;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
 .corner.bl{bottom:24%;left:13%;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
@@ -61,7 +62,7 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
 
 #footer{
   background:#1a2235;border-top:1px solid #263047;
-  padding:14px 16px 20px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;
+  padding:12px 16px 18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;
 }
 #status{
   text-align:center;font-size:14px;font-weight:600;
@@ -69,37 +70,45 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
 }
 #status.ok{color:#4ade80}
 #status.err{color:#f87171}
-#status.wait{color:#94a3b8}
 
-#scans-wrap{max-height:84px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+#scans-wrap{max-height:76px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
 .scan-row{
   display:flex;align-items:center;gap:8px;
   padding:6px 10px;background:#0f1520;border-radius:8px;
 }
-.scan-code{font-family:monospace;font-size:12px;color:#f59e0b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scan-code{font-family:monospace;font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scan-code.cv{color:#60a5fa}
+.scan-code.ci{color:#4ade80}
 .scan-ts{font-size:10px;color:#475569;flex-shrink:0}
+.scan-lbl{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;flex-shrink:0}
+.scan-lbl.lv{background:#1e3a5f;color:#60a5fa}
+.scan-lbl.li{background:#14532d;color:#4ade80}
 
 #manual-row{display:flex;gap:8px;align-items:center}
 #manual-inp{
-  flex:1;padding:11px 14px;border-radius:10px;
+  flex:1;padding:10px 12px;border-radius:10px;
   background:#0f1520;border:1.5px solid #263047;color:#fff;
   font-size:15px;outline:none;transition:border-color .15s;
 }
 #manual-inp:focus{border-color:#f59e0b}
 #manual-inp::placeholder{color:#475569}
 #manual-btn{
-  padding:11px 18px;border-radius:10px;flex-shrink:0;
+  padding:10px 16px;border-radius:10px;flex-shrink:0;
   background:#f59e0b;color:#000;border:none;font-size:14px;font-weight:700;
-  cursor:pointer;transition:opacity .15s;
+  cursor:pointer;
 }
-#manual-btn:active{opacity:.8}
 </style>
 </head>
 <body style="display:flex;flex-direction:column;height:100%">
 
 <div id="header">
-  <span id="logo">🌶️ El Miarma</span>
-  <span id="mode-badge">Venta</span>
+  <span id="logo">🌶️ El Miarma — Escáner</span>
+</div>
+
+<!-- Botones de modo -->
+<div id="mode-bar">
+  <button class="mode-btn" id="btn-venta" onclick="setMode('venta')">🛒 Venta</button>
+  <button class="mode-btn" id="btn-inventario" onclick="setMode('inventario')">📦 Inventario</button>
 </div>
 
 <div id="cam-wrap">
@@ -107,10 +116,8 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
   <div id="cam-overlay">
     <div id="scan-frame"></div>
     <div id="corners">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
     </div>
   </div>
   <div id="no-cam">
@@ -121,10 +128,10 @@ html,body{height:100%;background:#0f1520;color:#fff;font-family:system-ui,-apple
 </div>
 
 <div id="footer">
-  <div id="status" class="wait">Iniciando cámara...</div>
+  <div id="status">Iniciando cámara...</div>
   <div id="scans-wrap"></div>
   <div id="manual-row">
-    <input id="manual-inp" type="text" inputmode="numeric" placeholder="Código de barras manual..." autocomplete="off">
+    <input id="manual-inp" type="text" inputmode="numeric" placeholder="Código manual..." autocomplete="off">
     <button id="manual-btn" onclick="enviarManual()">Enviar</button>
   </div>
 </div>
@@ -134,14 +141,9 @@ const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 
-const p=new URLSearchParams(location.search);
-const SESSION=p.get('s')||'';
-const MODE=p.get('m')||'venta';
-
-// Mode badge
-const badge=document.getElementById('mode-badge');
-badge.textContent=MODE==='inventario'?'Inventario':'Venta';
-badge.className=MODE==='inventario'?'inventario':'venta';
+const params=new URLSearchParams(location.search);
+const SESSION=params.get('s')||'';
+let currentMode=params.get('m')||'venta';
 
 const video=document.getElementById('cam-video');
 const frame=document.getElementById('scan-frame');
@@ -149,42 +151,53 @@ const statusEl=document.getElementById('status');
 const scansWrap=document.getElementById('scans-wrap');
 const noCam=document.getElementById('no-cam');
 
+function setMode(m){
+  currentMode=m;
+  document.getElementById('btn-venta').className='mode-btn'+(m==='venta'?' active-venta':'');
+  document.getElementById('btn-inventario').className='mode-btn'+(m==='inventario'?' active-inventario':'');
+  statusEl.textContent=m==='venta'?'Modo Venta — apunta al código':'Modo Inventario — apunta al código';
+  statusEl.className='';
+}
+setMode(currentMode);
+
 let lastCode='',lastTs=0;
 
-function setStatus(msg,cls='wait'){
-  statusEl.textContent=msg;statusEl.className=cls;
-}
+function setStatus(msg,cls=''){statusEl.textContent=msg;statusEl.className=cls;}
 
 async function enviar(code){
   if(!SESSION){setStatus('⚠️ QR inválido — regenera el código desde la app','err');return;}
   const now=Date.now();
   if(code===lastCode&&now-lastTs<2000)return;
   lastCode=code;lastTs=now;
+  // Enviar modo:codigo para que la app sepa cómo procesarlo
+  const payload=currentMode+':'+code;
   try{
     const r=await fetch(SB_URL+'/rest/v1/escaneos',{
       method:'POST',headers:SB_H,
-      body:JSON.stringify({session_id:SESSION,barcode:code})
+      body:JSON.stringify({session_id:SESSION,barcode:payload})
     });
     if(r.ok||r.status===201){
+      const isV=currentMode==='venta';
       setStatus('✓ Enviado: '+code,'ok');
       try{if(navigator.vibrate)navigator.vibrate(80);}catch(e){}
-      frame.classList.add('ok');
-      setTimeout(()=>frame.classList.remove('ok'),600);
-      addRow(code);
-      setTimeout(()=>setStatus('Apunta al siguiente código','wait'),1800);
+      frame.className='ok-'+(isV?'venta':'inventario');
+      setTimeout(()=>{frame.className='';},600);
+      addRow(code,currentMode);
+      setTimeout(()=>setMode(currentMode),1800);
     }else{
       setStatus('⚠️ Error al enviar ('+r.status+')','err');
     }
   }catch(e){
-    setStatus('⚠️ Sin conexión a internet','err');
+    setStatus('⚠️ Sin conexión','err');
   }
 }
 
-function addRow(code){
+function addRow(code,mode){
   const t=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const isV=mode==='venta';
   const el=document.createElement('div');
   el.className='scan-row';
-  el.innerHTML=`<span class="scan-code">${code}</span><span class="scan-ts">${t}</span>`;
+  el.innerHTML=`<span class="scan-lbl ${isV?'lv':'li'}">${isV?'V':'I'}</span><span class="scan-code ${isV?'cv':'ci'}">${code}</span><span class="scan-ts">${t}</span>`;
   scansWrap.prepend(el);
   if(scansWrap.children.length>4)scansWrap.lastChild.remove();
 }
@@ -195,16 +208,12 @@ function enviarManual(){
   if(!code){setStatus('Introduce un código','err');return;}
   enviar(code);inp.value='';
 }
-document.getElementById('manual-inp').addEventListener('keydown',e=>{
-  if(e.key==='Enter')enviarManual();
-});
+document.getElementById('manual-inp').addEventListener('keydown',e=>{if(e.key==='Enter')enviarManual();});
 
 async function initCamera(){
   if(!('BarcodeDetector' in window)){
-    noCam.style.display='flex';
-    video.style.display='none';
+    noCam.style.display='flex';video.style.display='none';
     document.getElementById('cam-overlay').style.display='none';
-    setStatus('Introduce el código manualmente','wait');
     return;
   }
   try{
@@ -212,30 +221,23 @@ async function initCamera(){
       video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
     });
     video.srcObject=stream;
-    setStatus('Apunta al código de barras...','wait');
     const detector=new BarcodeDetector({
       formats:['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','data_matrix','codabar']
     });
     setInterval(async()=>{
       if(video.readyState<2)return;
-      try{
-        const codes=await detector.detect(video);
-        if(codes.length)await enviar(codes[0].rawValue);
-      }catch(e){}
+      try{const codes=await detector.detect(video);if(codes.length)await enviar(codes[0].rawValue);}
+      catch(e){}
     },300);
   }catch(e){
-    noCam.style.display='flex';
-    video.style.display='none';
+    noCam.style.display='flex';video.style.display='none';
     document.getElementById('cam-overlay').style.display='none';
     setStatus('Permite el acceso a la cámara','err');
   }
 }
 
-if(!SESSION){
-  setStatus('⚠️ QR inválido — regenera el código desde la app','err');
-}else{
-  initCamera();
-}
+if(!SESSION){setStatus('⚠️ QR inválido — regenera el código','err');}
+else{initCamera();}
 </script>
 </body>
 </html>
