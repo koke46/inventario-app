@@ -6539,9 +6539,11 @@ async function _qrPoll(){
       {headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
     const rows=await r.json();
     if(!rows.length)return;
-    const{id,barcode}=rows[0];
+    const{id,barcode:raw}=rows[0];
     await fetch(LIC_SB_URL+'/rest/v1/escaneos?id=eq.'+id,
       {method:'DELETE',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
+    const sep=raw.indexOf(':');
+    const barcode=(sep>0&&(raw.slice(0,sep)==='venta'||raw.slice(0,sep)==='inventario'))?raw.slice(sep+1):raw;
     const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===barcode.trim());
     if(prod){abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
     else _crearInventarioDesdeBarcode(barcode);
