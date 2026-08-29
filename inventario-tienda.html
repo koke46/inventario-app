@@ -1430,7 +1430,7 @@ body.demo-activo{padding-top:40px;}
 </div>
 
 <!-- Modal QR Escáner móvil (dos QR) -->
-<div id="modal-qr" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9001;align-items:center;justify-content:center">
+<div id="modal-qr-scanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9001;align-items:center;justify-content:center">
   <div style="background:var(--card);border-radius:18px;padding:22px;width:min(95vw,480px);display:flex;flex-direction:column;gap:14px">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <span style="font-weight:700;font-size:15px">📱 Escáner con el móvil</span>
@@ -6259,11 +6259,11 @@ function abrirQR(){
   document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(urlI);
   document.getElementById('qr-estado').textContent='Esperando escaneo...';
   document.getElementById('qr-lista').innerHTML='';
-  document.getElementById('modal-qr').style.display='flex';
+  document.getElementById('modal-qr-scanner').style.display='flex';
   _qrTimer=setInterval(_qrPoll,2000);
 }
 function cerrarQR(){
-  document.getElementById('modal-qr').style.display='none';
+  document.getElementById('modal-qr-scanner').style.display='none';
   if(_qrTimer){clearInterval(_qrTimer);_qrTimer=null;}
   if(_qrSid){
     fetch(LIC_SB_URL+'/rest/v1/escaneos?session_id=eq.'+encodeURIComponent(_qrSid),
