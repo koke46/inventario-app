@@ -6974,8 +6974,8 @@ const _pwaFab=(()=>{
   return el;
 })();
 if(!_isStandalone){
-  if(_isIOS) _pwaFab.style.display='flex';
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstall=e;_pwaFab.style.display='flex';});
+  _pwaFab.style.display='flex';
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstall=e;});
   window.addEventListener('appinstalled',()=>{_pwaFab.style.display='none';_deferredInstall=null;});
 }
 </script>
