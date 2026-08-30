@@ -689,6 +689,9 @@ body.demo-activo{padding-top:40px;}
       <span class="topbar-sub" id="page-sub">Todos los lotes ordenados por caducidad</span>
     </div>
     <div class="topbar-spacer"></div>
+    <div class="mode-toggle">
+      <button id="btn-theme" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+    </div>
     <div id="topbar-user-chip" style="display:none;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px 5px 8px;cursor:pointer;margin-left:8px" onclick="cambiarUsuario()" title="Cambiar usuario">
       <span id="topbar-user-emoji" style="font-size:17px">👤</span>
       <span id="topbar-usuario-nombre" style="font-size:13px;font-weight:600;color:var(--fg)">—</span>
@@ -988,6 +991,15 @@ body.demo-activo{padding-top:40px;}
             <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Define tramos horarios con descuento automático. El precio se aplica solo mientras estés en ese tramo.</p>
             <div id="hf-lista" style="margin-bottom:16px"></div>
             <button class="btn-save" onclick="abrirModalHoraFeliz()">＋ Añadir tramo</button>
+          </div>
+        </div>
+        <div class="aj-panel" id="panel-apariencia">
+          <div class="aj-head">🎨 Apariencia</div>
+          <div class="aj-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:600">Modo oscuro</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Cambia entre modo claro y modo oscuro</div></div>
+              <button id="aj-theme-btn" onclick="toggleTheme()" style="padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--sans);color:var(--text)">🌙 Oscuro</button>
+            </div>
           </div>
         </div>
         <div class="aj-panel" id="panel-notif">
@@ -2188,6 +2200,7 @@ const _AJ_PANELES=[
   {id:'panel-carta-qr',  ico:'📱', lbl:'Carta QR'},
   {id:'panel-menu-dia',  ico:'🍽️', lbl:'Menú del día'},
   {id:'panel-hora-feliz',ico:'🍺', lbl:'Hora feliz'},
+  {id:'panel-apariencia',ico:'🎨', lbl:'Apariencia'},
   {id:'panel-notif',     ico:'🔔', lbl:'Notificaciones'},
   {id:'panel-seguridad', ico:'🔐', lbl:'Seguridad'},
   {id:'panel-peligro',   ico:'🗑️', lbl:'Peligro',   soporteOnly:true, danger:true},
@@ -6252,6 +6265,32 @@ function eliminarPinCaja(){
 }
 
 // ══════════════════════════════════════════════
+// TEMA CLARO / OSCURO
+// ══════════════════════════════════════════════
+function _initTheme(){
+  const t=localStorage.getItem('if_theme');
+  if(t) document.documentElement.setAttribute('data-theme',t);
+  _updateThemeBtns();
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme');
+  const sys=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const next=(cur==='dark'||((!cur)&&sys))?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('if_theme',next);
+  _updateThemeBtns();
+}
+function _updateThemeBtns(){
+  const cur=document.documentElement.getAttribute('data-theme');
+  const sys=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const isDark=cur==='dark'||((!cur)&&sys);
+  const btn=document.getElementById('btn-theme');
+  if(btn) btn.textContent=isDark?'☀️':'🌙';
+  const aj=document.getElementById('aj-theme-btn');
+  if(aj) aj.textContent=isDark?'☀️ Claro':'🌙 Oscuro';
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function arrancarApp(){
@@ -6305,6 +6344,7 @@ function arrancarApp(){
   }
 }
 (async function init(){
+  _initTheme();
   // Reset completo via URL: ?reset=<MASTER_PASS>
   if(new URLSearchParams(location.search).get('reset')===MASTER_PASS){
     localStorage.clear();
