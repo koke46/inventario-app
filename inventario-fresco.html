@@ -1286,6 +1286,7 @@ body.demo-activo{padding-top:40px;}
   <button onclick="imprimirTicketBT(_ultimaComanda)" style="background:#1a73e8;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">🖨️ Ticket</button>
   <button onclick="enviarTicketWhatsApp(_ultimaComanda)" style="background:#25D366;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📱 WhatsApp</button>
   <button onclick="abrirModalFactura()" style="background:#6a1b9a;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">📄 Factura</button>
+  <button onclick="abrirModalDevolucion(_ultimaComanda)" style="background:#DC2626;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:var(--sans)">🔄 Devolución</button>
   <button onclick="document.getElementById('ticket-float').style.display='none'" style="background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;line-height:1;padding:0">×</button>
 </div>
 
@@ -1399,6 +1400,28 @@ body.demo-activo{padding-top:40px;}
     <div class="modal-ft">
       <button class="btn-cancel" onclick="cerrarModalFactura()">Cancelar</button>
       <button class="btn-save" onclick="imprimirFactura()">📄 Generar factura</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL DEVOLUCIÓN ── -->
+<div class="modal-overlay" id="modal-devolucion" onclick="if(event.target===this)cerrarModalDevolucion()">
+  <div class="modal" style="width:440px;max-width:96vw">
+    <div class="modal-hd">
+      <span>🔄 Devolución</span>
+      <button class="modal-x" onclick="cerrarModalDevolucion()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Marca los artículos que devuelve el cliente. El stock se recupera automáticamente.</div>
+      <div id="dev-items-list"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface2);border-radius:8px;margin-top:8px;border:1px solid var(--border)">
+        <span style="font-size:14px;font-weight:700">💸 A reembolsar</span>
+        <span id="dev-total-val" style="font-size:22px;font-weight:900;color:var(--red);font-family:var(--mono)">0,00 €</span>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" onclick="cerrarModalDevolucion()">Cancelar</button>
+      <button class="btn-save" style="background:#DC2626" onclick="confirmarDevolucion()">🔄 Confirmar devolución</button>
     </div>
   </div>
 </div>
@@ -2512,6 +2535,57 @@ function abrirModalFactura(){
 }
 function cerrarModalFactura(){
   document.getElementById('modal-factura').classList.remove('open');
+}
+// ── DEVOLUCIONES ──
+let _devComanda=null,_devSeleccion={};
+function abrirModalDevolucion(com){
+  if(!com){toast('⚠️ No hay comanda reciente');return;}
+  _devComanda=com;_devSeleccion={};
+  (com.items||[]).forEach((it,i)=>{_devSeleccion[i]=it.cantidad||1;});
+  _renderDevolucion();
+  document.getElementById('modal-devolucion').classList.add('open');
+}
+function cerrarModalDevolucion(){document.getElementById('modal-devolucion').classList.remove('open');}
+function _renderDevolucion(){
+  const items=_devComanda.items||[];
+  document.getElementById('dev-items-list').innerHTML=items.map((it,i)=>{
+    const qty=_devSeleccion[i]??0;const sel=qty>0;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:9px;background:${sel?'var(--red-lt)':'var(--surface2)'};border-radius:8px;margin-bottom:6px;border:1.5px solid ${sel?'var(--red)':'var(--border)'}">
+      <input type="checkbox" ${sel?'checked':''} onchange="_devToggle(${i},this.checked)" style="width:16px;height:16px;accent-color:var(--red);cursor:pointer;flex-shrink:0">
+      <span style="font-size:16px">${it.emoji||'📦'}</span>
+      <span style="flex:1;font-size:13px;font-weight:600">${esc(it.nombre)}</span>
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+        <button onclick="_devQty(${i},-1)" style="width:24px;height:24px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;font-weight:700;color:var(--fg)">−</button>
+        <span style="font-size:14px;font-weight:800;font-family:var(--mono);min-width:20px;text-align:center">${qty}</span>
+        <button onclick="_devQty(${i},1)" style="width:24px;height:24px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;font-weight:700;color:var(--fg)">+</button>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:var(--red);font-family:var(--mono);min-width:46px;text-align:right">${qty>0?fmtEuro((it.precio||0)*qty):''}</span>
+    </div>`;
+  }).join('');
+  const total=items.reduce((s,it,i)=>s+((_devSeleccion[i]??0)*(it.precio||0)),0);
+  document.getElementById('dev-total-val').textContent=fmtEuro(total);
+}
+function _devToggle(i,checked){_devSeleccion[i]=checked?(_devComanda.items[i].cantidad||1):0;_renderDevolucion();}
+function _devQty(i,d){const max=_devComanda.items[i].cantidad||1;_devSeleccion[i]=Math.max(0,Math.min(max,(_devSeleccion[i]??0)+d));_renderDevolucion();}
+function confirmarDevolucion(){
+  const items=_devComanda.items||[];
+  const devItems=items.map((it,i)=>({...it,cantidad:_devSeleccion[i]??0})).filter(it=>it.cantidad>0);
+  if(!devItems.length){toast('⚠️ Selecciona al menos un artículo');return;}
+  const total=devItems.reduce((s,it)=>s+(it.precio||0)*it.cantidad,0);
+  if(comercio.descontarStock!==false){
+    devItems.forEach(it=>{
+      const p=(comercio.categorias||[]).flatMap(c=>c.productos||[]).find(pr=>pr.id===it.id||pr.nombre===it.nombre);
+      if(p) p.stockTotal=(p.stockTotal||0)+it.cantidad;
+    });
+  }
+  comandas.unshift({id:uid(),nombre:'DEV-'+(_devComanda.nombre||_devComanda.mesa||''),
+    items:devItems,total:-total,estado:'devolucion',cobrada:true,
+    fecha:new Date().toISOString(),fechaCierre:new Date().toISOString(),refDevolucion:_devComanda.id});
+  save();
+  cerrarModalDevolucion();
+  toast('🔄 Devolución de '+fmtEuro(total)+' — recuerda entregar el efectivo al cliente',5000);
+  if(typeof renderHistorial==='function') renderHistorial();
+  if(typeof renderStatsPos==='function') renderStatsPos();
 }
 function imprimirFactura(){
   const nombre=document.getElementById('fac-nombre').value.trim();
@@ -3864,12 +3938,14 @@ function renderPedido(){
 
 let _cobroPersonas=1;
 let _propina=0;
-let _cobromodoItems=false;   // false=igual, true=por ítems
-let _itemPersonas={};        // {itemIdx: personaNum}
+let _cobromodoItems=false;
+let _itemPersonas={};
 let _nPersonasItems=2;
+let _mostrarEfectivo=false;
+let _efectivoEntregado=0;
 function abrirModalCobro(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
-  _cobroPersonas=1;_propina=0;_cobromodoItems=false;
+  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;
   _itemPersonas={};_nPersonasItems=2;
   _renderModalCobro();
   document.getElementById('modal-cobro').classList.add('open');
@@ -3952,9 +4028,18 @@ function _renderModalCobro(){
       <div id="propina-preview" style="font-size:13px;color:var(--green);font-weight:600;min-height:18px"></div>
     </div>
     <div class="cobro-btns">
-      <button class="cobro-btn" onclick="confirmarCobro('efectivo')">💵 Efectivo</button>
+      <button class="cobro-btn" onclick="_abrirEfectivo()" style="${_mostrarEfectivo?'border-color:var(--green);color:var(--green);background:rgba(16,185,129,.07)':''}">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
-    </div>`;
+    </div>
+    ${_mostrarEfectivo?`<div style="margin-top:10px;background:var(--surface2);border-radius:10px;border:1.5px solid var(--green);padding:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--green)">💵 ¿Cuánto entrega el cliente?</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        ${[5,10,20,50].map(b=>`<button onclick="_setBillete(${b})" style="flex:1;min-width:48px;padding:9px 4px;border-radius:8px;border:1.5px solid ${_efectivoEntregado===b?'var(--green)':'var(--border)'};background:${_efectivoEntregado===b?'var(--green)':'var(--surface)'};color:${_efectivoEntregado===b?'#fff':'var(--fg)'};font-size:15px;font-weight:800;cursor:pointer;font-family:var(--mono)">${b}€</button>`).join('')}
+      </div>
+      <input id="ef-inp" class="form-input" type="number" min="0" step="0.01" placeholder="Otro importe..." inputmode="decimal" value="${_efectivoEntregado||''}" oninput="_efectivoEntregado=parseFloat(this.value)||0;_actualizarCambio()">
+      <div id="cambio-res" style="font-size:22px;font-weight:900;text-align:center;padding:12px;border-radius:8px;background:var(--bg);font-family:var(--mono);margin-top:8px;min-height:52px;display:flex;align-items:center;justify-content:center"></div>
+      <button onclick="confirmarCobro('efectivo')" style="width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--sans)">✓ Confirmar cobro en efectivo</button>
+    </div>`:''}`;
 }
 function _setModoCobro(modo){_cobromodoItems=modo;_renderModalCobro();}
 function _cambiarPersonas(d){
@@ -3988,6 +4073,37 @@ function _setPropina(v){
 function _actualizarPropina(){
   const el=document.getElementById('propina-preview');
   if(el) el.textContent=_propina>0?'💰 Propina: '+fmtEuro(_propina):'';
+}
+function _abrirEfectivo(){
+  _mostrarEfectivo=!_mostrarEfectivo;
+  _efectivoEntregado=0;
+  _renderModalCobro();
+  if(_mostrarEfectivo){
+    setTimeout(()=>{
+      const inp=document.getElementById('ef-inp');
+      if(inp) inp.focus();
+      _actualizarCambio();
+    },40);
+  }
+}
+function _setBillete(v){
+  _efectivoEntregado=v;
+  const inp=document.getElementById('ef-inp');
+  if(inp) inp.value=v;
+  _actualizarCambio();
+}
+function _actualizarCambio(){
+  const el=document.getElementById('cambio-res');
+  if(!el) return;
+  const total=calcTotal();
+  const cambio=_efectivoEntregado-total;
+  if(_efectivoEntregado<=0){
+    el.innerHTML='<span style="font-size:13px;color:var(--muted)">Introduce el importe entregado</span>';
+  } else if(cambio<-0.005){
+    el.innerHTML='<span style="color:var(--red)">Faltan '+fmtEuro(Math.abs(cambio))+'</span>';
+  } else {
+    el.innerHTML='<span style="color:var(--green)">Cambio: '+fmtEuro(Math.max(0,cambio))+'</span>';
+  }
 }
 function confirmarCobro(metodoPago){
   cerrarModalCobro();
@@ -4948,7 +5064,7 @@ function _abrirCierreCajaModal(){
         <input class="form-input" id="cierre-nota" type="text" placeholder="Ej: día de mucho movimiento">
       </div>
       ${yaCerrado?`<div style="background:var(--surface2);border-radius:8px;padding:10px;font-size:13px;color:var(--orange)">⚠️ Ya existe un cierre para hoy (${fmtEuro(yaCerrado.total)}). Se creará uno adicional.</div>`:''}
-      <button onclick="imprimirCierreGestoria()" style="width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">📄 Imprimir resumen para gestoría</button>
+      <div style="display:flex;gap:8px;margin-top:4px"><button onclick="imprimirTicketCierre()" style="flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">🖨️ Ticket cierre</button><button onclick="imprimirCierreGestoria()" style="flex:1;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">📄 Gestoría PDF</button></div>
     </div>
   `;
   document.getElementById('modal-cierre').classList.add('open');
@@ -5035,6 +5151,53 @@ function mostrarBtnTicket(){
   clearTimeout(el._to);
   el.style.display='flex';
   el._to=setTimeout(()=>{el.style.display='none';},8000);
+}
+function imprimirTicketCierre(){
+  const hoyStr=new Date().toISOString().slice(0,10);
+  const hoyC=comandas.filter(c=>c.cobrada&&c.fecha.slice(0,10)===hoyStr);
+  const ventas=hoyC.filter(c=>c.estado!=='devolucion');
+  const devoluciones=hoyC.filter(c=>c.estado==='devolucion');
+  const total=hoyC.reduce((s,c)=>s+(c.total||0),0);
+  const ef=hoyC.filter(c=>c.metodoPago==='efectivo').reduce((s,c)=>s+(c.total||0),0);
+  const tj=hoyC.filter(c=>c.metodoPago==='tarjeta').reduce((s,c)=>s+(c.total||0),0);
+  const bz=hoyC.filter(c=>c.metodoPago==='bizum').reduce((s,c)=>s+(c.total||0),0);
+  const sd=hoyC.filter(c=>!c.metodoPago&&c.estado!=='devolucion').reduce((s,c)=>s+(c.total||0),0);
+  const totalDev=Math.abs(devoluciones.reduce((s,c)=>s+(c.total||0),0));
+  const ticket=ventas.length?ventas.reduce((s,c)=>s+(c.total||0),0)/ventas.length:0;
+  const nombre=comercio.nombre||'Mi Negocio';
+  const dir=[comercio.dir,comercio.cp&&comercio.ciudad?`${comercio.cp} ${comercio.ciudad}`:comercio.cp||comercio.ciudad].filter(Boolean).join(' · ');
+  const fechaLabel=new Date(hoyStr+'T00:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const apertura=cierresCaja.filter(c=>c.tipo==='apertura'&&c.fecha===hoyStr).sort((a,b)=>b.hora.localeCompare(a.hora))[0];
+  const fmt=v=>v.toFixed(2).replace('.',',');
+  const row=(l,r,bold)=>`<div style="display:flex;justify-content:space-between;${bold?'font-weight:700':''}"><span>${l}</span><span>${r}</span></div>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cierre ${hoyStr}</title><style>body{font-family:'Courier New',monospace;font-size:13px;max-width:300px;margin:0 auto;padding:20px 16px;color:#000;line-height:1.6}hr{border:none;border-top:1px dashed #000;margin:10px 0}.center{text-align:center}.big{font-size:20px;font-weight:900;letter-spacing:1px}.total-block{border-top:2px solid #000;border-bottom:2px solid #000;padding:6px 0;margin:8px 0;font-size:18px;font-weight:900;display:flex;justify-content:space-between}@media print{body{padding:0;max-width:100%}}</style></head><body>
+  <div class="center big">${nombre}</div>
+  ${dir?`<div class="center" style="font-size:11px;margin:2px 0">${dir}</div>`:''}
+  ${comercio.nif?`<div class="center" style="font-size:11px">NIF: ${comercio.nif}</div>`:''}
+  <div class="center" style="font-size:11px;margin-top:4px">CIERRE DE CAJA</div>
+  <hr>
+  <div class="center" style="font-size:12px">${fechaLabel}</div>
+  <div class="center" style="font-size:11px">Hora de cierre: ${hora}</div>
+  <hr>
+  ${apertura?row('🔓 Fondo inicial',fmt(apertura.fondo||0)+' €',false):''}
+  ${row('Ventas realizadas',ventas.length+'',false)}
+  ${devoluciones.length?row('Devoluciones',devoluciones.length+'',false):''}
+  <hr>
+  ${ef?row('💵 Efectivo',fmt(ef)+' €',false):''}
+  ${tj?row('💳 Tarjeta',fmt(tj)+' €',false):''}
+  ${bz?row('📱 Bizum',fmt(bz)+' €',false):''}
+  ${sd?row('Sin especificar',fmt(sd)+' €',false):''}
+  ${devoluciones.length?`<div style="display:flex;justify-content:space-between;color:#c00"><span>🔄 Devoluciones</span><span>-${fmt(totalDev)} €</span></div>`:''}
+  <div class="total-block"><span>TOTAL NETO</span><span>${fmt(total)} €</span></div>
+  ${row('Ticket medio',fmt(ticket)+' €',false)}
+  <hr>
+  <div class="center" style="font-size:10px;margin-top:4px">Generado: ${new Date().toLocaleString('es-ES')}</div>
+  <div class="center" style="font-size:12px;font-weight:700;margin-top:10px;letter-spacing:2px">* FIN DE JORNADA *</div>
+  <script>window.onload=function(){window.print()}<\/script>
+  </body></html>`;
+  const w=window.open('','_blank','width=380,height=620');
+  if(w){w.document.write(html);w.document.close();}
 }
 function imprimirCierreGestoria(){
   const hoyStr=new Date().toISOString().slice(0,10);
