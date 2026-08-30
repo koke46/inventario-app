@@ -769,7 +769,7 @@ async function guardarCliente(){
       _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
       cerrarModal();
       renderStats();renderTabla();
-      mostrarFicha(cliente,tipo,licenciaId,usuario,contrasena,notas);
+      toast('✅ Cliente '+cliente+' creado');
       return;
     }
     cerrarModal();
@@ -838,7 +838,7 @@ async function crearYMostrarFicha(){
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasGuardar,activa:true,created_at:new Date().toISOString()});
     renderStats();renderTabla();
     cerrarGenerador();
-    mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas);
+    toast('✅ Cliente '+cliente+' creado');
   }catch(e){
     toast('❌ Error al crear: '+e.message,true);
   }
