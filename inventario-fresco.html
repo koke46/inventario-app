@@ -1822,7 +1822,7 @@ async function checkLicencia(){
     if(forceReset){
       const _pfx=LICENCIA_ID.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_';
       Object.keys(localStorage).filter(k=>k.startsWith(_pfx)).forEach(k=>localStorage.removeItem(k));
-      fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
+      await fetch(LIC_SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID),
         {method:'PATCH',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({force_reset:false})}).catch(()=>{});
       location.reload();

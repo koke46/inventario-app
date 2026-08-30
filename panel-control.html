@@ -293,7 +293,10 @@ tr:hover td{background:var(--surface2)}
     </div>
     <div class="form-group">
       <label class="form-label">Fecha de expiración de licencia</label>
-      <input class="form-input" id="m-expiracion" type="date" placeholder="AAAA-MM-DD">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="form-input" id="m-expiracion" type="date" placeholder="AAAA-MM-DD" style="flex:1">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="ponerDosMeses()" title="Establecer 2 meses gratis desde hoy" style="white-space:nowrap;flex-shrink:0">📅 2 meses gratis</button>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Notas</label>
@@ -1030,6 +1033,14 @@ async function eliminarDemo(ip){
   }catch(e){
     toast('❌ Error: '+e.message,true);
   }
+}
+
+function ponerDosMeses(){
+  const d=new Date();
+  d.setMonth(d.getMonth()+2);
+  const val=d.toISOString().slice(0,10);
+  const el=document.getElementById('m-expiracion');
+  if(el) el.value=val;
 }
 
 // ── INICIO ──
