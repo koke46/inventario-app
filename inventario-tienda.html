@@ -6951,28 +6951,33 @@ function resetInactivityTimer(){
 }
 ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resetInactivityTimer,{passive:true}));
 
-// PWA install — botón fijo permanente
+// PWA install — botón fijo permanente con soporte iOS y Android
 let _deferredInstall=null;
+const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+const _isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const _FAB_CSS='display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--amber);color:#1A1F2E;border:none;border-radius:50px;padding:13px 26px;z-index:9990;box-shadow:0 4px 24px rgba(0,0,0,.4);font-family:var(--sans);align-items:center;gap:10px;cursor:pointer;white-space:nowrap;font-weight:800;font-size:14px;letter-spacing:.2px';
 function instalarPWA(){
-  if(!_deferredInstall) return;
-  _deferredInstall.prompt();
-  _deferredInstall.userChoice.then(()=>{_deferredInstall=null;_pwaFab.style.display='none';});
+  if(_deferredInstall){
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(()=>{_deferredInstall=null;_pwaFab.style.display='none';});
+  } else if(_isIOS){
+    alert('Para instalar en iPhone:\n\n1. Toca el botón de compartir (cuadrado con flecha ↑) en la barra de Safari\n2. Elige "Añadir a pantalla de inicio"\n3. Pulsa "Añadir"');
+  }
 }
 const _pwaFab=(()=>{
   const el=document.createElement('button');
   el.id='pwa-install-fab';
-  el.style.cssText='display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--amber);color:#1A1F2E;border:none;border-radius:50px;padding:13px 26px;z-index:9990;box-shadow:0 4px 24px rgba(0,0,0,.4);font-family:var(--sans);align-items:center;gap:10px;cursor:pointer;white-space:nowrap;font-weight:800;font-size:14px;letter-spacing:.2px';
+  el.style.cssText=_FAB_CSS;
   el.innerHTML='📲 Instalar app';
   el.onclick=()=>instalarPWA();
   document.body.appendChild(el);
   return el;
 })();
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();_deferredInstall=e;_pwaFab.style.display='flex';
-});
-window.addEventListener('appinstalled',()=>{
-  _pwaFab.style.display='none';_deferredInstall=null;
-});
+if(!_isStandalone){
+  if(_isIOS) _pwaFab.style.display='flex';
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstall=e;_pwaFab.style.display='flex';});
+  window.addEventListener('appinstalled',()=>{_pwaFab.style.display='none';_deferredInstall=null;});
+}
 </script>
 <script>
 if('serviceWorker' in navigator){
