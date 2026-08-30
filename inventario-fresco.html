@@ -352,7 +352,9 @@ body.demo-activo{padding-top:40px;}
 .cat-tab{padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;color:var(--muted);font-family:var(--sans);transition:all .15s;white-space:nowrap;}
 .cat-tab.active{background:var(--amber);border-color:var(--amber);color:#1A1F2E;}
 .prd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
-.numpad-wrap{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;margin-top:8px;}
+.numpad-wrap{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;margin-top:8px;display:none;}
+.numpad-toggle{width:100%;background:none;border:1px dashed var(--border);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--muted);font-weight:600;cursor:pointer;margin-top:8px;font-family:var(--sans);transition:all .15s;}
+.numpad-toggle:hover{border-color:var(--amber);color:var(--amber);}
 .numpad-display{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:20px;font-weight:700;font-family:var(--mono);text-align:right;margin-bottom:6px;color:var(--amber);letter-spacing:1px;}
 .numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px;}
 .num-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;height:38px;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--mono);color:var(--text);transition:background .1s;line-height:1;display:flex;align-items:center;justify-content:center;}
@@ -1105,6 +1107,7 @@ body.demo-activo{padding-top:40px;}
               <button class="btn-cocina" onclick="enviarACocina()">📤 Enviar a cocina</button>
               <button class="btn-limpiar-ped" onclick="limpiarPedido()">🗑️ Limpiar pedido</button>
             </div>
+            <button class="numpad-toggle" onclick="var w=this.nextElementSibling;var v=w.style.display==='block';w.style.display=v?'none':'block';this.textContent=v?'🔢 Mostrar teclado':'🔼 Ocultar teclado'">🔢 Mostrar teclado</button>
             <div class="numpad-wrap">
               <div class="numpad-display" id="num-display">0</div>
               <div class="numpad-grid">
