@@ -85,6 +85,7 @@ body.touch .stat-val{font-size:32px;}
 .cocina-item-row{display:flex;gap:8px;align-items:center;font-size:14px;}
 .cocina-qty{font-weight:800;font-family:var(--mono);color:var(--amber);min-width:24px;}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
 /* ── AUTH ── */
 #auth-screen{position:fixed;inset:0;background:#16191E;z-index:10000;display:flex;align-items:center;justify-content:center;}
 #auth-screen.hidden{display:none;}
@@ -534,10 +535,22 @@ body.demo-activo{padding-top:40px;}
 .ck-card.pendiente .ck-mesa{animation:ck-pulse 1.4s ease-in-out infinite;}
 .ped-estado-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
 .ped-estado-badge.pendiente{background:rgba(230,126,34,.15);color:var(--amber);}
-.ped-estado-badge.recibido{background:rgba(46,213,115,.15);color:var(--green);}
+.ped-estado-badge.recibido{background:rgba(46,213,113,.15);color:var(--green);}
+@media print{
+  .sidebar,.topbar,#demo-banner,#demo-aviso,#auth-screen,#login-screen,#user-select-screen,.btn-add,.toolbar,.act-btn,button:not(.print-ok){display:none!important;}
+  .main{overflow:visible!important;}
+  .content{overflow:visible!important;padding:0!important;}
+  body{overflow:visible!important;}
+  .inv-table{page-break-inside:auto;}
+}
 </style>
 </head>
 <body>
+<div id="loading-screen" style="position:fixed;inset:0;background:#16191E;z-index:99997;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="font-size:48px">🍺</div>
+  <div style="width:40px;height:40px;border:3px solid rgba(245,158,11,.2);border-top-color:#F59E0B;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div style="font-size:13px;color:rgba(255,255,255,.4);font-family:monospace">Cargando...</div>
+</div>
 
 <!-- ── USER SELECT ── -->
 <div id="user-select-screen" class="hidden">
@@ -662,9 +675,9 @@ body.demo-activo{padding-top:40px;}
 
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
-  <div class="logo-mark">🥦</div>
-  <button class="nav-btn active" id="nav-comandas" onclick="showPage('comandas',this)">🧾<span class="tip">Comandas</span></button>
-  <button class="nav-btn" id="nav-inventario" onclick="showPage('inventario',this)">📦<span class="tip">Inventario</span><span class="stock-badge" id="inv-stock-badge"></span></button>
+  <div class="logo-mark">🥦<div style="font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.5px;margin-top:2px">v2.0</div></div>
+  <button class="nav-btn active" id="nav-comandas" onclick="showPage('comandas',this)">🧾<span class="tip">Comandas</span><span class="stock-badge" id="sidebar-badge-comandas" style="background:var(--blue)"></span></button>
+  <button class="nav-btn" id="nav-inventario" onclick="showPage('inventario',this)">📦<span class="tip">Inventario</span><span class="stock-badge" id="inv-stock-badge"></span><span class="stock-badge" id="sidebar-badge-inv" style="display:none"></span></button>
   <button class="nav-btn" id="nav-reservas" onclick="showPage('reservas',this)">🗓️<span class="tip">Reservas</span></button>
   <button class="nav-btn" id="nav-caducidades" onclick="showPage('caducidades',this)">
     📅<span class="tip">Caducidades</span>
@@ -1204,6 +1217,7 @@ body.demo-activo{padding-top:40px;}
     <div class="page" id="page-historial">
       <div class="toolbar">
         <input class="search-input" id="hist-search" type="text" placeholder="🔍  Buscar producto..." oninput="renderHistorial()" autocomplete="off">
+        <button class="btn-add" onclick="exportarHistorialCSV()">📥 CSV</button>
       </div>
       <div id="hist-body"></div>
     </div>
@@ -2060,6 +2074,16 @@ function updateStats(){
   // Alert dot
   const dot=document.getElementById('cad-dot');
   dot.style.display=(numVenc+numProx>0)?'block':'none';
+  updateSidebarBadges();
+}
+function updateSidebarBadges(){
+  const abiertas=comandas.filter(c=>c.estado!=='cobrada'&&!c.cobrada).length;
+  const bComandas=document.getElementById('sidebar-badge-comandas');
+  if(bComandas){bComandas.style.display=abiertas>0?'flex':'none';bComandas.textContent=abiertas>9?'9+':abiertas;}
+  const umbral=comercio.umbral||7;
+  const criticos=getLotesConDias().filter(l=>l.dias<=umbral&&l.dias>=0).length;
+  const bInv=document.getElementById('sidebar-badge-inv');
+  if(bInv){bInv.style.display=criticos>0?'flex':'none';bInv.textContent=criticos>9?'9+':criticos;}
 }
 
 // ══════════════════════════════════════════════
@@ -2110,7 +2134,7 @@ function renderInventario(){
   }).filter(Boolean);
 
   if(!rows.length){
-    document.getElementById('inv-body').innerHTML=`<div class="inv-empty">📦 No hay productos.<br><small>Usa «Añadir producto» para registrar tu stock.</small></div>`;
+    document.getElementById('inv-body').innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">📦</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Sin productos aún</div><div style="font-size:13px">Pulsa «+ Añadir» para empezar</div></div>`;
     return;
   }
   document.getElementById('inv-body').innerHTML=rows.join('');
@@ -3294,6 +3318,8 @@ function hacerLogin(){
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     cerrarDetalle();cerrarModalAnadir();
+    document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+    document.querySelectorAll('[id$="-modal"]:not(.hidden)').forEach(m=>m.classList.add('hidden'));
   }
 });
 
@@ -4540,7 +4566,7 @@ function renderVentas(){
   _renderComparativa();
 
   if(!dias_arr.length){
-    document.getElementById('ventas-body').innerHTML='<div class="inv-empty" style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">📊 No hay ventas en este periodo.</div>';
+    document.getElementById('ventas-body').innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">💶</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Sin ventas en este periodo</div><div style="font-size:13px">Las comandas cobradas aparecerán aquí</div></div>`;
     return;
   }
 
@@ -5271,7 +5297,7 @@ function setProvTab(tab){
 }
 function renderListaProveedores(){
   const el=document.getElementById('prov-lista');if(!el) return;
-  if(!proveedores.length){el.innerHTML='<div class="inv-empty" style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">🏭 No hay proveedores. Añade uno con el botón de arriba.</div>';return;}
+  if(!proveedores.length){el.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">🏭</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Sin proveedores aún</div><div style="font-size:13px">Añade uno con el botón de arriba</div></div>`;return;}
   el.innerHTML=proveedores.map(p=>`
     <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
       <div style="flex-shrink:0;font-size:28px">🏭</div>
@@ -5797,7 +5823,7 @@ function renderHistorial(){
   movs.sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
   if(!movs.length){
-    document.getElementById('hist-body').innerHTML=`<div class="inv-empty" style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">📋 No hay entradas de stock registradas.</div>`;
+    document.getElementById('hist-body').innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">📋</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">Sin entradas registradas</div><div style="font-size:13px">Aquí aparecerán las entradas de stock</div></div>`;
     return;
   }
   const byDate={};
@@ -6265,6 +6291,21 @@ function eliminarPinCaja(){
 }
 
 // ══════════════════════════════════════════════
+// EXPORTAR CSV
+// ══════════════════════════════════════════════
+function exportarCSV(datos,nombre){
+  if(!datos.length){toast('Sin datos para exportar');return;}
+  const keys=Object.keys(datos[0]);
+  const csv=[keys.join(','),...datos.map(r=>keys.map(k=>{const v=r[k]??'';return typeof v==='string'&&v.includes(',')?`"${v}"`:v;}).join(','))].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download=nombre+'.csv';a.click();
+}
+function exportarHistorialCSV(){
+  exportarCSV(movimientos.filter(m=>m.tipo==='entrada').map(m=>({fecha:m.fecha,producto:m.nombre||m.id,tipo:m.tipo,cantidad:m.cantidad,usuario:m.usuario||''})),'historial');
+}
+
+// ══════════════════════════════════════════════
 // TEMA CLARO / OSCURO
 // ══════════════════════════════════════════════
 function _initTheme(){
@@ -6294,6 +6335,7 @@ function _updateThemeBtns(){
 // INIT
 // ══════════════════════════════════════════════
 function arrancarApp(){
+  document.getElementById('loading-screen')?.remove();
   document.getElementById('topbar-comercio').textContent=comercio.nombre||'Mi Comercio';
   if(_modoSoporte){
     let badge=document.getElementById('soporte-badge');
@@ -6374,6 +6416,7 @@ function arrancarApp(){
     else _demoCheckIp().catch(()=>{});
     const inicio=sbInicio||(localInicio?parseInt(localInicio):null);
     if(!inicio){
+      document.getElementById('loading-screen')?.remove();
       document.getElementById('demo-modal').classList.remove('hidden');
       return;
     }
@@ -7371,6 +7414,37 @@ function eliminarReserva(){
   reservas=reservas.filter(r=>r.id!==_resEditId);
   save();cerrarModalReserva();renderReservas();
   toast('🗑️ Reserva eliminada');
+}
+
+// Timeout de sesión por inactividad (10 min)
+let _inactivityTimer=null;
+function resetInactivityTimer(){
+  clearTimeout(_inactivityTimer);
+  if(!_usuarioActivo||_usuarioActivo.id==='__admin__') return;
+  _inactivityTimer=setTimeout(()=>{
+    if(usuarios.length){
+      _usuarioActivo=null;
+      mostrarSelectorUsuario();
+      toast('⏱️ Sesión cerrada por inactividad');
+    }
+  },10*60*1000);
+}
+['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resetInactivityTimer,{passive:true}));
+
+// PWA install prompt
+let _deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredInstall=e;
+  const banner=document.createElement('div');
+  banner.id='pwa-install-banner';
+  banner.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1A1F2E;border:1px solid var(--amber);border-radius:14px;padding:12px 18px;display:flex;align-items:center;gap:12px;z-index:9990;box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:var(--sans);max-width:340px;width:90%';
+  banner.innerHTML=`<span style="font-size:24px">🍺</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">Instalar El Miarma</div><div style="font-size:11px;color:var(--muted)">Accede más rápido desde la pantalla de inicio</div></div><button onclick="instalarPWA()" style="background:var(--amber);color:#1A1F2E;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)">Instalar</button><button onclick="document.getElementById('pwa-install-banner')?.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px">×</button>`;
+  document.body.appendChild(banner);
+  setTimeout(()=>document.getElementById('pwa-install-banner')?.remove(),15000);
+});
+function instalarPWA(){
+  document.getElementById('pwa-install-banner')?.remove();
+  if(_deferredInstall){_deferredInstall.prompt();_deferredInstall=null;}
 }
 </script>
 <script>
