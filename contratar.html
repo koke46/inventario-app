@@ -1,0 +1,338 @@
+<title>Solicitar acceso</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:#0f1520;
+  --card:#1a2235;
+  --border:#263047;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --amber:#f59e0b;
+  --amber-lt:rgba(245,158,11,.10);
+  --amber-mid:rgba(245,158,11,.18);
+  --green:#4ade80;
+  --red:#f87171;
+  --input-bg:#0f1520;
+  --label:#94a3b8;
+  --focus-ring:rgba(245,158,11,.35);
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --border:#e2e8f0;
+    --text:#0f172a;
+    --muted:#64748b;
+    --amber-lt:rgba(245,158,11,.08);
+    --amber-mid:rgba(245,158,11,.14);
+    --input-bg:#f8fafc;
+    --label:#475569;
+    --focus-ring:rgba(245,158,11,.30);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --amber-lt:rgba(245,158,11,.08);
+  --amber-mid:rgba(245,158,11,.14);
+  --input-bg:#f8fafc;
+  --label:#475569;
+  --focus-ring:rgba(245,158,11,.30);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1520;
+  --card:#1a2235;
+  --border:#263047;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --amber-lt:rgba(245,158,11,.10);
+  --amber-mid:rgba(245,158,11,.18);
+  --input-bg:#0f1520;
+  --label:#94a3b8;
+  --focus-ring:rgba(245,158,11,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:40px 16px 60px;
+}
+.wrap{width:100%;max-width:500px;display:flex;flex-direction:column;gap:28px}
+
+/* Header */
+.header{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-mark{
+  width:44px;height:44px;background:var(--amber);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#0f1520;
+  flex-shrink:0;
+}
+.logo-name{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.header h1{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px;text-wrap:balance;line-height:1.2}
+.header p{font-size:14px;color:var(--muted);line-height:1.6;max-width:380px;text-wrap:balance}
+
+/* Chips */
+.chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:99px;
+  border:1.5px solid var(--border);
+  font-size:12px;font-weight:600;color:var(--muted);
+  background:var(--card);
+}
+.chip span{font-size:14px}
+
+/* Card */
+.card{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:28px 28px 24px;
+  display:flex;flex-direction:column;gap:20px;
+}
+.card-title{
+  font-size:15px;font-weight:700;color:var(--text);
+  padding-bottom:16px;border-bottom:1px solid var(--border);
+}
+
+/* Form */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;color:var(--label);letter-spacing:.3px;text-transform:uppercase}
+.field input,.field select,.field textarea{
+  background:var(--input-bg);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:inherit;
+  font-size:14px;
+  padding:11px 13px;
+  outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  width:100%;
+}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted)}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--amber);
+  box-shadow:0 0 0 3px var(--focus-ring);
+}
+.field select{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;
+  padding-right:36px;
+}
+.field textarea{resize:vertical;min-height:80px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Tipo selector */
+.tipo-opts{display:flex;gap:8px;flex-wrap:wrap}
+.tipo-btn{
+  flex:1;min-width:100px;
+  padding:10px 12px;border-radius:10px;
+  border:1.5px solid var(--border);
+  background:var(--input-bg);
+  color:var(--muted);
+  font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;text-align:center;
+  transition:all .15s;
+}
+.tipo-btn.sel{
+  border-color:var(--amber);
+  background:var(--amber-mid);
+  color:var(--amber);
+}
+
+/* Submit */
+.btn-submit{
+  width:100%;padding:14px;border-radius:12px;
+  background:var(--amber);color:#0f1520;
+  border:none;font-family:inherit;font-size:15px;font-weight:800;
+  cursor:pointer;transition:opacity .15s,transform .1s;
+  letter-spacing:-.2px;
+}
+.btn-submit:hover{opacity:.9}
+.btn-submit:active{transform:scale(.98)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+/* States */
+.err-msg{
+  font-size:12px;color:var(--red);display:none;
+  padding:10px 13px;background:rgba(248,113,113,.08);
+  border:1px solid rgba(248,113,113,.25);border-radius:8px;line-height:1.5;
+}
+.err-msg.show{display:block}
+
+/* Success */
+.success{
+  display:none;flex-direction:column;align-items:center;
+  gap:16px;text-align:center;padding:32px 24px;
+}
+.success.show{display:flex}
+.success-ico{
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(74,222,128,.12);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+}
+.success h2{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.success p{font-size:14px;color:var(--muted);line-height:1.6;max-width:320px;text-wrap:balance}
+.success-ref{
+  font-family:monospace;font-size:13px;
+  padding:8px 16px;background:var(--amber-lt);border:1px solid var(--amber-mid);
+  border-radius:8px;color:var(--amber);letter-spacing:.5px;font-weight:600;
+}
+
+/* Footer */
+.footer{text-align:center;font-size:12px;color:var(--muted);line-height:1.7}
+.footer a{color:var(--amber);text-decoration:none}
+
+@media(max-width:420px){
+  .row2{grid-template-columns:1fr}
+  .card{padding:22px 18px 20px}
+  .header h1{font-size:22px}
+}
+</style>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">I</div>
+      <span class="logo-name">InventarioPro</span>
+    </div>
+    <h1>Solicita tu acceso</h1>
+    <p>Rellena el formulario y te contactamos en menos de 24 horas para activar tu cuenta.</p>
+    <div class="chips">
+      <div class="chip"><span>🏪</span> Tienda / Bocatería</div>
+      <div class="chip"><span>🍺</span> Bar / Restaurante</div>
+    </div>
+  </div>
+
+  <!-- Form card -->
+  <div class="card">
+    <div class="card-title">Datos de contacto</div>
+
+    <form id="form" style="display:flex;flex-direction:column;gap:16px" onsubmit="enviar(event)">
+
+      <div class="row2">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="f-nombre" placeholder="Tu nombre" autocomplete="given-name" required>
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" id="f-tel" placeholder="612 345 678" autocomplete="tel" inputmode="tel" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nombre del negocio</label>
+        <input type="text" id="f-negocio" placeholder="Bar El Ejemplo, Bocatería La Plaza…" required>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email" required>
+      </div>
+
+      <div class="field">
+        <label>Tipo de negocio</label>
+        <div class="tipo-opts">
+          <button type="button" class="tipo-btn sel" data-v="tienda" onclick="selTipo(this)">🏪 Tienda / Bocatería</button>
+          <button type="button" class="tipo-btn" data-v="bar" onclick="selTipo(this)">🍺 Bar / Restaurante</button>
+          <button type="button" class="tipo-btn" data-v="otro" onclick="selTipo(this)">📦 Otro</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Mensaje <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(opcional)</span></label>
+        <textarea id="f-msg" placeholder="¿Tienes alguna pregunta o necesidad especial?"></textarea>
+      </div>
+
+      <div class="err-msg" id="err"></div>
+
+      <button type="submit" class="btn-submit" id="btn-send">Enviar solicitud</button>
+
+    </form>
+
+    <!-- Success state -->
+    <div class="success" id="ok">
+      <div class="success-ico">✓</div>
+      <h2>¡Solicitud recibida!</h2>
+      <p>Te contactaremos en menos de 24 horas en el email y teléfono que nos has dejado.</p>
+      <div class="success-ref" id="ok-ref">—</div>
+      <p style="font-size:12px">Guarda este número de referencia por si necesitas consultarnos.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    ¿Tienes dudas? Escríbenos a <a href="mailto:jorgelinerochamorro@gmail.com">jorgelinerochamorro@gmail.com</a>
+  </div>
+
+</div>
+
+<script>
+const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+let _tipo='tienda';
+function selTipo(btn){
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  _tipo=btn.dataset.v;
+}
+
+function refId(){
+  const n=Date.now().toString(36).toUpperCase().slice(-5);
+  const r=Math.random().toString(36).toUpperCase().slice(2,6);
+  return 'SOL-'+n+r;
+}
+
+async function enviar(e){
+  e.preventDefault();
+  const err=document.getElementById('err');
+  const btn=document.getElementById('btn-send');
+  err.classList.remove('show');
+  btn.disabled=true;
+  btn.textContent='Enviando…';
+
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const negocio=document.getElementById('f-negocio').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const mensaje=document.getElementById('f-msg').value.trim();
+  const ref=refId();
+
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/solicitudes',{
+      method:'POST',
+      headers:{...SB_H,'Prefer':'return=minimal'},
+      body:JSON.stringify({nombre,telefono:tel,negocio,email,tipo:_tipo,mensaje:mensaje||null,ref})
+    });
+    if(!r.ok&&r.status!==201){
+      throw new Error('HTTP '+r.status);
+    }
+    // Éxito
+    document.getElementById('form').style.display='none';
+    const ok=document.getElementById('ok');
+    ok.classList.add('show');
+    document.getElementById('ok-ref').textContent=ref;
+  }catch(ex){
+    err.textContent='No se ha podido enviar la solicitud. Inténtalo de nuevo o escríbenos directamente a jorgelinerochamorro@gmail.com';
+    err.classList.add('show');
+    btn.disabled=false;
+    btn.textContent='Enviar solicitud';
+  }
+}
+</script>

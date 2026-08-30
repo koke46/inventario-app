@@ -377,6 +377,8 @@ body.demo-activo{padding-top:40px;}
 .cat-folder-ico{font-size:38px;margin-bottom:8px;}
 .cat-folder-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
 .cat-folder-count{font-size:11px;color:var(--muted);}
+.cat-folder.dragging{opacity:.3;transform:scale(.95)!important;border-style:dashed;}
+.cat-folder.drag-over{outline:2.5px solid var(--amber);background:var(--amber-lt)!important;transform:scale(1.04)!important;}
 .cat-back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);font-family:var(--sans);margin-bottom:14px;transition:all .15s;}
 .cat-back-btn:hover{border-color:var(--amber);color:var(--amber);}
 .prd-card-emoji{font-size:28px;margin-bottom:5px;}
@@ -1603,22 +1605,22 @@ body.demo-activo{padding-top:40px;}
 </div>
 
 <!-- Modal QR Escáner móvil -->
-<div id="modal-qr-scanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9001;align-items:center;justify-content:center">
-  <div style="background:var(--card);border-radius:18px;padding:22px;width:min(95vw,360px);display:flex;flex-direction:column;gap:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between">
+<div id="modal-qr-scanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9001;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:18px;padding:22px;width:min(95vw,340px);display:flex;flex-direction:column;gap:14px;align-items:center">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
       <span style="font-weight:700;font-size:15px">📱 Escáner con el móvil</span>
       <button onclick="cerrarQR()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">×</button>
     </div>
-    <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.5">Escanea este QR con el móvil y apunta la cámara al código de barras del producto</p>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-      <span style="font-size:12px;font-weight:700;color:#4ade80;letter-spacing:.5px;text-transform:uppercase">📦 Inventario</span>
-      <div style="padding:6px;background:#fff;border-radius:10px;border:2.5px solid #4ade80">
-        <img id="qr-img-inv" src="" alt="QR Inventario" style="width:170px;height:170px;display:block">
-      </div>
+    <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5;text-align:center">Escanea este QR con el móvil.<br>En el móvil elige <strong>Venta</strong> o <strong>Inventario</strong> y apunta al código de barras.</p>
+    <div style="padding:8px;background:#fff;border-radius:14px;border:3px solid var(--amber)">
+      <img id="qr-img-inv" src="" alt="QR Escáner" style="width:190px;height:190px;display:block">
     </div>
-    <div id="qr-estado" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px">Esperando escaneo...</div>
-    <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:80px;overflow-y:auto"></div>
-    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;font-weight:600">Cerrar</button>
+    <div id="qr-estado" style="text-align:center;font-size:13px;font-weight:600;color:var(--muted);min-height:18px">Esperando escaneo...</div>
+    <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:100px;overflow-y:auto;width:100%"></div>
+    <div style="display:flex;gap:8px;width:100%">
+      <button onclick="cerrarQR()" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:600">Ocultar QR</button>
+      <button onclick="detenerQR()" style="flex:1;padding:10px;border:1px solid var(--red,#e53935);border-radius:10px;background:none;color:var(--red,#e53935);cursor:pointer;font-size:13px;font-weight:600">⏹ Detener</button>
+    </div>
   </div>
 </div>
 <!-- Escáner código de barras -->
@@ -3510,6 +3512,68 @@ function _reordenarProductos(fromId,toId){
   save();renderCatalogo();
 }
 
+// ── DRAG & DROP reordenar categorías ──
+let _dragCat=null;
+let _touchDragCat={active:false,cat:null,x0:0,y0:0};
+function catDragStart(e,cat){
+  _dragCat=cat;
+  setTimeout(()=>e.currentTarget?.classList.add('dragging'),0);
+  e.dataTransfer.effectAllowed='move';
+}
+function catDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+}
+function catDragEnd(){
+  _dragCat=null;
+  document.querySelectorAll('.cat-folder').forEach(c=>c.classList.remove('dragging','drag-over'));
+}
+function catDrop(e,targetCat){
+  e.preventDefault();
+  if(!_dragCat||_dragCat===targetCat){catDragEnd();return;}
+  _reordenarCategorias(_dragCat,targetCat);
+  catDragEnd();
+}
+function catTouchStart(e,cat){
+  _touchDragCat={active:false,cat,x0:e.touches[0].clientX,y0:e.touches[0].clientY};
+}
+function catTouchMove(e){
+  if(!_touchDragCat.cat)return;
+  const dx=Math.abs(e.touches[0].clientX-_touchDragCat.x0);
+  const dy=Math.abs(e.touches[0].clientY-_touchDragCat.y0);
+  if(!_touchDragCat.active&&(dx>8||dy>8)){
+    _touchDragCat.active=true;
+    document.querySelector('[data-cat="'+_touchDragCat.cat+'"]')?.classList.add('dragging');
+  }
+  if(!_touchDragCat.active)return;
+  e.preventDefault();
+  const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+  const card=el?.closest('[data-cat]');
+  document.querySelectorAll('.cat-folder.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  if(card&&card.dataset.cat&&card.dataset.cat!==_touchDragCat.cat)card.classList.add('drag-over');
+}
+function catTouchEnd(){
+  if(_touchDragCat.active){
+    const target=document.querySelector('.cat-folder.drag-over');
+    if(target?.dataset.cat)_reordenarCategorias(_touchDragCat.cat,target.dataset.cat);
+    document.querySelectorAll('.cat-folder.drag-over,.cat-folder.dragging').forEach(c=>c.classList.remove('drag-over','dragging'));
+  }
+  _touchDragCat={active:false,cat:null,x0:0,y0:0};
+}
+function _reordenarCategorias(fromCat,toCat){
+  const todosProds=getCatProds();
+  const todas=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])];
+  if(!comercio.categorias)comercio.categorias=[];
+  todas.forEach(c=>{if(!comercio.categorias.includes(c))comercio.categorias.push(c);});
+  const fi=comercio.categorias.indexOf(fromCat);
+  const ti=comercio.categorias.indexOf(toCat);
+  if(fi<0||ti<0)return;
+  const[moved]=comercio.categorias.splice(fi,1);
+  comercio.categorias.splice(ti,0,moved);
+  save();renderCatalogo();
+}
+
 let _posSearch='';
 function buscarPOS(q){
   _posSearch=q.trim().toLowerCase();
@@ -3540,7 +3604,7 @@ function renderCatalogo(){
 
   // ── VISTA CARPETAS ──
   if(_catAbierta===null){
-    const cats=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])].sort();
+    const cats=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])];
     const favs=todosProds.filter(p=>p.favorito);
     let html='';
     if(favs.length){
@@ -3564,7 +3628,16 @@ function renderCatalogo(){
       const icoHtml=foto
         ?`<img src="${foto}" style="width:100px;height:100px;object-fit:contain;border-radius:10px;margin-bottom:8px">`
         :`<div class="cat-folder-ico">${_catEmoji(cat,todosProds)}</div>`;
-      html+=`<div class="cat-folder" onclick="abrirCarpeta('${esc(cat)}')">
+      html+=`<div class="cat-folder" data-cat="${esc(cat)}" draggable="true"
+        onclick="abrirCarpeta('${esc(cat)}')"
+        ondragstart="catDragStart(event,'${esc(cat)}')"
+        ondragover="catDragOver(event)"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="catDrop(event,'${esc(cat)}')"
+        ondragend="catDragEnd()"
+        ontouchstart="catTouchStart(event,'${esc(cat)}')"
+        ontouchmove="catTouchMove(event)"
+        ontouchend="catTouchEnd()">
         <button class="cat-folder-edit" onclick="event.stopPropagation();abrirEditarCategoria('${esc(cat)}')" title="Editar carpeta">✏️</button>
         <button class="cat-folder-del" onclick="event.stopPropagation();eliminarCategoria('${esc(cat)}')" title="Eliminar carpeta">✕</button>
         ${icoHtml}
@@ -6640,21 +6713,39 @@ renderMenu();
 </html>`;
 }
 
-// ── QR ESCÁNER MÓVIL (solo inventario) ───────────────────
+// ── QR ESCÁNER MÓVIL ─────────────────────────────────────
 const _QR_BASE='https://koke46.github.io/inventario-app/scanner.html';
 let _qrSid=null,_qrTimer=null;
 function abrirQR(){
   _qrSid=(crypto.randomUUID?crypto.randomUUID():(Date.now().toString(36)+Math.random().toString(36).slice(2)));
-  const urlI=_QR_BASE+'?s='+encodeURIComponent(_qrSid)+'&m=inventario';
-  const qrApi='https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=4&data=';
-  document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(urlI);
+  const url=_QR_BASE+'?s='+encodeURIComponent(_qrSid);
+  const qrApi='https://api.qrserver.com/v1/create-qr-code/?size=190x190&margin=4&data=';
+  document.getElementById('qr-img-inv').src=qrApi+encodeURIComponent(url);
   document.getElementById('qr-estado').textContent='Esperando escaneo...';
   document.getElementById('qr-lista').innerHTML='';
   document.getElementById('modal-qr-scanner').style.display='flex';
-  _qrTimer=setInterval(_qrPoll,2000);
+  if(_qrTimer)clearInterval(_qrTimer);
+  _qrTimer=setInterval(_qrPoll,1500);
 }
 function cerrarQR(){
   document.getElementById('modal-qr-scanner').style.display='none';
+  if(_qrSid) _mostrarBadgeEscaner();
+}
+function _mostrarBadgeEscaner(){
+  let badge=document.getElementById('qr-activo-badge');
+  if(!badge){
+    badge=document.createElement('div');
+    badge.id='qr-activo-badge';
+    badge.style.cssText='position:fixed;bottom:80px;left:16px;z-index:8999;background:#1e3a5f;border:2px solid #60a5fa;color:#60a5fa;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+    badge.innerHTML='<span>📱</span> Escáner activo · <span style="text-decoration:underline;font-weight:400">Ver</span>';
+    badge.onclick=()=>{document.getElementById('modal-qr-scanner').style.display='flex';badge.remove();};
+    document.body.appendChild(badge);
+  }
+}
+function detenerQR(){
+  document.getElementById('modal-qr-scanner').style.display='none';
+  const badge=document.getElementById('qr-activo-badge');
+  if(badge) badge.remove();
   if(_qrTimer){clearInterval(_qrTimer);_qrTimer=null;}
   if(_qrSid){
     fetch(LIC_SB_URL+'/rest/v1/escaneos?session_id=eq.'+encodeURIComponent(_qrSid),
@@ -6673,25 +6764,48 @@ async function _qrPoll(){
     await fetch(LIC_SB_URL+'/rest/v1/escaneos?id=eq.'+id,
       {method:'DELETE',headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY}});
     const sep=raw.indexOf(':');
-    const modo=(sep>0&&(raw.slice(0,sep)==='venta'||raw.slice(0,sep)==='inventario'))?raw.slice(0,sep):'inventario';
+    const modo=(sep>0&&(raw.slice(0,sep)==='venta'||raw.slice(0,sep)==='inventario'))?raw.slice(0,sep):'venta';
     const code=sep>0?raw.slice(sep+1):raw;
     _qrProcesar(modo,code);
+    const isV=modo==='venta';
     const estado=document.getElementById('qr-estado');
-    if(estado)estado.textContent='📦 '+code;
+    if(estado)estado.textContent=(isV?'🛒':'📦')+' '+code;
     const lista=document.getElementById('qr-lista');
     if(lista){
       const el=document.createElement('div');
       el.style=`font-size:12px;padding:5px 8px;background:var(--surface2);border-radius:6px;display:flex;gap:6px;align-items:center`;
-      el.innerHTML=`<span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#14532d;color:#4ade80">I</span><span style="font-family:monospace;color:#4ade80">${code}</span>`;
+      el.innerHTML=`<span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:${isV?'#1e3a5f':'#14532d'};color:${isV?'#60a5fa':'#4ade80'}">${isV?'V':'I'}</span><span style="font-family:monospace;color:${isV?'#60a5fa':'#4ade80'}">${code}</span>`;
       lista.prepend(el);
       if(lista.children.length>4)lista.lastChild.remove();
     }
   }catch(e){}
 }
 function _qrProcesar(modo,code){
-  const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
-  if(prod){cerrarQR();abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
-  else{cerrarQR();_crearInventarioDesdeBarcode(code);}
+  if(modo==='venta'){
+    const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim());
+    if(prod){
+      añadirAlPedido(prod.id);
+      const estado=document.getElementById('qr-estado');
+      if(estado){estado.textContent='✓ '+prod.nombre;estado.style.color='#4ade80';}
+      const lista=document.getElementById('qr-lista');
+      if(lista){
+        const el=document.createElement('div');
+        el.style=`font-size:12px;padding:5px 8px;background:var(--surface2);border-radius:6px;display:flex;gap:6px;align-items:center`;
+        el.innerHTML=`<span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#1e3a5f;color:#60a5fa">✓</span><span style="color:#60a5fa;font-weight:600">${esc(prod.nombre)}</span><span style="color:var(--muted);font-size:11px;margin-left:auto">${fmtEuro(prod.precio||0)}</span>`;
+        lista.prepend(el);
+        if(lista.children.length>5)lista.lastChild.remove();
+      }
+      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando siguiente código...';e.style.color='';}},2000);
+    }else{
+      const estado=document.getElementById('qr-estado');
+      if(estado){estado.textContent='⚠️ Código sin asignar en carta';estado.style.color='#f87171';}
+      setTimeout(()=>{const e=document.getElementById('qr-estado');if(e){e.textContent='Esperando escaneo...';e.style.color='';}},3000);
+    }
+  }else{
+    const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
+    if(prod){detenerQR();abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
+    else{detenerQR();_crearInventarioDesdeBarcode(code);}
+  }
 }
 async function _crearInventarioDesdeBarcode(code){
   let nombre='',imagen='';
