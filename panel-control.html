@@ -765,7 +765,7 @@ async function guardarCliente(){
       const h2=sbHeaders();
       await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
         {method:'DELETE',headers:h2}).catch(()=>{});
-      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null,force_reset:true});
+      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null,force_reset:false});
       _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
       cerrarModal();
       renderStats();renderTabla();
@@ -834,7 +834,7 @@ async function crearYMostrarFicha(){
     // Limpiar datos de sync antiguos para este ID antes de crear el cliente
     await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
       {method:'DELETE',headers:h}).catch(()=>{});
-    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true,max_dispositivos:genMaxDisp,force_reset:true});
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true,max_dispositivos:genMaxDisp,force_reset:false});
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasGuardar,activa:true,created_at:new Date().toISOString()});
     renderStats();renderTabla();
     cerrarGenerador();
