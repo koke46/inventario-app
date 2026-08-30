@@ -121,9 +121,36 @@ tr:hover td{background:var(--surface2)}
 .ficha-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.9;white-space:pre-wrap;word-break:break-all;user-select:all;color:var(--text)}
 .ficha-actions{display:flex;gap:10px;margin-top:16px;justify-content:center}
 .ficha-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
+#login-screen.hidden{display:none}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;max-width:360px;text-align:center}
+.login-logo{font-size:48px;margin-bottom:8px}
+.login-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.login-field{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;font-family:inherit;margin-bottom:12px;outline:none;transition:border-color .15s}
+.login-field:focus{border-color:var(--purple)}
+.login-btn{width:100%;background:var(--purple);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:4px}
+.login-btn:hover{background:#6d28d9}
+.login-error{font-size:13px;color:#fca5a5;margin-top:10px;min-height:18px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 </style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card" id="login-card">
+    <div class="login-logo">⚡</div>
+    <div class="login-title">Panel de Control</div>
+    <div class="login-sub">El Miarma — Acceso restringido</div>
+    <input class="login-field" id="login-user" type="text" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    <input class="login-field" id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -134,7 +161,8 @@ tr:hover td{background:var(--surface2)}
   </div>
   <div class="topbar-right">
     <button class="btn btn-ghost btn-sm" onclick="cargar()" id="btn-refresh">🔄 Actualizar</button>
-<button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">➕ Nuevo cliente</button>
+    <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">➕ Nuevo cliente</button>
+    <button class="btn btn-ghost btn-sm" onclick="cerrarSesionPanel()" title="Cerrar sesión" style="color:var(--muted)">🔒 Salir</button>
   </div>
 </div>
 
@@ -368,6 +396,45 @@ tr:hover td{background:var(--surface2)}
 <div class="toast" id="toast"></div>
 
 <script>
+// ── AUTH PANEL ──
+const _PANEL_USER='admin';
+const _PANEL_PASS=btoa('elmiarma2026');
+const _SESSION_KEY='pc_session';
+const _SESSION_TTL=8*60*60*1000; // 8 horas
+
+function _sessionValida(){
+  try{const s=JSON.parse(localStorage.getItem(_SESSION_KEY));return s&&(Date.now()-s.ts)<_SESSION_TTL;}catch{return false;}
+}
+function doLogin(){
+  const u=(document.getElementById('login-user').value||'').trim();
+  const p=document.getElementById('login-pass').value||'';
+  const err=document.getElementById('login-error');
+  if(u===_PANEL_USER&&btoa(p)===_PANEL_PASS){
+    localStorage.setItem(_SESSION_KEY,JSON.stringify({ts:Date.now()}));
+    document.getElementById('login-screen').classList.add('hidden');
+    err.textContent='';
+    iniciarPanel();
+  }else{
+    err.textContent='Usuario o contraseña incorrectos';
+    const card=document.getElementById('login-card');
+    card.style.animation='none';
+    requestAnimationFrame(()=>{card.style.animation='shake .35s ease';});
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-pass').focus();
+  }
+}
+function cerrarSesionPanel(){
+  localStorage.removeItem(_SESSION_KEY);
+  location.reload();
+}
+if(_sessionValida()){
+  document.getElementById('login-screen').classList.add('hidden');
+}else{
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('login-user').focus();
+  });
+}
+
 const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzU4MzQ2MiwiZXhwIjoyMTAzMTU5NDYyfQ.p8tdF6eNFIQptSjM-a7wQQI_LrY_qphB-sIH7SgWdzU';
 
@@ -992,8 +1059,8 @@ async function eliminarDemo(ip){
 }
 
 // ── INICIO ──
-cargar();
-cargarDemos();
+function iniciarPanel(){cargar();cargarDemos();}
+if(_sessionValida()) iniciarPanel();
 </script>
 </body>
 </html>
