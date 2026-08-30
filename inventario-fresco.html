@@ -1787,7 +1787,7 @@ async function checkLicencia(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return true;
 
   const cache=loadJ('if_lic_cache',null);
-  if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<60*1000){
+  if(cache&&cache.contrasena&&!cache.force_reset&&(Date.now()-cache.ts)<5*1000){
     console.log('[Licencia] caché:',cache.activa);
     if(cache.activa){
       const devOk=await checkDispositivo(cache.max_dispositivos??null);
