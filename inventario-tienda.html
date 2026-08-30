@@ -3819,6 +3819,16 @@ function numAdd(){
   renderPedido();
   toast('✓ '+fmtEuro(v)+' añadido');
 }
+document.addEventListener('keydown',function(e){
+  const tag=document.activeElement&&document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  const wrap=document.querySelector('.numpad-wrap');
+  if(!wrap||wrap.style.display!=='block') return;
+  if(e.key>='0'&&e.key<='9'){e.preventDefault();numPress(e.key);}
+  else if(e.key==='.'||e.key===','){e.preventDefault();numPress('.');}
+  else if(e.key==='Backspace'||e.key==='Delete'){e.preventDefault();numDel();}
+  else if(e.key==='Enter'){e.preventDefault();numAdd();}
+});
 function añadirAlPedido(prodId){
   const prod=productos.find(p=>p.id===prodId);
   if(!prod) return;
