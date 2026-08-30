@@ -6444,9 +6444,10 @@ function arrancarApp(){
     return;
   }
   const ok=await checkLicencia();
-  if(!ok){mostrarBloqueo();return;}
+  if(!ok){document.getElementById('loading-screen')?.remove();mostrarBloqueo();return;}
   if(_sesion&&_sesion.user==='soporte'){_sesion=null;saveJ('if_sesion',null);}
   if(!_sesion){
+    document.getElementById('loading-screen')?.remove();
     document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('auth-user').focus();return;
   }
   await cargarDatosSupabase();
