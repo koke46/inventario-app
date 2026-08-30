@@ -1,6 +1,6 @@
 // Service Worker — Inventario Fresco
 // Estrategia: red primero, caché como fallback (offline)
-const CACHE = 'inventario-v1';
+const CACHE = 'inventario-v2';
 
 self.addEventListener('install', e => {
   // Pre-cachea ambas apps al instalar el SW
@@ -29,8 +29,9 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        // Guarda en caché la versión más reciente
-        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        // Clona síncronamente antes de cualquier gap async
+        const resClone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, resClone));
         return res;
       })
       .catch(() =>
