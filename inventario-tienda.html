@@ -3921,20 +3921,20 @@ function confirmarPersonalizacion(){
   renderPedido();cerrarModalPersonalizar();
   toast(`✓ "${prod.nombre}" añadido`+(suplemento>0?` (+${fmtEuro(suplemento)})`:``));
 }
-function editarNotaItem(prodId){
-  const item=pedidoActual.items.find(i=>i.productoId===prodId);
+function editarNotaItem(idx){
+  const item=pedidoActual.items[idx];
   if(!item) return;
   const nota=prompt(`Nota para "${item.nombre}":`,item.nota||'');
   if(nota===null) return;
   item.nota=nota.trim()||undefined;
   renderPedido();
 }
-function quitarDelPedido(prodId){
-  const ex=pedidoActual.items.find(i=>i.productoId===prodId);
+function quitarDelPedido(idx){
+  const ex=pedidoActual.items[idx];
   if(!ex) return;
-  const prod=productos.find(p=>p.id===prodId);
+  const prod=productos.find(p=>p.id===ex.productoId);
   if(ex.cantidad>1) ex.cantidad--;
-  else pedidoActual.items=pedidoActual.items.filter(i=>i.productoId!==prodId);
+  else pedidoActual.items.splice(idx,1);
   renderPedido();
   if(prod) _devolverStockInventario(prod.nombre);
 }
@@ -3979,7 +3979,7 @@ function renderPedido(){
   if(!items.length){
     itemsCont.innerHTML='<div class="ped-empty">🧾<br>Toca un producto<br>para añadirlo</div>';
   } else {
-    itemsCont.innerHTML=items.map(i=>`
+    itemsCont.innerHTML=items.map((i,idx)=>`
       <div class="ped-item-row" style="flex-wrap:wrap">
         <span class="ped-item-emoji">${i.emoji}</span>
         <div class="ped-item-info" style="flex:1;min-width:0">
@@ -3988,9 +3988,9 @@ function renderPedido(){
           ${i.nota?`<div class="nota-item">📝 ${esc(i.nota)}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:2px">
-          <button class="nota-btn" onclick="editarNotaItem('${esc(i.productoId)}')" title="Añadir nota">📝</button>
+          <button class="nota-btn" onclick="editarNotaItem(${idx})" title="Añadir nota">📝</button>
           <div class="ped-item-ctrl">
-            <button class="act-btn" onclick="quitarDelPedido('${esc(i.productoId)}')" style="padding:2px 7px">−</button>
+            <button class="act-btn" onclick="quitarDelPedido(${idx})" style="padding:2px 7px">−</button>
             <span class="ped-item-qty">${i.cantidad}</span>
             <button class="act-btn" onclick="añadirAlPedido('${esc(i.productoId)}')" style="padding:2px 7px">+</button>
           </div>
