@@ -1720,10 +1720,14 @@ function _checkExpiracion(fechaExp){
   const dias=Math.ceil((new Date(fechaExp)-new Date())/86400000);
   if(dias<=0){
     setTimeout(()=>toast('🔴 Tu licencia ha expirado — contacta con soporte para renovar',8000),2000);
-  } else if(dias<=7){
-    setTimeout(()=>toast('⚠️ Tu licencia expira en '+dias+' día'+(dias!==1?'s':'')+' — contacta con soporte para renovar',7000),2000);
-  } else if(dias<=30){
-    setTimeout(()=>toast('📅 Tu licencia expira el '+new Date(fechaExp).toLocaleDateString('es-ES'),5000),3000);
+  } else {
+    const el=document.getElementById('demo-dias-num');
+    if(el) el.textContent=dias;
+    const banner=document.getElementById('demo-banner');
+    if(banner) banner.classList.remove('hidden');
+    if(dias<=7){
+      setTimeout(()=>toast('⚠️ Tu prueba expira en '+dias+' día'+(dias!==1?'s':'')+' — llama al 699 279 994 para contratar',7000),2000);
+    }
   }
 }
 

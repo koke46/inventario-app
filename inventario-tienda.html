@@ -378,6 +378,8 @@ body.demo-activo{padding-top:40px;}
 .cat-folder-ico{font-size:38px;margin-bottom:8px;}
 .cat-folder-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
 .cat-folder-count{font-size:11px;color:var(--muted);}
+.cat-folder.dragging{opacity:.3;transform:scale(.95)!important;border-style:dashed;}
+.cat-folder.drag-over{outline:2.5px solid var(--amber);background:var(--amber-lt)!important;transform:scale(1.04)!important;}
 .cat-back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);font-family:var(--sans);margin-bottom:14px;transition:all .15s;}
 .cat-back-btn:hover{border-color:var(--amber);color:var(--amber);}
 .prd-card-emoji{font-size:28px;margin-bottom:5px;}
@@ -1544,10 +1546,14 @@ function _checkExpiracion(fechaExp){
   const dias=Math.ceil((new Date(fechaExp)-new Date())/86400000);
   if(dias<=0){
     setTimeout(()=>toast('🔴 Tu licencia ha expirado — contacta con soporte para renovar',8000),2000);
-  } else if(dias<=7){
-    setTimeout(()=>toast('⚠️ Tu licencia expira en '+dias+' día'+(dias!==1?'s':'')+' — contacta con soporte para renovar',7000),2000);
-  } else if(dias<=30){
-    setTimeout(()=>toast('📅 Tu licencia expira el '+new Date(fechaExp).toLocaleDateString('es-ES'),5000),3000);
+  } else {
+    const el=document.getElementById('demo-dias-num');
+    if(el) el.textContent=dias;
+    const banner=document.getElementById('demo-banner');
+    if(banner) banner.classList.remove('hidden');
+    if(dias<=7){
+      setTimeout(()=>toast('⚠️ Tu prueba expira en '+dias+' día'+(dias!==1?'s':'')+' — llama al 699 279 994 para contratar',7000),2000);
+    }
   }
 }
 
@@ -3503,6 +3509,68 @@ function _reordenarProductos(fromId,toId){
   save();renderCatalogo();
 }
 
+// ── DRAG & DROP reordenar categorías ──
+let _dragCat=null;
+let _touchDragCat={active:false,cat:null,x0:0,y0:0};
+function catDragStart(e,cat){
+  _dragCat=cat;
+  setTimeout(()=>e.currentTarget?.classList.add('dragging'),0);
+  e.dataTransfer.effectAllowed='move';
+}
+function catDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+}
+function catDragEnd(){
+  _dragCat=null;
+  document.querySelectorAll('.cat-folder').forEach(c=>c.classList.remove('dragging','drag-over'));
+}
+function catDrop(e,targetCat){
+  e.preventDefault();
+  if(!_dragCat||_dragCat===targetCat){catDragEnd();return;}
+  _reordenarCategorias(_dragCat,targetCat);
+  catDragEnd();
+}
+function catTouchStart(e,cat){
+  _touchDragCat={active:false,cat,x0:e.touches[0].clientX,y0:e.touches[0].clientY};
+}
+function catTouchMove(e){
+  if(!_touchDragCat.cat)return;
+  const dx=Math.abs(e.touches[0].clientX-_touchDragCat.x0);
+  const dy=Math.abs(e.touches[0].clientY-_touchDragCat.y0);
+  if(!_touchDragCat.active&&(dx>8||dy>8)){
+    _touchDragCat.active=true;
+    document.querySelector('[data-cat="'+_touchDragCat.cat+'"]')?.classList.add('dragging');
+  }
+  if(!_touchDragCat.active)return;
+  e.preventDefault();
+  const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+  const card=el?.closest('[data-cat]');
+  document.querySelectorAll('.cat-folder.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  if(card&&card.dataset.cat&&card.dataset.cat!==_touchDragCat.cat)card.classList.add('drag-over');
+}
+function catTouchEnd(){
+  if(_touchDragCat.active){
+    const target=document.querySelector('.cat-folder.drag-over');
+    if(target?.dataset.cat)_reordenarCategorias(_touchDragCat.cat,target.dataset.cat);
+    document.querySelectorAll('.cat-folder.drag-over,.cat-folder.dragging').forEach(c=>c.classList.remove('drag-over','dragging'));
+  }
+  _touchDragCat={active:false,cat:null,x0:0,y0:0};
+}
+function _reordenarCategorias(fromCat,toCat){
+  const todosProds=getCatProds();
+  const todas=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])];
+  if(!comercio.categorias)comercio.categorias=[];
+  todas.forEach(c=>{if(!comercio.categorias.includes(c))comercio.categorias.push(c);});
+  const fi=comercio.categorias.indexOf(fromCat);
+  const ti=comercio.categorias.indexOf(toCat);
+  if(fi<0||ti<0)return;
+  const[moved]=comercio.categorias.splice(fi,1);
+  comercio.categorias.splice(ti,0,moved);
+  save();renderCatalogo();
+}
+
 let _posSearch='';
 function buscarPOS(q){
   _posSearch=q.trim().toLowerCase();
@@ -3531,7 +3599,7 @@ function renderCatalogo(){
 
   // ── VISTA CARPETAS ──
   if(_catAbierta===null){
-    const cats=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])].sort();
+    const cats=[...new Set([...(comercio.categorias||[]),...todosProds.map(p=>p.categoria).filter(Boolean)])];
     const favs=todosProds.filter(p=>p.favorito);
     let html='';
     // Carpeta favoritos si hay
@@ -3549,7 +3617,16 @@ function renderCatalogo(){
       const icoHtml=foto
         ?`<img src="${foto}" style="width:100px;height:100px;object-fit:contain;border-radius:10px;margin-bottom:8px">`
         :`<div class="cat-folder-ico">${_catEmoji(cat,todosProds)}</div>`;
-      html+=`<div class="cat-folder" onclick="abrirCarpeta('${esc(cat)}')">
+      html+=`<div class="cat-folder" data-cat="${esc(cat)}" draggable="true"
+        onclick="abrirCarpeta('${esc(cat)}')"
+        ondragstart="catDragStart(event,'${esc(cat)}')"
+        ondragover="catDragOver(event)"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="catDrop(event,'${esc(cat)}')"
+        ondragend="catDragEnd()"
+        ontouchstart="catTouchStart(event,'${esc(cat)}')"
+        ontouchmove="catTouchMove(event)"
+        ontouchend="catTouchEnd()">
         <button class="cat-folder-edit" onclick="event.stopPropagation();abrirEditarCategoria('${esc(cat)}')" title="Editar carpeta">✏️</button>
         <button class="cat-folder-del" onclick="event.stopPropagation();eliminarCategoria('${esc(cat)}')" title="Eliminar carpeta">✕</button>
         ${icoHtml}
