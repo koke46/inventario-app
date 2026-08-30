@@ -593,6 +593,8 @@ async function toggleActiva(licenciaId,activa){
     await sbPatch(licenciaId,{activa:nuevo});
     const row=_datos.find(r=>r.licencia_id===licenciaId);
     if(row) row.activa=nuevo;
+    const sel=document.getElementById('filtro-estado');
+    if(sel) sel.value='';
     renderStats();renderTabla();
     toast(nuevo?'✅ Licencia activada':'🔴 Licencia bloqueada');
   }catch(e){
