@@ -590,12 +590,12 @@ body.demo-activo{padding-top:40px;}
     <div class="login-body">
       <div class="login-field">
         <label class="login-label">Usuario</label>
-        <input class="login-input" id="auth-user" type="text" placeholder="usuario" autocomplete="username"
+        <input class="login-input" id="auth-user" type="text" placeholder="usuario" autocomplete="off"
           onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()">
       </div>
       <div class="login-field">
         <label class="login-label">Contraseña</label>
-        <input class="login-input" id="auth-pass" type="password" placeholder="••••••" autocomplete="current-password"
+        <input class="login-input" id="auth-pass" type="password" placeholder="••••••" autocomplete="off"
           onkeydown="if(event.key==='Enter')doAuth()">
       </div>
       <div class="auth-error" id="auth-error"></div>
