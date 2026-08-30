@@ -1618,7 +1618,7 @@ body.demo-activo{padding-top:40px;}
     </div>
     <div id="qr-estado" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px">Esperando escaneo...</div>
     <div id="qr-lista" style="display:flex;flex-direction:column;gap:4px;max-height:80px;overflow-y:auto"></div>
-    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text);cursor:pointer;font-size:14px">Cerrar</button>
+    <button onclick="cerrarQR()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;font-weight:600">Cerrar</button>
   </div>
 </div>
 <!-- Escáner código de barras -->
@@ -2275,6 +2275,7 @@ function renderAjustes(){
         <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nombre)}</div>
         <div style="font-size:11px;color:var(--muted)">${p.categoria||'Sin categoría'} · ${nLotes} lote${nLotes!==1?'s':''} · ${p.precio?fmtEuro(p.precio):'sin precio'}${p.precioCoste&&p.precio?` · <span style="color:var(--green)">Margen ${((p.precio-p.precioCoste)/p.precio*100).toFixed(1)}%</span>`:''}</div>
         ${p.barcode?`<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)">🔖 ${esc(p.barcode)}</div>`:`<div style="font-size:10px;color:var(--muted);opacity:.5;margin-top:2px">🔖 Sin código de barras</div>`}
+        ${p.franja?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${p.franja==='desayuno'?'☀️ Solo desayuno':p.franja==='almuerzo'?'🌤️ Solo almuerzo':'🌙 Solo cena'}</div>`:''}
         ${!p.imagen?`<div style="font-size:10px;color:#f59e0b;margin-top:2px">⚠️ Sin foto</div>`:''}
         ${(p.precioHistorial&&p.precioHistorial.length>1)?`<div style="font-size:10px;color:var(--muted);margin-top:1px">📈 ${p.precioHistorial.length} cambios de precio</div>`:''}
       </div>
@@ -2651,6 +2652,7 @@ function modalAnadirOk(){
 }
 
 function renderModalP1(barcode){
+  const p=productoActivo;
   document.getElementById('modal-anadir-titulo').textContent='Nuevo producto';
   document.getElementById('modal-anadir-ok').textContent='✓ Guardar producto';
   const cats=_anadirConLote
@@ -2773,6 +2775,15 @@ function renderModalP1(barcode){
         <option value="1">1º Primero</option>
         <option value="2">2º Segundo</option>
         <option value="3">Postre</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Disponible en horario <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+      <select class="form-input" id="p1-franja" style="cursor:pointer">
+        <option value="" ${!p?.franja?'selected':''}>Siempre disponible</option>
+        <option value="desayuno" ${p?.franja==='desayuno'?'selected':''}>☀️ Desayuno (6:00–12:00)</option>
+        <option value="almuerzo" ${p?.franja==='almuerzo'?'selected':''}>🌤️ Almuerzo (12:00–17:00)</option>
+        <option value="cena" ${p?.franja==='cena'?'selected':''}>🌙 Cena (18:00–01:00)</option>
       </select>
     </div>
     <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
@@ -2945,11 +2956,12 @@ function crearProductoYContinuar(){
     const tipoIva=parseInt(document.getElementById('p1-iva')?.value??'10')||10;
     const cursoVal=parseInt(document.getElementById('p1-curso')?.value)||null;
     const tiempoPrep=parseInt(document.getElementById('p1-tiempo')?.value)||undefined;
+    const franja=document.getElementById('p1-franja')?.value||undefined;
     const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
     const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
     const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
     const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo,proveedorId,precioHistorial,tiempoPrep,descripcion,alergenos,admiteNota,barcode};
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo,proveedorId,precioHistorial,tiempoPrep,franja,descripcion,alergenos,admiteNota,barcode};
     productos.push(productoActivo);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
   }
@@ -3303,8 +3315,16 @@ function fmtEuro(n){
 function getPedidoNum(){
   return '#'+String((comercio.ultimoPedido||0)+1).padStart(4,'0');
 }
+function _enFranja(franja){
+  if(!franja) return true;
+  const h=new Date().getHours();
+  if(franja==='desayuno') return h>=6&&h<12;
+  if(franja==='almuerzo') return h>=12&&h<17;
+  if(franja==='cena') return h>=18||h<1;
+  return true;
+}
 function getCatProds(){
-  return productos.map(p=>{
+  return productos.filter(p=>_enFranja(p.franja)).map(p=>{
     const st=lotes.filter(l=>l.productoId===p.id&&l.cantidad>0).reduce((s,l)=>s+l.cantidad,0);
     return{...p,stockTotal:st};
   });
