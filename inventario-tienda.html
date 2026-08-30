@@ -123,11 +123,11 @@ body.touch .stat-val{font-size:32px;}
 .aviso-btn:hover{background:#1ebe5d;}
 .aviso-skip{font-size:13px;color:#6B7280;cursor:pointer;text-decoration:underline;}
 /* ── DEMO BANNER ── */
-#demo-banner{position:fixed;top:0;left:0;right:0;z-index:9997;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:linear-gradient(90deg,#78350F,#B45309);color:#FEF3C7;font-size:13px;font-weight:600;flex-wrap:wrap;text-align:center;}
+#demo-banner{position:fixed;top:0;left:0;right:0;z-index:9997;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:transparent;color:#111;font-size:13px;font-weight:700;flex-wrap:wrap;text-align:center;text-shadow:0 0 8px rgba(255,255,255,.8);}
 #demo-banner.hidden{display:none;}
-#demo-banner strong{font-size:14px;color:#FDE68A;}
-.demo-banner-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#FEF3C7;padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
-.demo-banner-btn:hover{background:rgba(255,255,255,.25);}
+#demo-banner strong{font-size:14px;color:#111;}
+.demo-banner-btn{background:rgba(29,78,216,.1);border:1.5px solid rgba(29,78,216,.4);color:#1D4ED8;padding:4px 14px;border-radius:99px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;text-shadow:none;}
+.demo-banner-btn:hover{background:rgba(29,78,216,.18);}
 body.demo-activo{padding-top:40px;}
 #bloqueo-screen{position:fixed;inset:0;background:#0D1117;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;}
 #bloqueo-screen.hidden{display:none;}
@@ -5870,7 +5870,7 @@ function arrancarApp(){
     banner.classList.remove('hidden');
     document.body.classList.add('demo-activo');
     if(restantes<=3){
-      banner.style.background='linear-gradient(90deg,#7F1D1D,#DC2626)';
+      banner.style.background='transparent';
       setTimeout(()=>_avisoDemoExpira(restantes),800);
     } else if(restantes<=7){
       banner.style.background='linear-gradient(90deg,#78350F,#D97706)';
