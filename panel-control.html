@@ -514,6 +514,7 @@ function renderTabla(){
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
+          <button class="btn btn-ghost btn-sm" onclick="copiarEnlaceTabla('${esc(r.licencia_id)}','${tipo}','${esc(r.cliente||'')}')" title="Copiar enlace de la app">🔗</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
       </td>
@@ -830,6 +831,12 @@ function copiarEnlaceApp(){
       toast('🔗 Enlace copiado');
     })
     .catch(()=>toast('Copia el enlace manualmente de la ficha',true));
+}
+function copiarEnlaceTabla(licenciaId,tipo,cliente){
+  const enlace=_urlApp(tipo,licenciaId,cliente);
+  navigator.clipboard.writeText(enlace)
+    .then(()=>toast('🔗 Enlace de '+cliente+' copiado'))
+    .catch(()=>{prompt('Copia el enlace:',enlace);});
 }
 function copiarFicha(){
   const txt=document.getElementById('ficha-box').textContent;
