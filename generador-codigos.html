@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El Miarma — Generador de Códigos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0D1117;color:#fff;font-family:Inter,system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.sub{color:#7B8299;font-size:13px;margin-bottom:32px}
+.card{background:#16191E;border:1px solid #2D3748;border-radius:16px;padding:28px;width:100%;max-width:460px;margin-bottom:24px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:16px;color:#E2E8F0}
+label{display:block;font-size:12px;color:#7B8299;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+input[type=number],input[type=text]{width:100%;padding:11px 14px;background:#0D1117;border:1.5px solid #2D3748;border-radius:8px;color:#fff;font-size:15px;outline:none;margin-bottom:12px}
+input[type=number]:focus,input[type=text]:focus{border-color:#F59E0B}
+button.main{width:100%;padding:13px;background:#F59E0B;color:#1A1F2E;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
+button.main:active{opacity:.85}
+.result{margin-top:16px;padding:14px;background:#0D1117;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:20px;text-align:center;letter-spacing:3px;color:#F59E0B;border:1px solid #2D3748;display:none}
+.copy-btn{margin-top:8px;padding:8px;background:#2D3748;color:#E2E8F0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:#7B8299;border-bottom:1px solid #2D3748;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:9px 10px;border-bottom:1px solid #1A2030;font-family:'JetBrains Mono',monospace}
+td:first-child{color:#CBD5E0;font-family:system-ui;font-size:12px}
+td:last-child{color:#F59E0B;letter-spacing:1.5px}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#1A2E1A;color:#10B981;font-family:sans-serif;letter-spacing:.5px;vertical-align:middle;margin-left:6px}
+.nombre-input{width:100%;padding:6px 8px;background:#0D1117;border:1px solid #2D3748;border-radius:6px;color:#fff;font-size:12px;outline:none;font-family:system-ui}
+.nombre-input:focus{border-color:#F59E0B}
+</style>
+</head>
+<body>
+<div style="font-size:40px;margin-bottom:8px">🔑</div>
+<h1>Generador de Códigos</h1>
+<p class="sub">Uso interno — El Miarma</p>
+
+<div class="card">
+  <h2>Generar código para un cliente</h2>
+  <label>Número de cliente</label>
+  <input type="number" id="num" min="1" max="46655" placeholder="1" value="1" onkeydown="if(event.key==='Enter')generar()">
+  <button class="main" onclick="generar()">Generar código</button>
+  <div class="result" id="result"></div>
+  <button class="copy-btn" id="copy-btn" style="display:none" onclick="copiar()">Copiar código</button>
+</div>
+
+<div class="card">
+  <h2>Lista de clientes <span class="badge">REFERENCIA</span></h2>
+  <table>
+    <thead><tr><th>#</th><th>Nombre del negocio</th><th>Código</th></tr></thead>
+    <tbody id="tabla"></tbody>
+  </table>
+  <div style="margin-top:12px;font-size:11px;color:#4A5568;text-align:center">Los nombres se guardan en tu navegador automáticamente</div>
+</div>
+
+<script>
+const SK='Miarma2026#Inv';
+
+function hmac(n){
+  const str=SK+'::mm-'+n;
+  let h1=0xDEADBEEF,h2=0x41C6CE57;
+  for(let i=0;i<str.length;i++){
+    const c=str.charCodeAt(i);
+    h1=Math.imul(h1^c,0x9E3779B9);
+    h2=Math.imul(h2^c,0x85EBCA77);
+    h1^=h2>>>13; h2^=h1>>>7;
+  }
+  h1^=h2; h2^=h1;
+  return ((h1>>>0).toString(16).toUpperCase().padStart(8,'0')+
+          (h2>>>0).toString(16).toUpperCase().padStart(8,'0')).slice(0,6);
+}
+
+function n36(n){return n.toString(36).toUpperCase().padStart(3,'0')}
+function mkCode(n){return `MM-${n36(n)}-${hmac(n)}`}
+
+function generar(){
+  const n=parseInt(document.getElementById('num').value);
+  if(!n||n<1||n>46655){alert('Número entre 1 y 46655');return;}
+  const code=mkCode(n);
+  const r=document.getElementById('result');
+  r.textContent=code;
+  r.style.display='block';
+  document.getElementById('copy-btn').style.display='block';
+}
+
+function copiar(){
+  const t=document.getElementById('result').textContent;
+  navigator.clipboard.writeText(t).catch(()=>{});
+  const b=document.getElementById('copy-btn');
+  b.textContent='Copiado ✓';
+  setTimeout(()=>b.textContent='Copiar código',1500);
+}
+
+// Lista con nombres editables guardados en localStorage
+const STORAGE_KEY='mm_clientes';
+function getNames(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch{return{}}}
+function saveName(i,v){const d=getNames();d[i]=v;localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+
+function fillTable(){
+  const tbody=document.getElementById('tabla');
+  const names=getNames();
+  tbody.innerHTML='';
+  for(let i=1;i<=30;i++){
+    const tr=document.createElement('tr');
+    const tdN=document.createElement('td');
+    tdN.textContent=i;
+    const tdNombre=document.createElement('td');
+    const inp=document.createElement('input');
+    inp.className='nombre-input';
+    inp.placeholder='Escribe el nombre del negocio...';
+    inp.value=names[i]||'';
+    inp.addEventListener('input',()=>saveName(i,inp.value));
+    tdNombre.appendChild(inp);
+    const tdC=document.createElement('td');
+    tdC.textContent=mkCode(i);
+    tr.appendChild(tdN);tr.appendChild(tdNombre);tr.appendChild(tdC);
+    tbody.appendChild(tr);
+  }
+}
+
+fillTable();
+</script>
+</body>
+</html>

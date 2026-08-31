@@ -376,15 +376,20 @@ tr:hover td{background:var(--surface2)}
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🔗 Enlace app</div>
       <a id="ficha-enlace-link" href="#" target="_blank" rel="noopener" style="display:block;font-size:12px;color:var(--blue);word-break:break-all;text-decoration:none;font-family:var(--mono);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;line-height:1.5"></a>
     </div>
-    <div style="margin-bottom:14px;display:flex;gap:8px">
+    <div style="margin-bottom:10px;display:flex;gap:8px">
       <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">👤 Usuario</div>
         <div id="ficha-usuario" style="font-family:var(--mono);font-size:13px;color:var(--text)"></div>
       </div>
       <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🔑 Contraseña</div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🔐 Contraseña</div>
         <div id="ficha-pass" style="font-family:var(--mono);font-size:13px;color:var(--text)"></div>
       </div>
+    </div>
+    <div style="background:var(--bg);border:1.5px solid var(--amber);border-radius:10px;padding:10px 14px;margin-bottom:14px;text-align:center">
+      <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🔑 Código activación exe</div>
+      <div id="ficha-codigo-act" style="font-family:var(--mono);font-size:18px;color:var(--amber);letter-spacing:2px;margin-bottom:6px"></div>
+      <button class="btn btn-ghost btn-sm" onclick="copiarCodigoAct()" style="width:100%;font-size:11px">Copiar código</button>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px">
       <button class="btn btn-ghost btn-sm" onclick="fichaEditar()">✏️ Editar</button>
@@ -579,6 +584,7 @@ function renderTabla(){
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
           <button class="btn btn-ghost btn-sm" onclick="copiarEnlaceTabla('${esc(r.licencia_id)}','${tipo}','${esc(r.cliente||'')}')" title="Copiar enlace de la app">🔗</button>
+          <button class="btn btn-ghost btn-sm" onclick="copiarCodigoTabla('${esc(r.licencia_id)}')" title="Copiar código activación exe">🔑</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
       </td>
@@ -841,6 +847,7 @@ async function crearYMostrarFicha(){
     renderStats();renderTabla();
     cerrarGenerador();
     toast('✅ Cliente '+cliente+' creado');
+    mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notasGuardar);
   }catch(e){
     toast('❌ Error al crear: '+e.message,true);
   }
@@ -863,6 +870,8 @@ function mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas){
   if(uEl) uEl.textContent=usuario||'admin';
   const pEl=document.getElementById('ficha-pass');
   if(pEl) pEl.textContent=pass||'—';
+  const cEl=document.getElementById('ficha-codigo-act');
+  if(cEl) cEl.textContent=getActivationCode(licenciaId);
   document.getElementById('ficha-hint').textContent='';
   document.getElementById('ficha-overlay').classList.remove('hidden');
 }
@@ -933,6 +942,32 @@ function abrirSoporte(licenciaId){
   const url=archivo+'?lic='+encodeURIComponent(licenciaId)+'#soporte='+encodeURIComponent(MASTER_PASS)+'&cliente='+cliente;
   window.open(url,'_blank');
   toast('🔧 Abriendo '+esc(row?.cliente||licenciaId)+' en modo soporte...');
+}
+
+// ── CÓDIGO ACTIVACIÓN EXE ──
+function _actHmac(n){
+  const str='Miarma2026#Inv::mm-'+n;
+  let h1=0xDEADBEEF,h2=0x41C6CE57;
+  for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,0x9E3779B9);h2=Math.imul(h2^c,0x85EBCA77);h1^=h2>>>13;h2^=h1>>>7;}
+  h1^=h2;h2^=h1;
+  return((h1>>>0).toString(16).toUpperCase().padStart(8,'0')+(h2>>>0).toString(16).toUpperCase().padStart(8,'0')).slice(0,6);
+}
+function _actNum(licenciaId){
+  const p=(licenciaId||'').split('_');
+  const n=parseInt(p[p.length-1],10);
+  return(!isNaN(n)&&n>0)?n:1;
+}
+function getActivationCode(licenciaId){
+  const n=_actNum(licenciaId);
+  return`MM-${n.toString(36).toUpperCase().padStart(3,'0')}-${_actHmac(n)}`;
+}
+function copiarCodigoAct(){
+  const code=document.getElementById('ficha-codigo-act').textContent;
+  navigator.clipboard.writeText(code).then(()=>toast('🔑 Código copiado — '+code)).catch(()=>{});
+}
+function copiarCodigoTabla(licenciaId){
+  const code=getActivationCode(licenciaId);
+  navigator.clipboard.writeText(code).then(()=>toast('🔑 '+code+' copiado')).catch(()=>{prompt('Código de activación:',code);});
 }
 
 // ── UTILS ──
