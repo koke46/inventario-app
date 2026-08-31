@@ -564,6 +564,8 @@ body.demo-activo{padding-top:40px;}
 <script>
 (()=>{
   const SK='Miarma2026#Inv';
+  const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
   function hmac(n){
     const str=SK+'::mm-'+n;
     let h1=0xDEADBEEF,h2=0x41C6CE57;
@@ -578,8 +580,19 @@ body.demo-activo{padding-top:40px;}
     if(isNaN(n)||n<1||n>46655)return false;
     return p[2]===hmac(n);
   }
+  function pingPanel(code){
+    try{
+      const n=parseInt(code.trim().toUpperCase().split('-')[1],36);
+      const licId='BAR_'+String(n).padStart(4,'0');
+      fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId),{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+        body:JSON.stringify({ultimo_acceso:new Date().toISOString()})
+      }).catch(()=>{});
+    }catch(e){}
+  }
   const stored=localStorage.getItem('miarma_lic');
-  if(stored&&valid(stored)){document.getElementById('_act').remove();return;}
+  if(stored&&valid(stored)){document.getElementById('_act').remove();pingPanel(stored);return;}
   window._actOk=function(){
     const v=document.getElementById('_act_inp').value;
     const inp=document.getElementById('_act_inp');
@@ -589,6 +602,7 @@ body.demo-activo{padding-top:40px;}
     if(valid(v)){
       localStorage.setItem('miarma_lic',v.trim().toUpperCase());
       document.getElementById('_act').remove();
+      pingPanel(v);
     }else{
       err.style.display='block';
       inp.style.borderColor='#EF4444';
