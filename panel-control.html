@@ -107,20 +107,8 @@ tr:hover td{background:var(--surface2)}
 
 .refresh-info{font-size:11px;color:var(--muted);text-align:right;margin-bottom:8px}
 
-/* ── GENERADOR ── */
-.btn-green{background:#15803d;color:#fff}
-.btn-green:hover{background:#166534}
 .gen-pass-wrap{display:flex;gap:6px}
 .gen-pass-wrap .form-input{flex:1;font-family:var(--mono);letter-spacing:.5px}
-
-/* ── FICHA ── */
-.ficha-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px}
-.ficha-overlay.hidden{display:none}
-.ficha-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:420px}
-.ficha-title{font-size:16px;font-weight:700;margin-bottom:16px;text-align:center}
-.ficha-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.9;white-space:pre-wrap;word-break:break-all;user-select:all;color:var(--text)}
-.ficha-actions{display:flex;gap:10px;margin-top:16px;justify-content:center}
-.ficha-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
 
 /* ── LOGIN ── */
 #login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -316,89 +304,6 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
-<!-- MODAL GENERADOR -->
-<div class="overlay hidden" id="gen-overlay">
-  <div class="modal">
-    <div class="modal-title">🎟️ Vender app nueva</div>
-    <div class="form-group">
-      <label class="form-label">Nombre del cliente / negocio</label>
-      <input class="form-input" id="gen-cliente" placeholder="Ej: Bar El Rincón · María López">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Tipo de app</label>
-      <select class="form-input" id="gen-tipo" onchange="actualizarGenId()">
-        <option value="bar">🍺 Bar</option>
-        <option value="tienda">🛒 Tienda de alimentación</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">ID Licencia</label>
-        <input class="form-input" id="gen-licencia-id" style="font-family:var(--mono)">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Usuario acceso</label>
-        <input class="form-input" id="gen-usuario" value="admin">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Contraseña acceso</label>
-      <div class="gen-pass-wrap">
-        <input class="form-input" id="gen-pass" placeholder="Contraseña generada...">
-        <button class="btn btn-ghost btn-sm" onclick="generarPassword()" title="Nueva contraseña">🔀</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Plan</label>
-      <select class="form-input" id="gen-plan" onchange="aplicarPlanEnNotas()">
-        <option value="">— Seleccionar plan —</option>
-        <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
-        <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
-        <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notas (opcional)</label>
-      <input class="form-input" id="gen-notas" placeholder="Teléfono, precio mensual, dirección...">
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="cerrarGenerador()">Cancelar</button>
-      <button class="btn btn-green" onclick="crearYMostrarFicha()">✅ Crear y generar ficha</button>
-    </div>
-  </div>
-</div>
-
-<!-- FICHA RESULTADO -->
-<div class="ficha-overlay hidden" id="ficha-overlay">
-  <div class="ficha-card">
-    <div class="ficha-title" id="ficha-title">📋 Ficha del cliente</div>
-    <div style="margin-bottom:10px;display:flex;gap:8px">
-      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">👤 Usuario</div>
-        <div id="ficha-usuario" style="font-family:var(--mono);font-size:13px;color:var(--text)"></div>
-      </div>
-      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🔐 Contraseña</div>
-        <div id="ficha-pass" style="font-family:var(--mono);font-size:13px;color:var(--text)"></div>
-      </div>
-    </div>
-    <div style="background:var(--bg);border:1.5px solid var(--amber);border-radius:10px;padding:10px 14px;margin-bottom:14px;text-align:center">
-      <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🔑 Código activación exe</div>
-      <div id="ficha-codigo-act" style="font-family:var(--mono);font-size:18px;color:var(--amber);letter-spacing:2px;margin-bottom:6px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="copiarCodigoAct()" style="width:100%;font-size:11px">Copiar código</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px">
-      <button class="btn btn-ghost btn-sm" onclick="fichaEditar()">✏️ Editar</button>
-      <button class="btn btn-ghost btn-sm" onclick="abrirSoporte(_fichaActual.licenciaId)">🔧 Soporte</button>
-      <button class="btn btn-ghost btn-sm" onclick="fichaResetHoy()">📊 Reset hoy</button>
-      <button class="btn btn-ghost btn-sm" onclick="fichaLimpiarCaja()">🧹 Limpiar caja</button>
-      <button class="btn btn-danger btn-sm" onclick="fichaEliminar()">🗑️ Eliminar</button>
-    </div>
-    <button class="btn btn-primary btn-sm" style="width:100%" onclick="cerrarFicha()">✓ Cerrar</button>
-    <div class="ficha-hint" id="ficha-hint"></div>
-  </div>
-</div>
-
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -579,7 +484,6 @@ function renderTabla(){
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
-          <button class="btn btn-ghost btn-sm" onclick="copiarCodigoTabla('${esc(r.licencia_id)}')" title="Copiar código activación exe">🔑</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
       </td>
@@ -782,111 +686,10 @@ async function guardarCliente(){
   }
 }
 
-// ── GENERADOR ──
-const _PLANES={basico:'Plan Básico - 1 PC - 15€/mes',pro:'Plan Pro - 2 PCs - 25€/mes',premium:'Plan Premium - 3 PCs - 35€/mes'};
-function aplicarPlanEnNotas(){
-  const plan=document.getElementById('gen-plan')?.value;
-  const notas=document.getElementById('gen-notas');
-  if(notas&&plan&&_PLANES[plan]) notas.value=_PLANES[plan];
-}
-function abrirGenerador(){
-  document.getElementById('gen-cliente').value='';
-  document.getElementById('gen-tipo').value='bar';
-  document.getElementById('gen-usuario').value='admin';
-  document.getElementById('gen-notas').value='';
-  const gp=document.getElementById('gen-plan');if(gp) gp.value='';
-  actualizarGenId();
-  generarPassword();
-  document.getElementById('gen-overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('gen-cliente').focus(),50);
-}
-function cerrarGenerador(){
-  document.getElementById('gen-overlay').classList.add('hidden');
-}
-function actualizarGenId(){
-  const tipo=document.getElementById('gen-tipo').value;
-  const prefijo=tipo==='tienda'?'TIENDA':'BAR';
-  const existentes=_datos.map(r=>r.licencia_id||'').filter(id=>id.startsWith(prefijo+'_'));
-  let n=1;
-  while(existentes.includes(prefijo+'_'+String(n).padStart(4,'0'))) n++;
-  document.getElementById('gen-licencia-id').value=prefijo+'_'+String(n).padStart(4,'0');
-}
 function genPass(){
   const chars='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   let p='';for(let i=0;i<8;i++) p+=chars[Math.floor(Math.random()*chars.length)];
   return p;
-}
-function generarPassword(){
-  document.getElementById('gen-pass').value=genPass();
-}
-async function crearYMostrarFicha(){
-  const cliente=(document.getElementById('gen-cliente').value||'').trim();
-  const tipo=document.getElementById('gen-tipo').value;
-  const licenciaId=(document.getElementById('gen-licencia-id').value||'').trim();
-  const usuario=(document.getElementById('gen-usuario').value||'admin').trim();
-  const pass=(document.getElementById('gen-pass').value||'').trim();
-  const notas=(document.getElementById('gen-notas').value||'').trim();
-  const genPlan=(document.getElementById('gen-plan')?.value)||'';
-  const genMaxDisp=planToMaxDisp(genPlan);
-  if(!cliente){toast('⚠️ Escribe el nombre del cliente',true);return;}
-  if(!pass){toast('⚠️ Genera o escribe una contraseña',true);return;}
-  if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
-  try{
-    const notasGuardar=notas;
-    const h=sbHeaders();
-    // Limpiar datos de sync antiguos para este ID antes de crear el cliente
-    await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
-      {method:'DELETE',headers:h}).catch(()=>{});
-    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasGuardar,usuario,contrasena:pass,activa:true,max_dispositivos:genMaxDisp,force_reset:false});
-    _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasGuardar,activa:true,created_at:new Date().toISOString()});
-    renderStats();renderTabla();
-    cerrarGenerador();
-    toast('✅ Cliente '+cliente+' creado');
-    mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notasGuardar);
-  }catch(e){
-    toast('❌ Error al crear: '+e.message,true);
-  }
-}
-let _fichaActual={};
-function mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas){
-  _fichaActual={cliente,tipo,licenciaId,usuario,pass};
-  const titleEl=document.getElementById('ficha-title');
-  if(titleEl) titleEl.textContent='📋 '+cliente;
-  const uEl=document.getElementById('ficha-usuario');
-  if(uEl) uEl.textContent=usuario||'admin';
-  const pEl=document.getElementById('ficha-pass');
-  if(pEl) pEl.textContent=pass||'—';
-  const cEl=document.getElementById('ficha-codigo-act');
-  if(cEl) cEl.textContent=getActivationCode(licenciaId);
-  document.getElementById('ficha-hint').textContent='';
-  document.getElementById('ficha-overlay').classList.remove('hidden');
-}
-function cerrarFicha(){
-  document.getElementById('ficha-overlay').classList.add('hidden');
-}
-function fichaEditar(){cerrarFicha();abrirModalEditar(_fichaActual.licenciaId);}
-function fichaResetHoy(){resetearHoyCliente(_fichaActual.licenciaId,_fichaActual.cliente);}
-function fichaLimpiarCaja(){limpiarCaja(_fichaActual.licenciaId,_fichaActual.cliente);}
-function fichaEliminar(){cerrarFicha();eliminar(_fichaActual.licenciaId,_fichaActual.cliente);}
-function copiarFicha(){
-  const txt=document.getElementById('ficha-box').textContent;
-  navigator.clipboard.writeText(txt).then(()=>toast('📋 Ficha copiada al portapapeles')).catch(()=>toast('Selecciona el texto y cópialo manualmente',true));
-}
-async function resetDatosCliente(){
-  const {licenciaId,cliente}=_fichaActual;
-  if(!confirm('¿Borrar todos los datos guardados de «'+cliente+'»?\n\nSe eliminarán los datos en la nube y la próxima vez que el cliente abra la app verá la pantalla de configuración desde cero.\n\nEsta acción no se puede deshacer.')) return;
-  try{
-    const h=sbHeaders();
-    // Borrar fila de sincronizaciones (datos en la nube)
-    await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
-      {method:'DELETE',headers:h});
-    // Marcar force_reset para que la app limpie el localStorage al próximo acceso
-    const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),
-      {method:'PATCH',headers:h,body:JSON.stringify({force_reset:true})});
-    if(!r.ok) throw new Error('Error '+r.status);
-    toast('✅ Datos borrados — el cliente verá pantalla limpia al abrir la app');
-    document.getElementById('ficha-hint').innerHTML='<span style="color:#f59e0b">⚠️ Datos borrados en la nube — pendiente de limpiar el dispositivo del cliente</span>';
-  }catch(e){toast('❌ '+e.message,true);}
 }
 // ── SOPORTE ──
 const MASTER_PASS='IF.SOPORTE.2026';
@@ -900,32 +703,6 @@ function abrirSoporte(licenciaId){
   const url=archivo+'?lic='+encodeURIComponent(licenciaId)+'#soporte='+encodeURIComponent(MASTER_PASS)+'&cliente='+cliente;
   window.open(url,'_blank');
   toast('🔧 Abriendo '+esc(row?.cliente||licenciaId)+' en modo soporte...');
-}
-
-// ── CÓDIGO ACTIVACIÓN EXE ──
-function _actHmac(n){
-  const str='Miarma2026#Inv::mm-'+n;
-  let h1=0xDEADBEEF,h2=0x41C6CE57;
-  for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,0x9E3779B9);h2=Math.imul(h2^c,0x85EBCA77);h1^=h2>>>13;h2^=h1>>>7;}
-  h1^=h2;h2^=h1;
-  return((h1>>>0).toString(16).toUpperCase().padStart(8,'0')+(h2>>>0).toString(16).toUpperCase().padStart(8,'0')).slice(0,6);
-}
-function _actNum(licenciaId){
-  const p=(licenciaId||'').split('_');
-  const n=parseInt(p[p.length-1],10);
-  return(!isNaN(n)&&n>0)?n:1;
-}
-function getActivationCode(licenciaId){
-  const n=_actNum(licenciaId);
-  return`MM-${n.toString(36).toUpperCase().padStart(3,'0')}-${_actHmac(n)}`;
-}
-function copiarCodigoAct(){
-  const code=document.getElementById('ficha-codigo-act').textContent;
-  navigator.clipboard.writeText(code).then(()=>toast('🔑 Código copiado — '+code)).catch(()=>{});
-}
-function copiarCodigoTabla(licenciaId){
-  const code=getActivationCode(licenciaId);
-  navigator.clipboard.writeText(code).then(()=>toast('🔑 '+code+' copiado')).catch(()=>{prompt('Código de activación:',code);});
 }
 
 // ── UTILS ──
