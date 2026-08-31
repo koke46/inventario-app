@@ -6012,6 +6012,18 @@ function _updateThemeBtns(){
 function arrancarApp(){
   document.getElementById('loading-screen')?.remove();
   if(!comercio.categorias) comercio.categorias=[];
+  // Categorías por defecto con fotos reales para clientes nuevos
+  if(!comercio.categorias.length && !comercio._catsInit){
+    comercio.categorias=['Alimentación','Refresco','Bocadillo','Alcohol'];
+    comercio.catFotos={
+      'Alimentación':'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&q=80',
+      'Refresco':'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=300&q=80',
+      'Bocadillo':'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=300&q=80',
+      'Alcohol':'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&q=80'
+    };
+    comercio._catsInit=true;
+    saveJ('if_comercio',comercio);
+  }
   document.getElementById('topbar-comercio').textContent=comercio.nombre||'Mi Comercio';
   if(_modoSoporte){
     let badge=document.getElementById('soporte-badge');
