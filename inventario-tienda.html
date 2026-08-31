@@ -6012,7 +6012,7 @@ function _updateThemeBtns(){
 function arrancarApp(){
   document.getElementById('loading-screen')?.remove();
   if(!comercio.categorias) comercio.categorias=[];
-  // Categorías por defecto con fotos reales para clientes nuevos
+  // Categorías y productos por defecto para clientes nuevos
   if(!comercio.categorias.length && !comercio._catsInit){
     comercio.categorias=['Alimentación','Refresco','Bocadillo','Alcohol'];
     comercio.catFotos={
@@ -6023,6 +6023,30 @@ function arrancarApp(){
     };
     comercio._catsInit=true;
     saveJ('if_comercio',comercio);
+    // Refrescos con barcodes reales — fotos se cargan desde Open Food Facts
+    if(!productos.length){
+      [
+        {nombre:'Coca-Cola 33cl',        barcode:'5449000000996'},
+        {nombre:'Coca-Cola Zero 33cl',   barcode:'5449000131836'},
+        {nombre:'Fanta Naranja 33cl',    barcode:'5449000054227'},
+        {nombre:'Fanta Limón 33cl',      barcode:'5449000133861'},
+        {nombre:'Sprite 33cl',           barcode:'5449000054593'},
+        {nombre:'Aquarius Naranja 50cl', barcode:'5449000000491'},
+        {nombre:'Aquarius Limón 50cl',   barcode:'5449000000507'},
+        {nombre:'Red Bull 25cl',         barcode:'9002490100285'},
+        {nombre:'Monster Energy 50cl',   barcode:'5060337503619'},
+        {nombre:'Pepsi 33cl',            barcode:'4006381333351'},
+        {nombre:'7UP 33cl',              barcode:'5449000228444'},
+        {nombre:'Nestea Limón 33cl',     barcode:'5449000028723'},
+      ].forEach(r=>{
+        productos.push({id:uid(),nombre:r.nombre,emoji:'🥤',categoria:'Refresco',
+          unidad:'ud',precio:0,precioCoste:0,tipoIva:21,stockMinimo:0,
+          barcode:r.barcode,precioHistorial:[]});
+      });
+      saveJ('if_productos',productos);
+      // Carga fotos desde Open Food Facts en segundo plano
+      _cargarFotosDefecto();
+    }
   }
   document.getElementById('topbar-comercio').textContent=comercio.nombre||'Mi Comercio';
   if(_modoSoporte){
@@ -6851,6 +6875,25 @@ function _qrProcesar(modo,code){
     else _mostrarAsignarBarcode(code,'inventario');
   }
 }
+async function _cargarFotosDefecto(){
+  let cambios=false;
+  for(const p of productos){
+    if(p.barcode&&!p.imagen){
+      try{
+        const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(p.barcode)+'.json');
+        if(r.ok){
+          const d=await r.json();
+          if(d.status===1){
+            const img=(d.product.image_front_small_url||d.product.image_front_url||d.product.image_url||'').replace('http://','https://');
+            if(img){p.imagen=img;delete p.emoji;cambios=true;}
+          }
+        }
+      }catch(e){}
+    }
+  }
+  if(cambios){saveJ('if_productos',productos);renderCatalogo();renderInventario();}
+}
+
 async function _crearInventarioDesdeBarcode(code){
   let nombre='',imagen='';
   try{
