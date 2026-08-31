@@ -26,10 +26,6 @@ function createWindow() {
           label: '🛒 Tienda',
           click: () => win.loadFile('inventario-tienda.html')
         },
-        {
-          label: '🍺 Frescos y Bebidas',
-          click: () => win.loadFile('inventario-fresco.html')
-        },
         { type: 'separator' },
         { label: 'Salir', role: 'quit' }
       ]
