@@ -7487,6 +7487,57 @@ if('serviceWorker' in navigator){
       .catch(e=>console.warn('SW bar error',e));
   });
 }
+
+// ── ATAJOS DE TECLADO TPV ──────────────────────────────────
+document.addEventListener('keydown',function(e){
+  const enInput=['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
+  const esFKey=e.key.length>1&&e.key.startsWith('F')&&!isNaN(e.key.slice(1));
+  if(enInput&&!esFKey) return;
+  switch(e.key){
+    case 'F1':
+      e.preventDefault();
+      limpiarPedido();
+      break;
+    case 'F2':
+      e.preventDefault();
+      {const s=document.getElementById('pos-search');if(s){s.focus();s.select();}}
+      break;
+    case 'F5':
+      e.preventDefault();
+      abrirModalCobro();
+      break;
+    case 'F6':
+      e.preventDefault();
+      if(pedidoActual&&pedidoActual.items.length) confirmarCobro('tarjeta');
+      else toast('⚠️ No hay productos en el pedido');
+      break;
+    case 'F8':
+      e.preventDefault();
+      abrirCierreCaja();
+      break;
+    case 'F10':
+      e.preventDefault();
+      if(typeof comandas!=='undefined'&&comandas.length) imprimirTicket(comandas[0]);
+      else toast('⚠️ No hay tickets recientes');
+      break;
+    case '+':case 'Add':
+      if(!enInput){
+        e.preventDefault();
+        if(pedidoActual&&pedidoActual.items.length){
+          pedidoActual.items[pedidoActual.items.length-1].cantidad++;
+          renderPedido();
+        }
+      }
+      break;
+    case '-':case 'Subtract':
+      if(!enInput){
+        e.preventDefault();
+        if(pedidoActual&&pedidoActual.items.length)
+          quitarDelPedido(pedidoActual.items.length-1);
+      }
+      break;
+  }
+});
 </script>
 </body>
 </html>
