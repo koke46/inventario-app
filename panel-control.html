@@ -481,6 +481,7 @@ function renderTabla(){
         <div class="actions">
           <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
           <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${esc(r.licencia_id)}')">✏️</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirApp('${esc(r.licencia_id)}')" title="Abrir app del cliente">📱</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
@@ -691,6 +692,14 @@ function genPass(){
   let p='';for(let i=0;i<8;i++) p+=chars[Math.floor(Math.random()*chars.length)];
   return p;
 }
+// ── ABRIR APP ──
+function abrirApp(licenciaId){
+  const row=_datos.find(r=>r.licencia_id===licenciaId);
+  const tipo=row?getTipo(row):'bar';
+  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+  window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
+}
+
 // ── SOPORTE ──
 const MASTER_PASS='IF.SOPORTE.2026';
 const APP_BARES  ='inventario-fresco.html';
