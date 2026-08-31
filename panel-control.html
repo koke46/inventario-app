@@ -849,7 +849,7 @@ function abrirApp(licenciaId){
   const row=_datos.find(r=>r.licencia_id===licenciaId);
   const tipo=row?getTipo(row):'bar';
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
-  window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
+  window.open('elmiarma://open?file='+encodeURIComponent(archivo)+'&lic='+encodeURIComponent(licenciaId),'_blank');
 }
 
 // ── SOPORTE ──
