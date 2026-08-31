@@ -372,10 +372,6 @@ tr:hover td{background:var(--surface2)}
 <div class="ficha-overlay hidden" id="ficha-overlay">
   <div class="ficha-card">
     <div class="ficha-title" id="ficha-title">📋 Ficha del cliente</div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🔗 Enlace app</div>
-      <a id="ficha-enlace-link" href="#" target="_blank" rel="noopener" style="display:block;font-size:12px;color:var(--blue);word-break:break-all;text-decoration:none;font-family:var(--mono);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;line-height:1.5"></a>
-    </div>
     <div style="margin-bottom:10px;display:flex;gap:8px">
       <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">👤 Usuario</div>
@@ -583,7 +579,6 @@ function renderTabla(){
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
-          <button class="btn btn-ghost btn-sm" onclick="copiarEnlaceTabla('${esc(r.licencia_id)}','${tipo}','${esc(r.cliente||'')}')" title="Copiar enlace de la app">🔗</button>
           <button class="btn btn-ghost btn-sm" onclick="copiarCodigoTabla('${esc(r.licencia_id)}')" title="Copiar código activación exe">🔑</button>
           <button class="btn btn-danger btn-sm" onclick="eliminar('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🗑️</button>
         </div>
@@ -852,20 +847,11 @@ async function crearYMostrarFicha(){
     toast('❌ Error al crear: '+e.message,true);
   }
 }
-const BASE_URL = 'https://koke46.github.io/inventario-app';
 let _fichaActual={};
-function _urlApp(tipo,licenciaId,cliente){
-  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
-  const nombre=cliente?'&nombre='+encodeURIComponent(cliente):'';
-  return `${BASE_URL}/${archivo}?lic=${encodeURIComponent(licenciaId)}${nombre}`;
-}
 function mostrarFicha(cliente,tipo,licenciaId,usuario,pass,notas){
   _fichaActual={cliente,tipo,licenciaId,usuario,pass};
-  const enlace=_urlApp(tipo,licenciaId,cliente);
   const titleEl=document.getElementById('ficha-title');
   if(titleEl) titleEl.textContent='📋 '+cliente;
-  const enlaceEl=document.getElementById('ficha-enlace-link');
-  if(enlaceEl){enlaceEl.href=enlace;enlaceEl.textContent=enlace;}
   const uEl=document.getElementById('ficha-usuario');
   if(uEl) uEl.textContent=usuario||'admin';
   const pEl=document.getElementById('ficha-pass');
@@ -882,22 +868,6 @@ function fichaEditar(){cerrarFicha();abrirModalEditar(_fichaActual.licenciaId);}
 function fichaResetHoy(){resetearHoyCliente(_fichaActual.licenciaId,_fichaActual.cliente);}
 function fichaLimpiarCaja(){limpiarCaja(_fichaActual.licenciaId,_fichaActual.cliente);}
 function fichaEliminar(){cerrarFicha();eliminar(_fichaActual.licenciaId,_fichaActual.cliente);}
-function copiarEnlaceApp(){
-  const {licenciaId,tipo,cliente}=_fichaActual;
-  const enlace=_urlApp(tipo,licenciaId,cliente);
-  navigator.clipboard.writeText(enlace)
-    .then(()=>{
-      document.getElementById('ficha-hint').innerHTML='<span style="color:var(--green)">✅ Enlace copiado — pégalo al cliente por WhatsApp o email</span>';
-      toast('🔗 Enlace copiado');
-    })
-    .catch(()=>toast('Copia el enlace manualmente de la ficha',true));
-}
-function copiarEnlaceTabla(licenciaId,tipo,cliente){
-  const enlace=_urlApp(tipo,licenciaId,cliente);
-  navigator.clipboard.writeText(enlace)
-    .then(()=>toast('🔗 Enlace de '+cliente+' copiado'))
-    .catch(()=>{prompt('Copia el enlace:',enlace);});
-}
 function copiarFicha(){
   const txt=document.getElementById('ficha-box').textContent;
   navigator.clipboard.writeText(txt).then(()=>toast('📋 Ficha copiada al portapapeles')).catch(()=>toast('Selecciona el texto y cópialo manualmente',true));
@@ -918,18 +888,6 @@ async function resetDatosCliente(){
     document.getElementById('ficha-hint').innerHTML='<span style="color:#f59e0b">⚠️ Datos borrados en la nube — pendiente de limpiar el dispositivo del cliente</span>';
   }catch(e){toast('❌ '+e.message,true);}
 }
-function copiarEnlacePrimerAcceso(){
-  const {licenciaId,tipo}=_fichaActual;
-  const archivo=tipo==='tienda'?APP_TIENDA:APP_BARES;
-  const enlace=BASE_URL+'/'+archivo+'?lic='+encodeURIComponent(licenciaId)+'&reset_session=1';
-  navigator.clipboard.writeText(enlace)
-    .then(()=>{
-      document.getElementById('ficha-hint').innerHTML='<span style="color:var(--green)">✅ Enlace "primer acceso" copiado — el cliente verá el login aunque ya haya entrado antes</span>';
-      toast('🔄 Enlace primer acceso copiado');
-    })
-    .catch(()=>toast('Copia el enlace manualmente de la ficha',true));
-}
-
 // ── SOPORTE ──
 const MASTER_PASS='IF.SOPORTE.2026';
 const APP_BARES  ='inventario-fresco.html';
