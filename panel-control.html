@@ -110,6 +110,12 @@ tr:hover td{background:var(--surface2)}
 .gen-pass-wrap{display:flex;gap:6px}
 .gen-pass-wrap .form-input{flex:1;font-family:var(--mono);letter-spacing:.5px}
 
+/* ── WIZARD ── */
+.wizard-steps{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.wstep{font-size:12px;font-weight:700;color:var(--muted);padding:5px 14px;border-radius:20px;border:1px solid var(--border);transition:.2s}
+.wstep.active{color:#a78bfa;border-color:#7c3aed;background:#4c1d95}
+.wstep-sep{color:var(--muted);font-size:14px}
+
 /* ── LOGIN ── */
 #login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
 #login-screen.hidden{display:none}
@@ -231,6 +237,86 @@ tr:hover td{background:var(--surface2)}
         <tr><td colspan="5" class="empty"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- WIZARD NUEVO CLIENTE -->
+<div class="overlay hidden" id="wizard-overlay">
+  <div class="modal">
+    <div class="wizard-steps">
+      <div class="wstep active" id="wstep-1">1 · Acceso</div>
+      <div class="wstep-sep">›</div>
+      <div class="wstep" id="wstep-2">2 · Comercio</div>
+    </div>
+
+    <!-- Paso 1: usuario y contraseña -->
+    <div id="wpaso-1">
+      <div class="modal-title">Nuevo cliente — Datos de acceso</div>
+      <div class="form-group">
+        <label class="form-label">Tipo de app</label>
+        <select class="form-input" id="w-tipo" onchange="wizardGenerarId()">
+          <option value="bar">🍺 Bar</option>
+          <option value="tienda">🛒 Tienda</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usuario acceso</label>
+        <input class="form-input" id="w-usuario" placeholder="admin" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('w-contrasena').focus()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña acceso</label>
+        <div class="gen-pass-wrap">
+          <input class="form-input" id="w-contrasena" type="text" autocomplete="off" onkeydown="if(event.key==='Enter')wizardPaso2()">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('w-contrasena').value=genPass()" title="Generar contraseña">🔀</button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="cerrarWizard()">Cancelar</button>
+        <button class="btn btn-primary" onclick="wizardPaso2()">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Paso 2: nombre de comercio -->
+    <div id="wpaso-2" style="display:none">
+      <div class="modal-title">Nuevo cliente — Nombre del comercio</div>
+      <div class="form-group">
+        <label class="form-label">Nombre del comercio</label>
+        <input class="form-input" id="w-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="off" onkeydown="if(event.key==='Enter')wizardGuardar()">
+      </div>
+      <details style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;user-select:none">Opciones avanzadas</summary>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:0">
+          <div class="form-group">
+            <label class="form-label">ID Licencia</label>
+            <input class="form-input" id="w-licencia-id" style="font-family:var(--mono)" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plan</label>
+            <select class="form-input" id="w-plan">
+              <option value="">— Sin plan (acceso ilimitado) —</option>
+              <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
+              <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
+              <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha expiración</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="w-expiracion" type="date" style="flex:1">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="wizardPonerDosMeses()" style="white-space:nowrap;flex-shrink:0">📅 2 meses</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <input class="form-input" id="w-notas" placeholder="Teléfono, dirección, precio mensual..." autocomplete="off">
+          </div>
+        </div>
+      </details>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="wizardAtras()">← Atrás</button>
+        <button class="btn btn-primary" id="w-btn-crear" onclick="wizardGuardar()">🚀 Crear y abrir app</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -570,26 +656,92 @@ async function eliminar(licenciaId,cliente){
   }
 }
 
-// ── MODAL ──
+// ── WIZARD NUEVO CLIENTE ──
 function abrirModalNuevo(){
-  document.getElementById('modal-titulo').textContent='Nuevo cliente';
-  document.getElementById('m-id').value='';
-  document.getElementById('m-cliente').value='';
-  document.getElementById('m-notas').value='';
-  document.getElementById('m-tipo').value='bar';
-  const mp=document.getElementById('m-plan');if(mp) mp.value='';
-  const mExp=document.getElementById('m-expiracion');if(mExp) mExp.value='';
-  const mLicId=document.getElementById('m-licencia-id');
-  mLicId.value='';mLicId.readOnly=false;mLicId.style.opacity='1';
-  document.getElementById('m-usuario').value='admin';
-  document.getElementById('m-contrasena').value=genPass();
-  window._clienteVal=undefined;
-  _modalActiva=true;
-  actualizarToggleModal();
-  generarId();
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('m-cliente').focus(),50);
+  document.getElementById('w-tipo').value='bar';
+  document.getElementById('w-usuario').value='admin';
+  document.getElementById('w-contrasena').value=genPass();
+  document.getElementById('w-cliente').value='';
+  document.getElementById('w-notas').value='';
+  document.getElementById('w-plan').value='';
+  document.getElementById('w-expiracion').value='';
+  wizardGenerarId();
+  _wizardMostrarPaso(1);
+  document.getElementById('wizard-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('w-usuario').focus(),50);
 }
+function wizardGenerarId(){
+  const tipo=document.getElementById('w-tipo').value;
+  const prefijo=tipo==='bar'?'BAR':'TIENDA';
+  const existentes=_datos.map(r=>r.licencia_id||'').filter(id=>id.startsWith(prefijo+'_'));
+  let n=1;
+  while(existentes.includes(prefijo+'_'+String(n).padStart(4,'0'))) n++;
+  document.getElementById('w-licencia-id').value=prefijo+'_'+String(n).padStart(4,'0');
+}
+function _wizardMostrarPaso(n){
+  document.getElementById('wpaso-1').style.display=n===1?'':'none';
+  document.getElementById('wpaso-2').style.display=n===2?'':'none';
+  document.getElementById('wstep-1').classList.toggle('active',n===1);
+  document.getElementById('wstep-2').classList.toggle('active',n===2);
+}
+function wizardPaso2(){
+  const u=(document.getElementById('w-usuario').value||'').trim();
+  const p=(document.getElementById('w-contrasena').value||'').trim();
+  if(!u){toast('⚠️ Escribe el usuario',true);return;}
+  if(!p){toast('⚠️ La contraseña no puede estar vacía',true);return;}
+  _wizardMostrarPaso(2);
+  setTimeout(()=>document.getElementById('w-cliente').focus(),50);
+}
+function wizardAtras(){
+  _wizardMostrarPaso(1);
+  setTimeout(()=>document.getElementById('w-contrasena').focus(),50);
+}
+function cerrarWizard(){
+  document.getElementById('wizard-overlay').classList.add('hidden');
+}
+function wizardPonerDosMeses(){
+  const d=new Date();d.setMonth(d.getMonth()+2);
+  document.getElementById('w-expiracion').value=d.toISOString().slice(0,10);
+}
+async function wizardGuardar(){
+  const cliente=(document.getElementById('w-cliente').value||'').trim();
+  const licenciaId=(document.getElementById('w-licencia-id').value||'').trim();
+  const tipo=document.getElementById('w-tipo').value;
+  const usuario=(document.getElementById('w-usuario').value||'admin').trim();
+  const contrasena=(document.getElementById('w-contrasena').value||'').trim();
+  const notas=(document.getElementById('w-notas').value||'').trim();
+  const plan=(document.getElementById('w-plan')?.value)||'';
+  const maxDisp=planToMaxDisp(plan);
+  const fechaExp=(document.getElementById('w-expiracion')?.value)||null;
+
+  if(!cliente){toast('⚠️ Escribe el nombre del comercio',true);return;}
+  if(!licenciaId){toast('⚠️ El ID de licencia es obligatorio',true);return;}
+  if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
+
+  const btn=document.getElementById('w-btn-crear');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Creando...';
+
+  const licenciaIdUp=licenciaId.toUpperCase();
+  const idDetectaTipo=licenciaIdUp.startsWith('BAR')||licenciaIdUp.startsWith('TIENDA');
+  const tipoPrefijo=tipo==='bar'?'[bar] ':'[tienda] ';
+  const notasFinal=idDetectaTipo?notas:tipoPrefijo+notas;
+
+  try{
+    await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
+      {method:'DELETE',headers:sbHeaders()}).catch(()=>{});
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,max_dispositivos:maxDisp,fecha_expiracion:fechaExp||null,force_reset:false});
+    _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,created_at:new Date().toISOString()});
+    cerrarWizard();
+    renderStats();renderTabla();
+    toast('✅ '+cliente+' creado — abriendo app...');
+    const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+    window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
+  }catch(e){
+    toast('❌ Error: '+e.message,true);
+    btn.disabled=false;btn.innerHTML='🚀 Crear y abrir app';
+  }
+}
+
 function abrirModalEditar(licenciaId){
   window._clienteVal=undefined;
   const r=_datos.find(x=>x.licencia_id===licenciaId);
@@ -744,10 +896,13 @@ function toast(msg,err=false){
   t._to=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// Cerrar modal con Escape
-document.addEventListener('keydown',e=>{if(e.key==='Escape') cerrarModal();});
-// Cerrar modal al clicar fuera
+// Cerrar modales con Escape
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){cerrarModal();cerrarWizard();}
+});
+// Cerrar al clicar fuera
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay')) cerrarModal();});
+document.getElementById('wizard-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('wizard-overlay')) cerrarWizard();});
 
 // ── AUTO-REFRESH cada 60s ──
 setInterval(cargar,60000);
