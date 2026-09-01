@@ -122,7 +122,9 @@ function createWindow() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
+        { role: 'togglefullscreen' },
+        { type: 'separator' },
+        { role: 'toggleDevTools', label: 'Consola (F12)', accelerator: 'F12' }
       ]
     }
   ]);

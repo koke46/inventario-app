@@ -5832,7 +5832,8 @@ const _BT_UUIDS=[
 ];
 let _btChar=null,_btDev=null;
 async function conectarImpresora(){
-  if(!navigator.bluetooth){toast('❌ Bluetooth no soportado. Usa Chrome o Edge.');return;}
+  if(!navigator.bluetooth){toast('❌ Bluetooth no disponible en esta versión');return;}
+  toast('🔵 Buscando impresora Bluetooth...',4000);
   try{
     const dev=await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
