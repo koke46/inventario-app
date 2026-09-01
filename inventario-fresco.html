@@ -1147,6 +1147,19 @@ body.demo-activo{padding-top:40px;}
           </div>
         </div>
 
+        <div class="aj-panel" id="panel-clientes">
+          <div class="aj-head">👥 Clientes / Fidelización</div>
+          <div class="aj-body">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Registro de clientes habituales. Las visitas y el total gastado se actualizan automáticamente en cada cobro asignado.</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+              <input class="form-input" id="cl-nombre" type="text" placeholder="Nombre del cliente" maxlength="60" autocomplete="off" style="flex:1">
+              <input class="form-input" id="cl-tel" type="tel" placeholder="Teléfono" maxlength="20" autocomplete="off" style="flex:1">
+              <button class="btn-save" onclick="clAddCliente()" style="flex-shrink:0">➕ Añadir</button>
+            </div>
+            <div id="cl-lista"></div>
+          </div>
+        </div>
+
         </div><!-- /aj-grid -->
       </div><!-- /aj-detail -->
     </div>
@@ -1235,6 +1248,7 @@ body.demo-activo{padding-top:40px;}
               <button class="btn-cocina" onclick="enviarACocina()">📤 Enviar a cocina</button>
               <button class="btn-reimprimir" id="btn-reimprimir" onclick="reimprimirUltimo()" style="display:none">🖨️ Reimprimir último</button>
               <button class="btn-limpiar-ped" onclick="limpiarPedido()">🗑️ Limpiar pedido</button>
+              <button class="btn-reimprimir" onclick="abrirVisorCliente()" style="border-color:var(--amber);color:var(--amber)">📺 Visor cliente</button>
             </div>
             <button class="numpad-toggle" onclick="var w=this.nextElementSibling;var v=w.style.display==='block';w.style.display=v?'none':'block';this.textContent=v?'🔢 Mostrar teclado':'🔼 Ocultar teclado'">🔢 Mostrar teclado</button>
             <div class="numpad-wrap">
@@ -1975,6 +1989,8 @@ let proveedores   = loadJ('if_proveedores',[]);
 let pedidosCompra = loadJ('if_pedidos',[]);
 let reservas      = loadJ('if_reservas',[]);
 let registrosVF   = loadJ('if_vf_registros',[]);
+let _nTicketContador = loadJ('if_nticket', 0);
+let _clientes = loadJ('if_clientes', []);
 let vfConfig      = loadJ('if_vf_config',{activo:false,nif:'',nombre:'',serie:'VF',ultimoNumero:0,hashAnterior:'0'.repeat(64)});
 
 function save(){
@@ -2496,6 +2512,7 @@ const _AJ_PANELES=[
   {id:'panel-seguridad', ico:'🔐', lbl:'Seguridad'},
   {id:'panel-instalar',  ico:'📲', lbl:'Instalar app'},
   {id:'panel-verifactu', ico:'🏛️', lbl:'VeriFactu'},
+  {id:'panel-clientes',  ico:'👥', lbl:'Clientes'},
   {id:'panel-peligro',   ico:'🗑️', lbl:'Peligro',   soporteOnly:true, danger:true},
 ];
 function _renderAjHome(){
@@ -2524,6 +2541,7 @@ function abrirPanelAj(id){
   if(id==='panel-ingredientes') renderIngrMasterList();
   if(id==='panel-instalar'){const qr=document.getElementById('aj-qr-img');if(qr)qr.src='https://chart.googleapis.com/chart?cht=qr&chs=200x200&choe=UTF-8&chl='+encodeURIComponent(location.href);}
   if(id==='panel-verifactu') _renderVFPanel();
+  if(id==='panel-clientes') _renderClientesPanel();
   const segAdmin=document.getElementById('seg-admin-section');
   if(segAdmin){const isAdmin=_modoSoporte||(_usuarioActivo&&_usuarioActivo.rol==='admin');segAdmin.style.display=isAdmin?'':'none';}
 }
@@ -4350,11 +4368,14 @@ function renderPedido(){
   if(subEl) subEl.textContent=fmtEuro(subtotal);
   if(totEl) totEl.textContent=fmtEuro(total);
   onDescInput();
+  // Visor cliente
+  try{const desc=getDescuento();localStorage.setItem('if_visor_pedido',JSON.stringify({negocio:comercio.nombre||'El Miarma',mesa:getMesaNombre(),items:pedidoActual.items,total,descuento:desc?.importe||0}));}catch(e){}
 }
 
 let _cobroPersonas=1;
 let _propina=0;
 let _cobromodoItems=false;
+let _cobroClienteId=null;
 let _itemPersonas={};
 let _nPersonasItems=2;
 let _mostrarEfectivo=false;
@@ -4363,7 +4384,7 @@ let _cobroMixto=false;
 let _mixtoEfectivo=0;
 function abrirModalCobro(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
-  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;_cobroMixto=false;_mixtoEfectivo=0;
+  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;_cobroMixto=false;_mixtoEfectivo=0;_cobroClienteId=null;
   _itemPersonas={};_nPersonasItems=2;
   _renderModalCobro();
   document.getElementById('modal-cobro').classList.add('open');
@@ -4445,6 +4466,13 @@ function _renderModalCobro(){
       <input class="form-input" id="propina-input" type="number" min="0" step="0.01" placeholder="Otro importe..." inputmode="decimal" oninput="_propina=parseFloat(this.value)||0;_actualizarPropina()" style="margin-bottom:6px">
       <div id="propina-preview" style="font-size:13px;color:var(--green);font-weight:600;min-height:18px"></div>
     </div>
+    ${_clientes.length?`<div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">👥 CLIENTE (opcional)</div>
+      <select id="cobro-cliente-sel" onchange="_cobroClienteId=this.value||null" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px">
+        <option value="">— Sin cliente —</option>
+        ${_clientes.map(c=>`<option value="${c.id}"${_cobroClienteId===c.id?' selected':''}>${esc(c.nombre)}${c.tel?' ('+esc(c.tel)+')':''}</option>`).join('')}
+      </select>
+    </div>`:''}
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="_abrirEfectivo()" style="${_mostrarEfectivo?'border-color:var(--green);color:var(--green);background:rgba(16,185,129,.07)':''}">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
@@ -4546,19 +4574,81 @@ function _actualizarMixto(){
   else if(tarjeta<-0.005){el.innerHTML='<span style="color:var(--red)">El efectivo supera el total</span>';}
   else{el.innerHTML=`<span style="color:var(--green)">💵 ${fmtEuro(_mixtoEfectivo)}</span><span style="color:var(--muted)"> + </span><span style="color:#3B82F6">💳 ${fmtEuro(Math.max(0,tarjeta))}</span>`;}
 }
+// ── Fidelización / Clientes ──
+function _renderClientesPanel(){
+  const el=document.getElementById('cl-lista');if(!el)return;
+  if(!_clientes.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sin clientes todavía. Añade el primero arriba.</div>';return;}
+  el.innerHTML=_clientes.map(c=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${esc(c.nombre)}</div>
+        <div style="font-size:12px;color:var(--muted)">${c.tel?'📞 '+esc(c.tel)+' · ':''}<span style="color:var(--green)">${fmtEuro(c.totalGastado||0)}</span> · ${c.visitas||0} visita${(c.visitas||0)!==1?'s':''}</div>
+      </div>
+      <button onclick="clEliminarCliente('${c.id}')" style="font-size:18px;background:none;border:none;cursor:pointer;color:var(--muted)">🗑</button>
+    </div>`).join('');
+}
+function clAddCliente(){
+  const nom=(document.getElementById('cl-nombre')?.value||'').trim();
+  if(!nom){toast('⚠️ Introduce un nombre');return;}
+  const tel=(document.getElementById('cl-tel')?.value||'').trim();
+  _clientes.push({id:uid(),nombre:nom,tel,visitas:0,totalGastado:0});
+  saveJ('if_clientes',_clientes);
+  document.getElementById('cl-nombre').value='';
+  document.getElementById('cl-tel').value='';
+  _renderClientesPanel();
+  toast('✅ Cliente añadido');
+}
+function clEliminarCliente(id){
+  _clientes=_clientes.filter(c=>c.id!==id);
+  saveJ('if_clientes',_clientes);
+  _renderClientesPanel();
+}
+function clActualizarStats(clienteId,importe){
+  const c=_clientes.find(x=>x.id===clienteId);if(!c)return;
+  c.visitas=(c.visitas||0)+1;
+  c.totalGastado=Math.round(((c.totalGastado||0)+importe)*100)/100;
+  saveJ('if_clientes',_clientes);
+}
+
 function descuentoLinea(idx){
   const it=pedidoActual.items[idx];if(!it)return;
-  const actual=it.descuentoLinea||0;
-  const v=prompt(`Descuento para "${it.nombre}" (%):\n0 para quitar`,actual||'');
-  if(v===null)return;
-  const pct=parseFloat(v);
-  if(isNaN(pct)||pct<0||pct>100){toast('⚠️ Introduce un valor entre 0 y 100');return;}
-  if(pct===0)delete it.descuentoLinea;else it.descuentoLinea=pct;
+  let el=document.getElementById('_modal-desc-linea');if(el)el.remove();
+  el=document.createElement('div');el.id='_modal-desc-linea';
+  el.style.cssText='position:fixed;inset:0;z-index:9980;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:24px;width:90%;max-width:300px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">% Descuento en línea</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${esc(it.nombre)}</div>
+    <input id="_desc-linea-inp" class="form-input" type="number" min="0" max="100" step="1" placeholder="0 – 100 %" value="${it.descuentoLinea||''}" style="margin-bottom:14px">
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('_modal-desc-linea').remove()" class="btn-cancel" style="flex:1">Cancelar</button>
+      <button onclick="_guardarDescLinea(${idx})" class="btn-save" style="flex:1">Aplicar</button>
+    </div>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+  setTimeout(()=>{const i=document.getElementById('_desc-linea-inp');if(i){i.focus();i.select();}},50);
+}
+function _guardarDescLinea(idx){
+  const it=pedidoActual.items[idx];if(!it)return;
+  const v=parseFloat(document.getElementById('_desc-linea-inp')?.value)||0;
+  if(v<0||v>100){toast('⚠️ Entre 0 y 100%');return;}
+  if(v===0)delete it.descuentoLinea;else it.descuentoLinea=v;
+  document.getElementById('_modal-desc-linea')?.remove();
   renderPedido();
 }
 function reimprimirUltimo(){
-  if(_ultimaComanda)imprimirTicket(_ultimaComanda);
+  if(_ultimaComanda)imprimirTicketBT(_ultimaComanda);
   else toast('⚠️ No hay ticket reciente');
+}
+function abrirVisorCliente(){
+  const w=window.open('visor-cliente.html','visor-cliente','width=520,height=700,left=0,top=0');
+  if(!w){toast('⚠️ No se pudo abrir el visor. Permite ventanas emergentes.');return;}
+  toast('📺 Visor cliente abierto');
+}
+function reimprimirComanda(id){
+  const c=comandas.find(x=>x.id===id);
+  if(!c){toast('⚠️ Comanda no encontrada');return;}
+  imprimirTicketBT(c);
 }
 let _pinBuffer='';
 function guardarPinBloqueo(){
@@ -4643,9 +4733,11 @@ function confirmarCobro(metodoPago){
       if(rem>0) warnings.push(item.nombre);
     }
   }
+  _nTicketContador++;saveJ('if_nticket',_nTicketContador);comanda.nTicket=_nTicketContador;
   comercio.ultimoPedido=(comercio.ultimoPedido||0)+1;
   comandas.push(comanda);save();
   if(vfConfig.activo) _generarRegistroVF(comanda);
+  if(_cobroClienteId){comanda.clienteId=_cobroClienteId;clActualizarStats(_cobroClienteId,total);}
   _cuentaCobroFin();
   document.getElementById('desc-input').value='';
   onDescInput();
@@ -5051,12 +5143,13 @@ function renderVentas(){
         <div class="cad-item">
           <div class="cad-ico" style="font-size:20px">🧾</div>
           <div class="cad-info">
-            <div class="cad-nombre">#${c.numero||'–'} ${esc(c.nombre||'Sin mesa')}</div>
+            <div class="cad-nombre">${c.nTicket?`<span style="font-family:var(--mono);color:var(--amber)">#${String(c.nTicket).padStart(4,'0')}</span> `:c.numero?`#${c.numero} `:''}${esc(c.nombre||'Sin mesa')}</div>
             <div class="cad-meta">${(c.items||[]).length} artículo${(c.items||[]).length!==1?'s':''}${c.camarero?` · 👤 ${esc(c.camarero.nombre)}`:''}</div>
           </div>
-          <div class="cad-right">
+          <div class="cad-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
             <div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--green)">${fmtEuro(c.total||0)}</div>
             <div style="font-size:11px;color:var(--muted)">${new Date(c.fecha).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>
+            <button onclick="reimprimirComanda('${c.id}')" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;color:var(--text)">🖨️ Reimprimir</button>
           </div>
         </div>`).join('')}
     </div>`;
@@ -5585,7 +5678,7 @@ function _abrirCierreCajaModal(){
         <input class="form-input" id="cierre-nota" type="text" placeholder="Ej: día de mucho movimiento">
       </div>
       ${yaCerrado?`<div style="background:var(--surface2);border-radius:8px;padding:10px;font-size:13px;color:var(--orange)">⚠️ Ya existe un cierre para hoy (${fmtEuro(yaCerrado.total)}). Se creará uno adicional.</div>`:''}
-      <div style="display:flex;gap:8px;margin-top:4px"><button onclick="imprimirTicketCierre()" style="flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">🖨️ Ticket cierre</button><button onclick="imprimirCierreGestoria()" style="flex:1;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">📄 Gestoría PDF</button></div>
+      <div style="display:flex;gap:8px;margin-top:4px"><button onclick="imprimirCierreBT()" style="flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">🖨️ Ticket cierre</button><button onclick="imprimirCierreGestoria()" style="flex:1;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)">📄 Gestoría PDF</button></div>
     </div>
   `;
   document.getElementById('modal-cierre').classList.add('open');
@@ -5634,7 +5727,7 @@ function imprimirTicket(com){
   const fechaStr=fecha.toLocaleDateString('es-ES')+' '+fecha.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   const metodos={efectivo:'Efectivo',tarjeta:'Tarjeta',bizum:'Bizum'};
   const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
-  const num=String(comercio.ultimoPedido||'').padStart(4,'0');
+  const num=String(com.nTicket||comercio.ultimoPedido||'').padStart(4,'0');
   const fmt=v=>v.toFixed(2).replace('.',',');
   const filas=(com.items||[]).map(i=>`<tr><td style="padding:3px 0">${i.nombre}</td><td style="text-align:center;padding:3px 8px">${i.cantidad}</td><td style="text-align:right;padding:3px 0">${fmt((i.precio||0)*(i.cantidad||1))} €</td></tr>`).join('');
   const ivaGrupos=_calcIva(com.items);
@@ -5726,6 +5819,51 @@ function imprimirTicketCierre(){
   </body></html>`;
   const w=window.open('','_blank','width=380,height=620');
   if(w){w.document.write(html);w.document.close();}
+}
+async function imprimirCierreBT(){
+  if(!_btChar){imprimirTicketCierre();return;}
+  const hoyStr=new Date().toISOString().slice(0,10);
+  const hoyC=comandas.filter(c=>c.cobrada&&c.fecha.slice(0,10)===hoyStr);
+  const ventas=hoyC.filter(c=>c.estado!=='devolucion');
+  const total=hoyC.reduce((s,c)=>s+(c.total||0),0);
+  const ef=hoyC.filter(c=>c.metodoPago==='efectivo').reduce((s,c)=>s+(c.total||0),0);
+  const tj=hoyC.filter(c=>c.metodoPago==='tarjeta').reduce((s,c)=>s+(c.total||0),0);
+  const bz=hoyC.filter(c=>c.metodoPago==='bizum').reduce((s,c)=>s+(c.total||0),0);
+  const ticket=ventas.length?ventas.reduce((s,c)=>s+(c.total||0),0)/ventas.length:0;
+  const apertura=cierresCaja.filter(c=>c.tipo==='apertura'&&c.fecha===hoyStr).sort((a,b)=>b.hora.localeCompare(a.hora))[0];
+  const fmt=v=>v.toFixed(2).replace('.',',');
+  const W=_getImpCfg().ancho;
+  const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const bytes=[
+    ..._ep.init(),..._ep.page(),
+    ..._ep.align('c'),..._ep.bold(true),..._ep.dbl(),
+    ..._ep.text((comercio.nombre||'Cierre').slice(0,16)),..._ep.lf(),
+    ..._ep.norm(),..._ep.bold(false),
+    ..._ep.text('CIERRE DE CAJA'),..._ep.lf(),
+    ..._ep.text(new Date(hoyStr+'T00:00:00').toLocaleDateString('es-ES')),..._ep.lf(),
+    ..._ep.text('Hora: '+hora),..._ep.lf(),
+    ..._ep.align('l'),
+    ..._ep.line('-'.repeat(W)),
+  ];
+  if(apertura){bytes.push(..._ep.two('Fondo inicial',fmt(apertura.fondo||0)+' E',W),..._ep.lf());}
+  bytes.push(..._ep.two('Ventas realizadas',String(ventas.length),W),..._ep.lf());
+  bytes.push(..._ep.line('-'.repeat(W)));
+  if(ef>0)bytes.push(..._ep.two('Efectivo',fmt(ef)+' E',W),..._ep.lf());
+  if(tj>0)bytes.push(..._ep.two('Tarjeta',fmt(tj)+' E',W),..._ep.lf());
+  if(bz>0)bytes.push(..._ep.two('Bizum',fmt(bz)+' E',W),..._ep.lf());
+  bytes.push(..._ep.line('='.repeat(W)));
+  bytes.push(..._ep.bold(true),..._ep.dbl());
+  bytes.push(..._ep.two('TOTAL NETO',fmt(total)+' E',W),..._ep.lf());
+  bytes.push(..._ep.norm(),..._ep.bold(false));
+  bytes.push(..._ep.two('Ticket medio',fmt(ticket)+' E',W),..._ep.lf());
+  bytes.push(..._ep.line('-'.repeat(W)),..._ep.align('c'));
+  bytes.push(..._ep.text('* FIN DE JORNADA *'),..._ep.lf());
+  bytes.push(..._ep.lfs(3),..._ep.cut());
+  try{
+    const ok=await _btSend(bytes);
+    if(ok)toast('🖨️ Cierre imprimido por BT');
+    else{toast('⚠️ Sin impresora BT');imprimirTicketCierre();}
+  }catch(e){toast('❌ Error al imprimir: '+e.message);imprimirTicketCierre();}
 }
 function imprimirCierreGestoria(){
   const hoyStr=new Date().toISOString().slice(0,10);
