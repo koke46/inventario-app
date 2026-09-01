@@ -852,11 +852,34 @@ body.demo-activo{padding-top:40px;}
         <div class="aj-panel" id="panel-impresora">
           <div class="aj-head">🖨️ Impresora térmica Bluetooth</div>
           <div class="aj-body">
+            <div style="margin-bottom:14px">
+              <label class="form-label">Modelo de impresora</label>
+              <select id="imp-modelo-sel" class="form-input" style="margin-bottom:8px" onchange="_onModeloImpresora()"></select>
+              <div id="imp-custom-opts" style="display:none">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+                  <div style="flex:1;min-width:120px">
+                    <label class="form-label" style="font-size:11px">Ancho papel</label>
+                    <select id="imp-custom-ancho" class="form-input" style="font-size:13px" onchange="_guardarModeloImpresora()">
+                      <option value="32">58 mm (32 chars)</option>
+                      <option value="48">80 mm (48 chars)</option>
+                    </select>
+                  </div>
+                  <div style="flex:1;min-width:120px">
+                    <label class="form-label" style="font-size:11px">Pin cajón</label>
+                    <select id="imp-custom-pin" class="form-input" style="font-size:13px" onchange="_guardarModeloImpresora()">
+                      <option value="0">Pin 2 (estándar)</option>
+                      <option value="1">Pin 5 (Star/algunos Epson)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div id="bt-printer-status" style="margin-bottom:10px;font-size:13px"></div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">Compatible con impresoras ESC/POS Bluetooth (Xprinter, HOIN, Goojprt y similares). Solo Chrome/Edge.</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">Solo Chrome/Edge. Conecta primero la impresora por Bluetooth en la configuración de Windows.</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button id="btn-bt-conectar" class="btn-save" onclick="conectarImpresora()">🔗 Conectar impresora</button>
               <button id="btn-bt-desconectar" class="btn-save" style="display:none;background:#c62828" onclick="desconectarImpresora()">✖ Desconectar</button>
+              <button id="btn-bt-cajon" class="btn-save" style="display:none;background:#6a1b9a" onclick="abrirCajonBT()">🔓 Abrir cajón</button>
             </div>
           </div>
         </div>
@@ -4545,6 +4568,7 @@ function confirmarCobro(metodoPago){
   else toast((iconos[metodoPago]||'✓')+' Cobrado '+fmtEuro(total)+' · '+(metodoPago||''));
   _ultimaComanda=comanda; mostrarBtnTicket();
   const btnReim=document.getElementById('btn-reimprimir');if(btnReim)btnReim.style.display='';
+  if((metodoPago==='efectivo'||metodoPago==='mixto')&&_btChar) abrirCajonBT();
   setTimeout(_checkStockBajo,800);
 }
 function enviarACocina(){
@@ -5749,6 +5773,58 @@ function recibirPedido(id){
 // ══════════════════════════════════════════════
 // IMPRESORA BLUETOOTH ESC/POS
 // ══════════════════════════════════════════════
+// ── Modelos de impresora ──────────────────────────────
+const _PRINTER_MODELS=[
+  {id:'xp58',    label:'Xprinter XP-58 / XP-58IIL (58 mm)',  pin:0x00, ancho:32},
+  {id:'xp80',    label:'Xprinter XP-80 / N160II (80 mm)',    pin:0x00, ancho:48},
+  {id:'hoin58',  label:'HOIN HOP-E58 (58 mm)',               pin:0x00, ancho:32},
+  {id:'hoin80',  label:'HOIN HOP-E80 (80 mm)',               pin:0x00, ancho:48},
+  {id:'goojprt', label:'Goojprt PT-210 / PT-280 (58 mm)',    pin:0x00, ancho:32},
+  {id:'epson20', label:'Epson TM-T20III (80 mm)',            pin:0x00, ancho:48},
+  {id:'epson88', label:'Epson TM-T88VI (80 mm)',             pin:0x00, ancho:48},
+  {id:'star',    label:'Star TSP143 / TSP654 (80 mm)',       pin:0x01, ancho:48},
+  {id:'citizen', label:'Citizen CT-S310II (80 mm)',          pin:0x00, ancho:48},
+  {id:'zywell',  label:'Zywell ZY208 (58 mm)',               pin:0x01, ancho:32},
+  {id:'custom',  label:'Personalizada…',                     pin:0x00, ancho:32},
+];
+function _getImpCfg(){
+  const m=comercio.impresora||{};
+  if(m.modelo==='custom') return {pin:m.pin??0x00, ancho:m.ancho??32};
+  const found=_PRINTER_MODELS.find(x=>x.id===m.modelo);
+  return found||_PRINTER_MODELS[0];
+}
+function _onModeloImpresora(){
+  const sel=document.getElementById('imp-modelo-sel');if(!sel)return;
+  const id=sel.value;
+  const customOpts=document.getElementById('imp-custom-opts');
+  if(customOpts) customOpts.style.display=id==='custom'?'block':'none';
+  if(!comercio.impresora) comercio.impresora={};
+  comercio.impresora.modelo=id;
+  const m=_PRINTER_MODELS.find(x=>x.id===id)||_PRINTER_MODELS[0];
+  if(id!=='custom'){comercio.impresora.pin=m.pin;comercio.impresora.ancho=m.ancho;}
+  save();
+}
+function _guardarModeloImpresora(){
+  const ancho=document.getElementById('imp-custom-ancho');
+  const pin=document.getElementById('imp-custom-pin');
+  if(!comercio.impresora) comercio.impresora={modelo:'custom'};
+  if(ancho) comercio.impresora.ancho=parseInt(ancho.value);
+  if(pin)   comercio.impresora.pin=parseInt(pin.value);
+  save();
+}
+function _renderSelectModelo(){
+  const sel=document.getElementById('imp-modelo-sel');if(!sel)return;
+  const cur=(comercio.impresora?.modelo)||'xp58';
+  sel.innerHTML=_PRINTER_MODELS.map(m=>`<option value="${m.id}"${m.id===cur?' selected':''}>${esc(m.label)}</option>`).join('');
+  const customOpts=document.getElementById('imp-custom-opts');
+  if(customOpts) customOpts.style.display=cur==='custom'?'block':'none';
+  if(cur==='custom'){
+    const a=document.getElementById('imp-custom-ancho');const p=document.getElementById('imp-custom-pin');
+    if(a) a.value=String(comercio.impresora?.ancho??32);
+    if(p) p.value=String(comercio.impresora?.pin??0);
+  }
+}
+
 const _BT_UUIDS=[
   {s:'e7810a71-73ae-499d-8c15-faa9aef0c3f2',c:'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'},
   {s:'000018f0-0000-1000-8000-00805f9b34fb',c:'00002af1-0000-1000-8000-00805f9b34fb'},
@@ -5780,17 +5856,20 @@ async function desconectarImpresora(){
   _btChar=null;_btDev=null;_renderPanelImpresora();toast('Impresora desconectada');
 }
 function _renderPanelImpresora(){
+  _renderSelectModelo();
   const el=document.getElementById('bt-printer-status');if(!el)return;
   const ok=!!_btChar;
   el.innerHTML=ok?`<span style="color:var(--green)">✅ ${esc(comercio.btNombre||'Conectada')}</span>`:'<span style="color:var(--muted)">Sin impresora conectada</span>';
-  const bC=document.getElementById('btn-bt-conectar');const bD=document.getElementById('btn-bt-desconectar');
+  const bC=document.getElementById('btn-bt-conectar');const bD=document.getElementById('btn-bt-desconectar');const bCj=document.getElementById('btn-bt-cajon');
   if(bC)bC.style.display=ok?'none':'inline-block';
   if(bD)bD.style.display=ok?'inline-block':'none';
+  if(bCj)bCj.style.display=ok?'inline-block':'none';
 }
 const _ESC=0x1B,_GS=0x1D;
 const _ep={
   init:()=>[_ESC,0x40],
   cut:()=>[_GS,0x56,0x00],
+  drawer:()=>[_ESC,0x70,_getImpCfg().pin,0x19,0xFA],
   lf:()=>[0x0A],
   lfs:(n)=>Array(n).fill(0x0A),
   bold:(on)=>[_ESC,0x45,on?1:0],
@@ -5811,10 +5890,17 @@ async function _btSend(bytes){
   }
   return true;
 }
+async function abrirCajonBT(){
+  if(!_btChar){toast('⚠️ Sin impresora conectada — conecta la impresora primero');return;}
+  try{
+    await _btSend([..._ep.init(),..._ep.drawer()]);
+    toast('🔓 Cajón abierto');
+  }catch(e){toast('❌ Error al abrir cajón: '+e.message);}
+}
 async function imprimirTicketBT(com){
   if(!_btChar){imprimirTicket(com);return;}
   const fmt=v=>v.toFixed(2).replace('.',',');
-  const W=32;
+  const W=_getImpCfg().ancho;
   const bytes=[
     ..._ep.init(),..._ep.page(),
     ..._ep.align('c'),..._ep.bold(true),..._ep.dbl(),
