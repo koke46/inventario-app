@@ -6437,6 +6437,11 @@ function arrancarApp(){
     else _demoCheckIp().catch(()=>{});
     const inicio=sbInicio||(localInicio?parseInt(localInicio):null);
     if(!inicio){
+      // En Electron (app de escritorio) activar demo automáticamente sin mostrar el modal
+      if(navigator.userAgent.includes('Electron')){
+        await activarDemo();
+        return;
+      }
       document.getElementById('loading-screen')?.remove();
       document.getElementById('demo-modal').classList.remove('hidden');
       return;
