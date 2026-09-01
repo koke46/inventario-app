@@ -1070,6 +1070,48 @@ body.demo-activo{padding-top:40px;}
             <button class="btn-danger-full" onclick="borrarInstalacionCompleta()">🗑️ Borrar instalación completa</button>
           </div>
         </div>
+
+        <!-- ══ VERIFACTU ══ -->
+        <div class="aj-panel" id="panel-verifactu">
+          <div class="aj-head">🏛️ VeriFactu / Facturación verificable</div>
+          <div class="aj-body">
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6;margin-bottom:16px">
+              <strong style="color:var(--amber)">⚠️ Pendiente de certificado digital</strong><br>
+              El sistema genera y encadena los registros correctamente (hash SHA-256). Para enviarlos a la AEAT solo hace falta añadir el certificado digital cuando lo tengas.
+            </div>
+            <div id="vf-stats"></div>
+            <div class="form-group" style="flex-direction:row;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px;font-weight:600">Activar VeriFactu</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">Genera registro con hash encadenado en cada cobro</div>
+              </div>
+              <button id="vf-activo-btn" onclick="vfToggleActivo()" style="padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--border);cursor:pointer;font-family:var(--sans)">Inactivo</button>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">NIF del negocio *</label>
+                <input class="form-input" id="vf-nif" type="text" placeholder="B12345678" maxlength="9" autocomplete="off" style="text-transform:uppercase">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Serie</label>
+                <input class="form-input" id="vf-serie" type="text" placeholder="VF" maxlength="2" autocomplete="off" style="text-transform:uppercase">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nombre / razón social</label>
+              <input class="form-input" id="vf-nombre" type="text" placeholder="Mi Negocio SL" maxlength="80" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button class="btn-save" onclick="vfGuardar()">💾 Guardar configuración</button>
+              <button class="btn-cancel" onclick="vfExportarJSON()" style="flex-shrink:0">📥 Exportar registros</button>
+            </div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Pendiente de implementar (necesita certificado)</div>
+              <button class="btn-save" style="opacity:.4;cursor:not-allowed;background:var(--blue)" disabled>🔐 Enviar a AEAT — requiere certificado .p12</button>
+            </div>
+          </div>
+        </div>
+
         </div><!-- /aj-grid -->
       </div><!-- /aj-detail -->
     </div>
@@ -1897,6 +1939,8 @@ let cierresCaja = loadJ('if_cierres',[]);
 let proveedores   = loadJ('if_proveedores',[]);
 let pedidosCompra = loadJ('if_pedidos',[]);
 let reservas      = loadJ('if_reservas',[]);
+let registrosVF   = loadJ('if_vf_registros',[]);
+let vfConfig      = loadJ('if_vf_config',{activo:false,nif:'',nombre:'',serie:'VF',ultimoNumero:0,hashAnterior:'0'.repeat(64)});
 
 function save(){
   saveJ('if_comercio',comercio);
@@ -1910,6 +1954,8 @@ function save(){
   saveJ('if_pedidos',pedidosCompra);
   saveJ('if_reservas',reservas);
   saveJ('if_usuarios',usuarios);
+  saveJ('if_vf_registros',registrosVF);
+  saveJ('if_vf_config',vfConfig);
   _autoSyncSupabase();
 }
 
@@ -1981,7 +2027,7 @@ function _autoSyncSupabase(){
     const ts=new Date().toISOString();
     _lastOwnSyncTs=ts;
     _rtUpdateIndicator('sync');
-    const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,reservas,usuarios};
+    const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,reservas,usuarios,registrosVF,vfConfig};
     try{
       await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
         method:'POST',
@@ -2038,7 +2084,101 @@ async function cargarDatosSupabase(){
     if(sd.proveedores)   proveedores=sd.proveedores;
     if(sd.pedidosCompra) pedidosCompra=sd.pedidosCompra;
     if(sd.usuarios)      usuarios=sd.usuarios;
+    if(sd.registrosVF)   registrosVF=sd.registrosVF;
+    if(sd.vfConfig)      vfConfig=sd.vfConfig;
   }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// VERIFACTU — Preparado para certificado digital
+// ══════════════════════════════════════════════
+async function _sha256hex(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+async function _generarRegistroVF(comanda){
+  if(!vfConfig.activo||!vfConfig.nif) return null;
+  vfConfig.ultimoNumero=(vfConfig.ultimoNumero||0)+1;
+  const num=vfConfig.ultimoNumero;
+  const numSerie=(vfConfig.serie||'VF')+String(num).padStart(8,'0');
+  const dt=new Date(comanda.fecha||Date.now());
+  const fecha=[String(dt.getDate()).padStart(2,'0'),String(dt.getMonth()+1).padStart(2,'0'),dt.getFullYear()].join('-');
+  const ivaG=_calcIva(comanda.items||[]);
+  const cuota=ivaG.reduce((s,g)=>s+g.cuota,0);
+  const total=(comanda.total||0);
+  const hashAnt=vfConfig.hashAnterior||'0'.repeat(64);
+  const cadena=[vfConfig.nif,numSerie,fecha,'F1',cuota.toFixed(2),total.toFixed(2),hashAnt].join('&');
+  const huella=await _sha256hex(cadena);
+  const qrUrl='https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif='+encodeURIComponent(vfConfig.nif)+'&numserie='+encodeURIComponent(numSerie)+'&fecha='+encodeURIComponent(fecha)+'&importe='+encodeURIComponent(total.toFixed(2));
+  const reg={
+    id:uid(),comandaId:comanda.id,
+    nif:vfConfig.nif,numSerie,fecha,
+    fechaHora:new Date().toISOString(),
+    tipoFactura:'F1',descripcion:'Venta al por menor',
+    total,cuota,ivaGrupos:ivaG,
+    hashAnterior:hashAnt,huella,
+    estadoEnvio:'pendiente', // cambiará a 'enviado' cuando se integre el certificado
+    qrUrl
+  };
+  vfConfig.hashAnterior=huella;
+  registrosVF.push(reg);
+  saveJ('if_vf_registros',registrosVF);
+  saveJ('if_vf_config',vfConfig);
+  return reg;
+}
+
+function _renderVFPanel(){
+  const el=document.getElementById('panel-verifactu');if(!el)return;
+  const total=registrosVF.length;
+  const pendientes=registrosVF.filter(r=>r.estadoEnvio==='pendiente').length;
+  el.querySelector('#vf-activo-btn').textContent=vfConfig.activo?'✓ Activo':'Inactivo';
+  el.querySelector('#vf-activo-btn').style.background=vfConfig.activo?'var(--green)':'var(--surface2)';
+  el.querySelector('#vf-activo-btn').style.color=vfConfig.activo?'#fff':'var(--muted)';
+  el.querySelector('#vf-nif').value=vfConfig.nif||'';
+  el.querySelector('#vf-nombre').value=vfConfig.nombre||'';
+  el.querySelector('#vf-serie').value=vfConfig.serie||'VF';
+  el.querySelector('#vf-stats').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px">
+        <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--text)">${total}</div>
+        <div style="font-size:11px;color:var(--muted)">Total registros</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px">
+        <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:${pendientes?'var(--orange)':'var(--green)'}">${pendientes}</div>
+        <div style="font-size:11px;color:var(--muted)">Pendientes envío</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px">
+        <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--green)">${total-pendientes}</div>
+        <div style="font-size:11px;color:var(--muted)">Enviados AEAT</div>
+      </div>
+    </div>`;
+}
+
+function vfToggleActivo(){
+  vfConfig.activo=!vfConfig.activo;
+  saveJ('if_vf_config',vfConfig);
+  _renderVFPanel();
+  toast(vfConfig.activo?'✓ VeriFactu activado':'VeriFactu desactivado');
+}
+
+function vfGuardar(){
+  const nif=(document.getElementById('vf-nif')?.value||'').trim().toUpperCase();
+  const nombre=(document.getElementById('vf-nombre')?.value||'').trim();
+  const serie=(document.getElementById('vf-serie')?.value||'VF').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(vfConfig.activo&&!nif){toast('⚠️ El NIF es obligatorio para activar VeriFactu');return;}
+  vfConfig.nif=nif;vfConfig.nombre=nombre;vfConfig.serie=serie||'VF';
+  saveJ('if_vf_config',vfConfig);
+  _renderVFPanel();toast('✓ Configuración guardada');
+}
+
+function vfExportarJSON(){
+  if(!registrosVF.length){toast('No hay registros VeriFactu aún');return;}
+  const json=JSON.stringify({licencia:LICENCIA_ID,nif:vfConfig.nif,exportado:new Date().toISOString(),registros:registrosVF},null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download='verifactu_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
 }
 
 // ══════════════════════════════════════════════
@@ -2320,6 +2460,7 @@ const _AJ_PANELES=[
   {id:'panel-notif',     ico:'🔔', lbl:'Notificaciones'},
   {id:'panel-seguridad', ico:'🔐', lbl:'Seguridad'},
   {id:'panel-instalar',  ico:'📲', lbl:'Instalar app'},
+  {id:'panel-verifactu', ico:'🏛️', lbl:'VeriFactu'},
   {id:'panel-peligro',   ico:'🗑️', lbl:'Peligro',   soporteOnly:true, danger:true},
 ];
 function _renderAjHome(){
@@ -2347,6 +2488,7 @@ function abrirPanelAj(id){
   if(id==='panel-hora-feliz') renderAjustesHoraFeliz();
   if(id==='panel-ingredientes') renderIngrMasterList();
   if(id==='panel-instalar'){const qr=document.getElementById('aj-qr-img');if(qr)qr.src='https://chart.googleapis.com/chart?cht=qr&chs=200x200&choe=UTF-8&chl='+encodeURIComponent(location.href);}
+  if(id==='panel-verifactu') _renderVFPanel();
   const segAdmin=document.getElementById('seg-admin-section');
   if(segAdmin){const isAdmin=_modoSoporte||(_usuarioActivo&&_usuarioActivo.rol==='admin');segAdmin.style.display=isAdmin?'':'none';}
 }
@@ -4367,6 +4509,7 @@ function confirmarCobro(metodoPago){
   }
   comercio.ultimoPedido=(comercio.ultimoPedido||0)+1;
   comandas.push(comanda);save();
+  if(vfConfig.activo) _generarRegistroVF(comanda);
   _cuentaCobroFin();
   document.getElementById('desc-input').value='';
   onDescInput();
@@ -5337,7 +5480,9 @@ function imprimirTicket(com){
   const filas=(com.items||[]).map(i=>`<tr><td style="padding:3px 0">${i.nombre}</td><td style="text-align:center;padding:3px 8px">${i.cantidad}</td><td style="text-align:right;padding:3px 0">${fmt((i.precio||0)*(i.cantidad||1))} €</td></tr>`).join('');
   const ivaGrupos=_calcIva(com.items);
   const ivaRows=ivaGrupos.length?ivaGrupos.map(g=>`<tr style="font-size:10px;color:#555"><td>Base imp. ${g.tasa}%</td><td style="text-align:right">${fmt(g.base)} €</td></tr><tr style="font-size:10px;color:#555"><td>IVA ${g.tasa}%</td><td style="text-align:right">${fmt(g.cuota)} €</td></tr>`).join(''):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr><tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
+  const vfReg=registrosVF.find(r=>r.comandaId===com.id);
+  const vfBlock=vfReg?`<hr><div style="text-align:center;margin:8px 0"><div style="font-size:9px;color:#555;margin-bottom:4px">Verificar en AEAT · ${vfReg.numSerie}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(vfReg.qrUrl)}" style="width:90px;height:90px" alt="QR VeriFactu"><div style="font-size:8px;color:#888;margin-top:3px;word-break:break-all">${vfReg.huella.slice(0,16)}...</div></div>`:'';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr><tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}${vfBlock}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
   const w=window.open('','_blank','width=360,height=680');
   if(w){w.document.write(html);w.document.close();}
 }
