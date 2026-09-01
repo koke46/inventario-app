@@ -1,5 +1,8 @@
-const { app, BrowserWindow, Menu } = require('electron');
+const { app, BrowserWindow, Menu, dialog } = require('electron');
 const path = require('path');
+
+// Habilitar Web Bluetooth en Electron
+app.commandLine.appendSwitch('enable-features', 'WebBluetooth');
 
 // Una sola instancia — necesario para recibir URLs del protocolo cuando ya está abierta
 const gotLock = app.requestSingleInstanceLock();
@@ -67,6 +70,37 @@ function createWindow() {
 
   win.loadFile(htmlFile);
   applyWindowOpenHandler(win);
+
+  // Selector de dispositivo Bluetooth para Web Bluetooth API
+  let _btCallback = null;
+  let _btDevices  = [];
+  let _btTimer    = null;
+
+  win.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
+    event.preventDefault();
+    _btDevices  = deviceList;
+    _btCallback = callback;
+    if (_btTimer) clearTimeout(_btTimer);
+    if (deviceList.length === 0) return; // espera a que aparezcan dispositivos
+    _btTimer = setTimeout(() => {
+      _btTimer = null;
+      if (!_btCallback) return;
+      const cb = _btCallback;
+      _btCallback = null;
+      const devs = _btDevices;
+      const names = devs.map(d => d.deviceName || '(sin nombre)');
+      dialog.showMessageBox(win, {
+        type: 'question',
+        title: 'Seleccionar impresora',
+        message: 'Elige la impresora Bluetooth:',
+        buttons: [...names, 'Cancelar'],
+        cancelId: names.length,
+        defaultId: 0
+      }).then(({ response }) => {
+        cb(response < devs.length ? devs[response].deviceId : '');
+      });
+    }, 1200); // espera 1.2 s para que aparezcan más dispositivos antes de mostrar el diálogo
+  });
 
   // Si se lanzó directamente via protocolo (app no estaba abierta)
   const protocolUrl = process.argv.find(arg => arg.startsWith('elmiarma://'));
