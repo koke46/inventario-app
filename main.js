@@ -52,7 +52,7 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 function createWindow() {
-  const esTienda = app.getName().toLowerCase().includes('tienda');
+  const esTienda = process.execPath.toLowerCase().includes('tienda');
   const htmlFile = esTienda ? 'inventario-tienda.html' : 'inventario-fresco.html';
   const titulo   = esTienda ? 'El Miarma — Tienda' : 'El Miarma — Inventario';
 
