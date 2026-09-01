@@ -2630,15 +2630,37 @@ function verHistorialPrecio(id){
 function _cambiarPrecioProducto(id){
   const p=productos.find(x=>x.id===id);
   if(!p) return;
-  const nv=prompt(`Nuevo precio para "${p.nombre}" (actual: ${fmtEuro(p.precio||0)}):`,p.precio||'');
-  if(nv===null) return;
-  const precio=parseFloat((nv+'').replace(',','.'));
+  let el=document.getElementById('_cambio-precio-modal');
+  if(el) el.remove();
+  el=document.createElement('div');
+  el.id='_cambio-precio-modal';
+  el.style.cssText='position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:20px;width:min(95vw,320px);box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">✏️ Cambiar precio</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${esc(p.nombre)} · actual: ${fmtEuro(p.precio||0)}</div>
+    <input id="_cp-inp" type="number" step="0.01" min="0" value="${p.precio||''}" placeholder="0.00"
+      style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;outline:none;margin-bottom:12px">
+    <div style="display:flex;gap:8px">
+      <button onclick="_confirmarCambioPrecio('${id}')" style="flex:1;padding:10px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Guardar</button>
+      <button onclick="document.getElementById('_cambio-precio-modal').remove()" style="flex:1;padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px">Cancelar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('_cp-inp')?.focus(),80);
+  document.getElementById('_cp-inp').addEventListener('keydown',e=>{if(e.key==='Enter')_confirmarCambioPrecio(id);});
+}
+function _confirmarCambioPrecio(id){
+  const p=productos.find(x=>x.id===id);
+  if(!p) return;
+  const nv=(document.getElementById('_cp-inp')?.value||'').replace(',','.');
+  const precio=parseFloat(nv);
   if(isNaN(precio)||precio<0){toast('⚠️ Precio no válido');return;}
-  if(precio===p.precio){toast('El precio no ha cambiado');return;}
+  if(precio===p.precio){toast('El precio no ha cambiado');document.getElementById('_cambio-precio-modal')?.remove();return;}
   p.precio=precio;
   if(!p.precioHistorial) p.precioHistorial=[];
   p.precioHistorial.push({fecha:new Date().toISOString().slice(0,10),precio});
   save();renderAjustes();
+  document.getElementById('_cambio-precio-modal')?.remove();
   document.getElementById('_hist-precio-panel')?.remove();
   toast(`✓ Precio actualizado a ${fmtEuro(precio)}`);
 }
