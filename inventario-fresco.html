@@ -478,6 +478,19 @@ body.demo-activo{padding-top:40px;}
 .btn-cocina:hover{background:var(--blue-lt);}
 .btn-limpiar-ped{padding:6px;background:none;border:1.5px solid var(--border);border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;font-family:var(--sans);width:100%;color:var(--muted);transition:all .15s;}
 .btn-limpiar-ped:hover{border-color:var(--red);color:var(--red);}
+.btn-reimprimir{padding:6px;background:none;border:1.5px solid #3B82F6;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;font-family:var(--sans);width:100%;color:#3B82F6;transition:all .15s;}
+.btn-reimprimir:hover{background:rgba(59,130,246,.08);}
+#pin-lock-screen{position:fixed;inset:0;background:rgba(10,12,18,.97);z-index:99990;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#pin-lock-screen.hidden{display:none;}
+.pin-lock-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;text-align:center;max-width:320px;width:90%;}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:24px;}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--border);background:transparent;transition:all .15s;}
+.pin-dot.filled{background:var(--amber);border-color:var(--amber);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto;}
+.pin-key{height:58px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);font-size:22px;font-weight:700;font-family:var(--mono);color:var(--fg);cursor:pointer;transition:all .15s;}
+.pin-key:hover{background:var(--amber);color:#1A1F2E;border-color:var(--amber);}
+@keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.pin-shake{animation:pinShake .4s;}
 /* Sección en cocina */
 .cocina-section{margin-top:20px;}
 .cocina-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--orange);margin-bottom:10px;}
@@ -702,8 +715,10 @@ body.demo-activo{padding-top:40px;}
       <span class="topbar-sub" id="page-sub">Todos los lotes ordenados por caducidad</span>
     </div>
     <div class="topbar-spacer"></div>
+    <div id="sync-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#EF4444;flex-shrink:0;cursor:default;transition:background .4s" title="Sin conexión cloud"></div>
     <div class="mode-toggle">
       <button id="btn-theme" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+      <button class="mode-btn" onclick="bloquearPantalla()" title="Bloquear pantalla (PIN)">🔒</button>
     </div>
     <div id="topbar-user-chip" style="display:none;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px 5px 8px;cursor:pointer;margin-left:8px" onclick="cambiarUsuario()" title="Cambiar usuario">
       <span id="topbar-user-emoji" style="font-size:17px">👤</span>
@@ -1141,6 +1156,7 @@ body.demo-activo{padding-top:40px;}
             <div class="ped-btns">
               <button class="btn-cobrar" onclick="abrirModalCobro()">✓ Cobrar y cerrar</button>
               <button class="btn-cocina" onclick="enviarACocina()">📤 Enviar a cocina</button>
+              <button class="btn-reimprimir" id="btn-reimprimir" onclick="reimprimirUltimo()" style="display:none">🖨️ Reimprimir último</button>
               <button class="btn-limpiar-ped" onclick="limpiarPedido()">🗑️ Limpiar pedido</button>
             </div>
             <button class="numpad-toggle" onclick="var w=this.nextElementSibling;var v=w.style.display==='block';w.style.display=v?'none':'block';this.textContent=v?'🔢 Mostrar teclado':'🔼 Ocultar teclado'">🔢 Mostrar teclado</button>
@@ -1899,19 +1915,83 @@ function save(){
 
 let _syncTimer=null;
 let _lastOwnSyncTs=null;
+
+// ── REALTIME MULTI-DISPOSITIVO ────────────────────
+let _rtWs=null,_rtRef=1,_rtHbTimer=null,_rtReconnTimer=null;
+const _RT_TOPIC='realtime:sync_'+LICENCIA_ID;
+
+function _rtUpdateIndicator(s){
+  const el=document.getElementById('sync-dot');if(!el)return;
+  el.style.display='';
+  if(s==='ok'){el.style.background='#10B981';el.title='Sincronizado ✓';}
+  else if(s==='sync'){el.style.background='#F59E0B';el.title='Sincronizando...';}
+  else{el.style.background='#EF4444';el.title='Sin conexión cloud';}
+}
+function _rtSend(msg){if(_rtWs&&_rtWs.readyState===1)_rtWs.send(JSON.stringify(msg));}
+function _rtBroadcast(){
+  _rtSend({topic:_RT_TOPIC,event:'broadcast',
+    payload:{type:'broadcast',event:'sync',payload:{d:DEVICE_ID}},ref:String(_rtRef++)});
+}
+function _initRealtime(){
+  if(!LIC_SB_URL||!LIC_SB_KEY||!LICENCIA_ID||LICENCIA_ID==='__DEMO__') return;
+  clearTimeout(_rtReconnTimer);
+  try{_rtWs=new WebSocket(LIC_SB_URL.replace('https://','wss://')+'/realtime/v1/websocket?apikey='+LIC_SB_KEY+'&vsn=1.0.0');}
+  catch(e){return;}
+  _rtWs.onopen=()=>{
+    _rtUpdateIndicator('ok');
+    _rtRef=1;
+    _rtSend({topic:_RT_TOPIC,event:'phx_join',
+      payload:{config:{broadcast:{ack:false,self:false},presence:{key:''}}},ref:String(_rtRef++)});
+    clearInterval(_rtHbTimer);
+    _rtHbTimer=setInterval(()=>_rtSend({topic:'phoenix',event:'heartbeat',payload:{},ref:String(_rtRef++)}),25000);
+  };
+  _rtWs.onmessage=async(e)=>{
+    try{
+      const msg=JSON.parse(e.data);
+      if(msg.event==='broadcast'&&msg.payload?.payload?.d&&msg.payload.payload.d!==DEVICE_ID){
+        _rtUpdateIndicator('sync');
+        await cargarDatosSupabase();
+        _renderPostSync();
+        _rtUpdateIndicator('ok');
+        toast('🔄 Sincronizado en tiempo real');
+      }
+    }catch(_){}
+  };
+  const _onClose=()=>{
+    _rtUpdateIndicator('offline');clearInterval(_rtHbTimer);
+    _rtReconnTimer=setTimeout(_initRealtime,6000);
+  };
+  _rtWs.onclose=_rtWs.onerror=_onClose;
+}
+function _renderPostSync(){
+  try{updateStats();}catch(_){}
+  const pid=document.querySelector('.page.active')?.id||'';
+  try{renderPOS();}catch(_){}
+  if(pid==='page-cocina'){try{renderCocina();}catch(_){}}
+  if(pid==='page-plano'){try{renderPlano();}catch(_){}}
+  if(pid==='page-ventas'){try{renderVentas();}catch(_){}}
+  if(pid==='page-reservas'){try{renderReservas();}catch(_){}}
+}
+// ────────────────────────────────────────────────
+
 function _autoSyncSupabase(){
   if(!LIC_SB_URL||!LIC_SB_KEY) return;
   clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(()=>{
+  _syncTimer=setTimeout(async()=>{
     const ts=new Date().toISOString();
     _lastOwnSyncTs=ts;
+    _rtUpdateIndicator('sync');
     const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,reservas,usuarios};
-    fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
-      method:'POST',
-      headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({licencia_id:LICENCIA_ID,datos,actualizado_en:ts})
-    }).catch(()=>{});
-  },3000);
+    try{
+      await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
+        method:'POST',
+        headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+        body:JSON.stringify({licencia_id:LICENCIA_ID,datos,actualizado_en:ts})
+      });
+      _rtUpdateIndicator('ok');
+      _rtBroadcast();
+    }catch(e){_rtUpdateIndicator('offline');}
+  },1500);
 }
 async function _checkRemoteChanges(){
   if(!LIC_SB_URL||!LIC_SB_KEY||!LICENCIA_ID||LICENCIA_ID==='__DEMO__') return;
@@ -1925,12 +2005,13 @@ async function _checkRemoteChanges(){
     if(remoteTs>_lastOwnSyncTs){
       _lastOwnSyncTs=remoteTs;
       await cargarDatosSupabase();
-      renderPOS();updateStats();
-      toast('🔄 Datos actualizados desde el panel');
+      _renderPostSync();
+      toast('🔄 Datos actualizados');
     }
   }catch(e){}
 }
-setInterval(_checkRemoteChanges,45000);
+setInterval(_checkRemoteChanges,30000);
+_initRealtime();
 
 async function cargarDatosSupabase(){
   if(!LIC_SB_URL||!LIC_SB_KEY||LICENCIA_ID==='__DEMO__') return;
@@ -3947,7 +4028,10 @@ function onDescInput(){
   if(tot) tot.textContent=fmtEuro(Math.max(0,sub-descImporte));
 }
 function calcSubtotal(){
-  return pedidoActual.items.reduce((s,i)=>s+i.precio*i.cantidad,0);
+  return pedidoActual.items.reduce((s,i)=>{
+    const p=i.descuentoLinea?i.precio*(1-i.descuentoLinea/100):i.precio;
+    return s+p*i.cantidad;
+  },0);
 }
 function calcTotal(){
   const sub=calcSubtotal();
@@ -3971,15 +4055,18 @@ function renderPedido(){
   if(!items.length){
     itemsCont.innerHTML='<div class="ped-empty">🧾<br>Toca un producto<br>para añadirlo</div>';
   } else {
-    itemsCont.innerHTML=items.map((i,idx)=>`
+    itemsCont.innerHTML=items.map((i,idx)=>{
+      const pEf=i.descuentoLinea?i.precio*(1-i.descuentoLinea/100):i.precio;
+      return `
       <div class="ped-item-row" style="flex-wrap:wrap">
         <span class="ped-item-emoji">${i.emoji}</span>
         <div class="ped-item-info" style="flex:1;min-width:0">
           <div class="ped-item-nombre">${esc(i.nombre)}${i.curso?`<span style="font-size:10px;font-weight:700;background:var(--amber-lt);color:var(--amber);border-radius:4px;padding:1px 5px;margin-left:5px">${{1:'1º',2:'2º',3:'🍮'}[i.curso]||i.curso+'º'}</span>`:''}</div>
-          <div class="ped-item-sub">${fmtEuro(i.precio)} × ${i.cantidad} = ${fmtEuro(i.precio*i.cantidad)}</div>
+          <div class="ped-item-sub">${i.descuentoLinea?`<span style="text-decoration:line-through;opacity:.5">${fmtEuro(i.precio)}</span> <span style="color:var(--green);font-weight:700">-${i.descuentoLinea}%</span> `:''}${fmtEuro(pEf)} × ${i.cantidad} = ${fmtEuro(pEf*i.cantidad)}</div>
           ${i.nota?`<div class="nota-item">📝 ${esc(i.nota)}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:2px">
+          <button class="nota-btn" onclick="descuentoLinea(${idx})" title="Descuento en línea" style="${i.descuentoLinea?'color:var(--green);font-weight:900':''}">%</button>
           <button class="nota-btn" onclick="editarNotaItem(${idx})" title="Añadir nota">📝</button>
           <div class="ped-item-ctrl">
             <button class="act-btn" onclick="quitarDelPedido(${idx})" style="padding:2px 7px">−</button>
@@ -3987,7 +4074,8 @@ function renderPedido(){
             <button class="act-btn" onclick="añadirAlPedido('${esc(i.productoId)}')" style="padding:2px 7px">+</button>
           </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   const subtotal=calcSubtotal();
   const total=calcTotal();
@@ -4005,9 +4093,11 @@ let _itemPersonas={};
 let _nPersonasItems=2;
 let _mostrarEfectivo=false;
 let _efectivoEntregado=0;
+let _cobroMixto=false;
+let _mixtoEfectivo=0;
 function abrirModalCobro(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
-  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;
+  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;_cobroMixto=false;_mixtoEfectivo=0;
   _itemPersonas={};_nPersonasItems=2;
   _renderModalCobro();
   document.getElementById('modal-cobro').classList.add('open');
@@ -4092,6 +4182,7 @@ function _renderModalCobro(){
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="_abrirEfectivo()" style="${_mostrarEfectivo?'border-color:var(--green);color:var(--green);background:rgba(16,185,129,.07)':''}">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
+      <button class="cobro-btn" onclick="_abrirMixto()" style="flex-basis:calc(100% - 2px);margin-top:4px;${_cobroMixto?'border-color:#3B82F6;color:#3B82F6;background:rgba(59,130,246,.07)':''}">💵+💳 Mixto</button>
     </div>
     ${_mostrarEfectivo?`<div style="margin-top:10px;background:var(--surface2);border-radius:10px;border:1.5px solid var(--green);padding:12px">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--green)">💵 ¿Cuánto entrega el cliente?</div>
@@ -4101,6 +4192,16 @@ function _renderModalCobro(){
       <input id="ef-inp" class="form-input" type="number" min="0" step="0.01" placeholder="Otro importe..." inputmode="decimal" value="${_efectivoEntregado||''}" oninput="_efectivoEntregado=parseFloat(this.value)||0;_actualizarCambio()">
       <div id="cambio-res" style="font-size:22px;font-weight:900;text-align:center;padding:12px;border-radius:8px;background:var(--bg);font-family:var(--mono);margin-top:8px;min-height:52px;display:flex;align-items:center;justify-content:center"></div>
       <button onclick="confirmarCobro('efectivo')" style="width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--sans)">✓ Confirmar cobro en efectivo</button>
+    </div>`:''}
+    ${_cobroMixto?`<div style="margin-top:10px;background:var(--surface2);border-radius:10px;border:1.5px solid #3B82F6;padding:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#3B82F6">💵+💳 Pago mixto</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--muted)">Total a cobrar:</span>
+        <span style="font-size:16px;font-weight:800;font-family:var(--mono)">${fmtEuro(total)}</span>
+      </div>
+      <input id="mixto-inp" class="form-input" type="number" min="0" step="0.01" placeholder="Efectivo del cliente..." inputmode="decimal" value="${_mixtoEfectivo||''}" oninput="_mixtoEfectivo=parseFloat(this.value)||0;_actualizarMixto()">
+      <div id="mixto-res" style="font-size:15px;font-weight:700;text-align:center;padding:10px;border-radius:8px;background:var(--bg);font-family:var(--mono);margin-top:8px;min-height:46px;display:flex;align-items:center;justify-content:center;gap:12px"></div>
+      <button onclick="confirmarCobro('mixto')" style="width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#3B82F6;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--sans)">✓ Confirmar cobro mixto</button>
     </div>`:''}`;
 }
 function _setModoCobro(modo){_cobromodoItems=modo;_renderModalCobro();}
@@ -4167,6 +4268,65 @@ function _actualizarCambio(){
     el.innerHTML='<span style="color:var(--green)">Cambio: '+fmtEuro(Math.max(0,cambio))+'</span>';
   }
 }
+function _abrirMixto(){
+  _cobroMixto=!_cobroMixto;_mostrarEfectivo=false;_mixtoEfectivo=0;
+  _renderModalCobro();
+  if(_cobroMixto)setTimeout(()=>{const inp=document.getElementById('mixto-inp');if(inp){inp.focus();_actualizarMixto();}},40);
+}
+function _actualizarMixto(){
+  const el=document.getElementById('mixto-res');if(!el)return;
+  const total=calcTotal();const tarjeta=total-_mixtoEfectivo;
+  if(_mixtoEfectivo<=0){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Introduce el importe en efectivo</span>';}
+  else if(tarjeta<-0.005){el.innerHTML='<span style="color:var(--red)">El efectivo supera el total</span>';}
+  else{el.innerHTML=`<span style="color:var(--green)">💵 ${fmtEuro(_mixtoEfectivo)}</span><span style="color:var(--muted)"> + </span><span style="color:#3B82F6">💳 ${fmtEuro(Math.max(0,tarjeta))}</span>`;}
+}
+function descuentoLinea(idx){
+  const it=pedidoActual.items[idx];if(!it)return;
+  const actual=it.descuentoLinea||0;
+  const v=prompt(`Descuento para "${it.nombre}" (%):\n0 para quitar`,actual||'');
+  if(v===null)return;
+  const pct=parseFloat(v);
+  if(isNaN(pct)||pct<0||pct>100){toast('⚠️ Introduce un valor entre 0 y 100');return;}
+  if(pct===0)delete it.descuentoLinea;else it.descuentoLinea=pct;
+  renderPedido();
+}
+function reimprimirUltimo(){
+  if(_ultimaComanda)imprimirTicket(_ultimaComanda);
+  else toast('⚠️ No hay ticket reciente');
+}
+let _pinBuffer='';
+function bloquearPantalla(){
+  if(!comercio.pinBloqueo){
+    const p=prompt('Define un PIN de 4 dígitos para bloquear la pantalla:');
+    if(!p||!/^\d{4}$/.test(p)){toast('⚠️ El PIN debe ser exactamente 4 dígitos');return;}
+    comercio.pinBloqueo=p;save();
+  }
+  _pinBuffer='';_renderPinDots();
+  document.getElementById('pin-lock-screen').classList.remove('hidden');
+}
+function pinKey(k){
+  if(k==='del'){_pinBuffer=_pinBuffer.slice(0,-1);_renderPinDots();return;}
+  if(_pinBuffer.length>=4)return;
+  _pinBuffer+=k;_renderPinDots();
+  if(_pinBuffer.length===4)_checkPin();
+}
+function _renderPinDots(){
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d,i)=>d.classList.toggle('filled',i<_pinBuffer.length));
+}
+function _checkPin(){
+  if(_pinBuffer===String(comercio.pinBloqueo)){
+    document.getElementById('pin-lock-screen').classList.add('hidden');
+    _pinBuffer='';_renderPinDots();
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorrecto';
+    document.getElementById('pin-grid').classList.add('pin-shake');
+    setTimeout(()=>{
+      document.getElementById('pin-grid').classList.remove('pin-shake');
+      document.getElementById('pin-error').textContent='';
+      _pinBuffer='';_renderPinDots();
+    },600);
+  }
+}
 function confirmarCobro(metodoPago){
   cerrarModalCobro();
   const mesa=getMesaNombre();guardarMesaNueva(mesa);
@@ -4187,6 +4347,7 @@ function confirmarCobro(metodoPago){
     descuento:desc||null,metodoPago,personas,camarero,
     propina:_propina>0?_propina:null,
     divisionItems,
+    pagoMixto:metodoPago==='mixto'?{efectivo:_mixtoEfectivo,tarjeta:Math.max(0,total-_mixtoEfectivo)}:null,
     fecha:new Date().toISOString(),fechaCierre:new Date().toISOString()};
   const warnings=[];
   if(comercio.descontarStock!==false){
@@ -4214,10 +4375,11 @@ function confirmarCobro(metodoPago){
   if(mesaSel) mesaSel.value='';
   if(mesaWrap) mesaWrap.style.display='none';
   renderPOS();updateStats();
-  const iconos={efectivo:'💵',tarjeta:'💳',bizum:'📱'};
+  const iconos={efectivo:'💵',tarjeta:'💳',bizum:'📱',mixto:'💵+💳'};
   if(warnings.length) toast('✓ '+fmtEuro(total)+' · '+warnings.join(', ')+' sin stock',4000);
   else toast((iconos[metodoPago]||'✓')+' Cobrado '+fmtEuro(total)+' · '+(metodoPago||''));
   _ultimaComanda=comanda; mostrarBtnTicket();
+  const btnReim=document.getElementById('btn-reimprimir');if(btnReim)btnReim.style.display='';
   setTimeout(_checkStockBajo,800);
 }
 function enviarACocina(){
@@ -7539,5 +7701,31 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
+<!-- ── PIN LOCK SCREEN ── -->
+<div id="pin-lock-screen" class="hidden">
+  <div class="pin-lock-card">
+    <div style="font-size:48px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px;color:var(--fg)">Pantalla bloqueada</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Introduce tu PIN para continuar</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="pin-grid" id="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('del')" style="color:var(--muted)">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <div></div>
+    </div>
+    <div id="pin-error" style="height:20px;margin-top:14px;font-size:13px;color:var(--red);font-weight:600"></div>
+  </div>
+</div>
 </body>
 </html>
