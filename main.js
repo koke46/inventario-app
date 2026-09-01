@@ -52,16 +52,20 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 function createWindow() {
+  const esTienda = app.getName().toLowerCase().includes('tienda');
+  const htmlFile = esTienda ? 'inventario-tienda.html' : 'inventario-fresco.html';
+  const titulo   = esTienda ? 'El Miarma — Tienda' : 'El Miarma — Inventario';
+
   win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'El Miarma — Inventario',
+    title: titulo,
     webPreferences: { nodeIntegration: false, contextIsolation: true }
   });
 
-  win.loadFile('inventario-fresco.html');
+  win.loadFile(htmlFile);
   applyWindowOpenHandler(win);
 
   // Si se lanzó directamente via protocolo (app no estaba abierta)

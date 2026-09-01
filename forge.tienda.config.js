@@ -1,8 +1,7 @@
 module.exports = {
   packagerConfig: {
     name: 'El Miarma Tienda',
-    executableName: 'El Miarma Tienda',
-    entryPoint: 'main-tienda.js'
+    executableName: 'El Miarma Tienda'
   },
   makers: [
     {
