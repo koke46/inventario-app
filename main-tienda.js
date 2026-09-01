@@ -22,11 +22,6 @@ function createWindow() {
     {
       label: 'Inventario',
       submenu: [
-        {
-          label: '🛒 Tienda',
-          click: () => win.loadFile('inventario-tienda.html')
-        },
-        { type: 'separator' },
         { label: 'Salir', role: 'quit' }
       ]
     },

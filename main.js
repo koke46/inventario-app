@@ -72,11 +72,6 @@ function createWindow() {
     {
       label: 'Inventario',
       submenu: [
-        { label: '🍺 Frescos y Bebidas', click: () => win.loadFile('inventario-fresco.html') },
-        { label: '🛒 Tienda',            click: () => win.loadFile('inventario-tienda.html') },
-        { type: 'separator' },
-        { label: '⚡ Panel de control',  click: () => win.loadFile('panel-control.html') },
-        { type: 'separator' },
         { label: 'Salir', role: 'quit' }
       ]
     },
