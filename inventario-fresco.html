@@ -3222,8 +3222,7 @@ function renderModalP1(barcode){
       </div>
     </div>`;
   filtrarProds();
-  const p=productoActivo;
-  _variantesSel=p?.variantes?JSON.parse(JSON.stringify(p.variantes)):[];
+  _variantesSel=productoActivo?.variantes?JSON.parse(JSON.stringify(productoActivo.variantes)):[];
   _renderVariantesForm();
 }
 
