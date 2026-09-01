@@ -771,6 +771,18 @@ body.demo-activo{padding-top:40px;}
         <div class="aj-panel" id="panel-seguridad">
           <div class="aj-head">🔐 Seguridad</div>
           <div class="aj-body">
+            <div style="margin-bottom:14px">
+              <label class="form-label">PIN de bloqueo de pantalla 🔒</label>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Pulsa el candado arriba a la derecha para bloquear. Necesitas este PIN para desbloquear.</div>
+              <div class="form-group" style="margin-top:6px">
+                <input class="form-input" id="aj-pin-bloqueo" type="text" inputmode="numeric" placeholder="Nuevo PIN (4 dígitos)" maxlength="10" autocomplete="off">
+              </div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <button class="btn-save" onclick="guardarPinBloqueo()">Guardar PIN</button>
+                <button class="btn-save" style="background:var(--surface2);color:var(--text);border:1px solid var(--border)" onclick="quitarPinBloqueo()">Quitar PIN</button>
+              </div>
+              <div id="aj-pin-bloqueo-estado" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+            </div>
             <button class="btn-save" style="background:var(--red,#e53935);width:100%" onclick="cerrarSesion()">🚪 Cerrar sesión</button>
             <div id="seg-admin-section" style="display:none">
               <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
@@ -4482,12 +4494,24 @@ function reimprimirUltimo(){
   else toast('⚠️ No hay ticket reciente');
 }
 let _pinBuffer='';
+function guardarPinBloqueo(){
+  const inp=document.getElementById('aj-pin-bloqueo');
+  const p=(inp?.value||'').trim();
+  if(!p||!/^\d{4,10}$/.test(p)){toast('⚠️ El PIN debe tener entre 4 y 10 dígitos');return;}
+  comercio.pinBloqueo=p;save();
+  if(inp) inp.value='';
+  const est=document.getElementById('aj-pin-bloqueo-estado');
+  if(est) est.textContent='✅ PIN de bloqueo guardado';
+  toast('✅ PIN de bloqueo guardado');
+}
+function quitarPinBloqueo(){
+  delete comercio.pinBloqueo;save();
+  const est=document.getElementById('aj-pin-bloqueo-estado');
+  if(est) est.textContent='Sin PIN — la pantalla no se bloqueará';
+  toast('PIN de bloqueo eliminado');
+}
 function bloquearPantalla(){
-  if(!comercio.pinBloqueo){
-    const p=prompt('Define un PIN de 4 dígitos para bloquear la pantalla:');
-    if(!p||!/^\d{4}$/.test(p)){toast('⚠️ El PIN debe ser exactamente 4 dígitos');return;}
-    comercio.pinBloqueo=p;save();
-  }
+  if(!comercio.pinBloqueo){toast('⚠️ Define primero un PIN en Ajustes → Seguridad');return;}
   _pinBuffer='';_renderPinDots();
   document.getElementById('pin-lock-screen').classList.remove('hidden');
 }
