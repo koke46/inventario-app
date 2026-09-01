@@ -3117,7 +3117,6 @@ function renderModalP1(barcode){
       <label class="form-label">Código de barras <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
       <div style="display:flex;gap:8px;align-items:center">
         <input class="form-input" id="p1-barcode" type="text" maxlength="50" placeholder="Ej: 8410076530201" autocomplete="off" inputmode="numeric" value="${barcode||''}">
-        <button type="button" onclick="abrirEscanerCodigo(c=>{const el=document.getElementById('p1-barcode');if(el)el.value=c;})" title="Escanear con cámara" style="flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer">📷</button>
       </div>
     </div>
     <div class="form-group">
