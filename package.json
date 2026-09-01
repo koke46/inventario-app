@@ -1,14 +1,15 @@
 ﻿{
     "name":  "el-miarma",
-    "version":  "1.0.2",
+    "version":  "1.0.3",
     "description":  "App de inventario para El Miarma",
     "author":  "El Miarma",
     "main":  "main.js",
     "scripts":  {
                     "start":  "electron .",
                     "build":  "electron-packager . \"El Miarma\" --platform=win32 --arch=x64 --overwrite --out=dist --ignore=dist",
-                    "make":  "electron-forge make",
-                    "make-tienda":  "electron-forge make --config forge.tienda.config.js"
+                    "make":  "electron-forge make && copy /Y \"out\\make\\squirrel.windows\\x64\\*.exe\" \"C:\\Users\\jorge\\Desktop\\\"",
+                    "make-tienda":  "electron-forge make --config forge.tienda.config.js && copy /Y \"out\\make\\squirrel.windows\\x64\\*.exe\" \"C:\\Users\\jorge\\Desktop\\\"",
+                    "make-all":  "npm run make && npm run make-tienda"
                 },
     "config":  {
                    "forge":  {
