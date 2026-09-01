@@ -4197,11 +4197,27 @@ function confirmarPersonalizacion(){
   toast(`✓ "${prod.nombre}" añadido`+(suplemento>0?` (+${fmtEuro(suplemento)})`:``));
 }
 function editarNotaItem(idx){
+  const item=pedidoActual.items[idx];if(!item)return;
+  let el=document.getElementById('_modal-nota-item');if(el)el.remove();
+  el=document.createElement('div');el.id='_modal-nota-item';
+  el.style.cssText='position:fixed;inset:0;z-index:9980;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:24px;width:90%;max-width:340px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px">📝 Nota para "${esc(item.nombre)}"</div>
+    <input id="_nota-item-inp" class="form-input" type="text" maxlength="80" placeholder="Sin cebolla, sin gluten…" value="${esc(item.nota||'')}" style="margin-bottom:14px">
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('_modal-nota-item').remove()" class="btn-cancel" style="flex:1">Cancelar</button>
+      <button onclick="_guardarNotaItem(${idx})" class="btn-save" style="flex:1">Guardar</button>
+    </div>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('_nota-item-inp')?.focus(),50);
+}
+function _guardarNotaItem(idx){
   const item=pedidoActual.items[idx];
-  if(!item) return;
-  const nota=prompt(`Nota para "${item.nombre}":`,item.nota||'');
-  if(nota===null) return;
-  item.nota=nota.trim()||undefined;
+  const v=(document.getElementById('_nota-item-inp')?.value||'').trim();
+  if(item)item.nota=v||undefined;
+  document.getElementById('_modal-nota-item')?.remove();
   renderPedido();
 }
 function quitarDelPedido(idx){

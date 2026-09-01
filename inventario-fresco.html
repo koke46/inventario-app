@@ -3205,6 +3205,11 @@ function renderModalP1(barcode){
         <div style="font-size:11px;color:var(--muted);margin-top:2px">El cliente puede escribir "sin cebolla", etc.</div>
       </div>
       <button type="button" id="p1-nota-toggle" onclick="toggleAdmiteNota()" style="padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--sans);color:var(--muted)">No</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Variantes <span style="font-weight:400;color:var(--muted)">(opcional — ej: Caña / Tubo / Jarra)</span></label>
+      <div id="p1-var-list"></div>
+      <button type="button" onclick="_añadirVariante()" style="width:100%;margin-top:6px;padding:8px;background:var(--surface);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);font-family:var(--sans)">+ Añadir variante</button>
     </div>`}
     <div class="form-group">
       <label class="form-label">Tiempo de preparación <span style="font-weight:400;color:var(--muted)">(minutos, opcional)</span></label>
@@ -3217,6 +3222,9 @@ function renderModalP1(barcode){
       </div>
     </div>`;
   filtrarProds();
+  const p=productoActivo;
+  _variantesSel=p?.variantes?JSON.parse(JSON.stringify(p.variantes)):[];
+  _renderVariantesForm();
 }
 
 function actualizarMargen(){
@@ -3374,7 +3382,8 @@ function crearProductoYContinuar(){
     const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
     const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
     const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo,proveedorId,precioHistorial,tiempoPrep,franja,descripcion,alergenos,admiteNota,barcode};
+    const variantes=_variantesSel.filter(v=>(v.nombre||'').trim()).map(v=>({nombre:v.nombre.trim(),precio:parseFloat(v.precio)||0}));
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,precioCoste,tipoIva,curso:cursoVal||undefined,stockMinimo,proveedorId,precioHistorial,tiempoPrep,franja,descripcion,alergenos,admiteNota,barcode,variantes:variantes.length?variantes:undefined};
     productos.push(productoActivo);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
   }
@@ -4186,21 +4195,80 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='Backspace'||e.key==='Delete'){e.preventDefault();numDel();}
   else if(e.key==='Enter'){e.preventDefault();numAdd();}
 });
-function añadirAlPedido(prodId){
-  const ex=pedidoActual.items.find(i=>i.productoId===prodId);
-  if(ex){ex.cantidad++;renderPedido();return;}
+// ── Variantes de producto ──────────────────────
+let _variantesSel=[];
+function _renderVariantesForm(){
+  const list=document.getElementById('p1-var-list');if(!list)return;
+  if(!_variantesSel.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">Sin variantes — se usa el precio principal.</div>';return;}
+  list.innerHTML=_variantesSel.map((v,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <input class="form-input" style="flex:2" placeholder="Nombre (ej: Caña)" value="${esc(v.nombre||'')}" oninput="_variantesSel[${i}].nombre=this.value">
+      <input class="form-input" style="flex:1;max-width:90px" type="number" min="0" step="0.01" placeholder="Precio" value="${v.precio||''}" oninput="_variantesSel[${i}].precio=parseFloat(this.value)||0" inputmode="decimal">
+      <button type="button" onclick="_quitarVariante(${i})" style="width:32px;height:32px;border:none;background:#ef4444;color:#fff;border-radius:6px;cursor:pointer;font-size:14px;flex-shrink:0">✕</button>
+    </div>`).join('');
+}
+function _añadirVariante(){_variantesSel.push({nombre:'',precio:0});_renderVariantesForm();const inputs=document.querySelectorAll('#p1-var-list input');if(inputs.length)inputs[inputs.length-2].focus();}
+function _quitarVariante(i){_variantesSel.splice(i,1);_renderVariantesForm();}
+function abrirModalVariantes(prodId){
   const prod=productos.find(p=>p.id===prodId);
-  if(!prod) return;
-  const precioFinal=precioHF(prod.precio||0);
-  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null,tiempoPrep:prod.tiempoPrep||null});
+  if(!prod||!prod.variantes?.length)return;
+  let el=document.getElementById('_modal-variantes');if(el)el.remove();
+  el=document.createElement('div');el.id='_modal-variantes';
+  el.style.cssText='position:fixed;inset:0;z-index:9980;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:420px;max-height:70vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">${esc(prod.nombre)}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Elige la variante:</div>
+    ${prod.variantes.map(v=>`<button onclick="_selVariante('${esc(prodId)}','${esc(v.nombre)}',${v.precio||prod.precio||0})"
+      style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:13px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans);color:var(--text);margin-bottom:8px">
+      <span>${esc(v.nombre)}</span><span style="font-weight:700;font-family:var(--mono)">${fmtEuro(v.precio||prod.precio||0)}</span>
+    </button>`).join('')}
+    <button onclick="document.getElementById('_modal-variantes').remove()" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:14px;color:var(--muted);font-family:var(--sans)">Cancelar</button>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+}
+function _selVariante(prodId,nombreVariante,precio){
+  const prod=productos.find(p=>p.id===prodId);if(!prod)return;
+  document.getElementById('_modal-variantes')?.remove();
+  const varKey=prodId+'__'+nombreVariante;
+  const ex=pedidoActual.items.find(i=>i.productoId===varKey);
+  if(ex){ex.cantidad++;renderPedido();return;}
+  pedidoActual.items.push({productoId:varKey,nombre:prod.nombre+' ('+nombreVariante+')',emoji:prod.emoji||'📦',precio,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null});
   renderPedido();
 }
+// ── Modal nota por artículo (reemplaza prompt()) ──
 function editarNotaItem(idx){
+  const item=pedidoActual.items[idx];if(!item)return;
+  let el=document.getElementById('_modal-nota-item');if(el)el.remove();
+  el=document.createElement('div');el.id='_modal-nota-item';
+  el.style.cssText='position:fixed;inset:0;z-index:9980;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:24px;width:90%;max-width:340px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px">📝 Nota para "${esc(item.nombre)}"</div>
+    <input id="_nota-item-inp" class="form-input" type="text" maxlength="80" placeholder="Sin cebolla, sin gluten…" value="${esc(item.nota||'')}" style="margin-bottom:14px">
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('_modal-nota-item').remove()" class="btn-cancel" style="flex:1">Cancelar</button>
+      <button onclick="_guardarNotaItem(${idx})" class="btn-save" style="flex:1">Guardar</button>
+    </div>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('_nota-item-inp')?.focus(),50);
+}
+function _guardarNotaItem(idx){
   const item=pedidoActual.items[idx];
-  if(!item) return;
-  const nota=prompt(`Nota para "${item.nombre}":`,item.nota||'');
-  if(nota===null) return;
-  item.nota=nota.trim()||undefined;
+  const v=(document.getElementById('_nota-item-inp')?.value||'').trim();
+  if(item)item.nota=v||undefined;
+  document.getElementById('_modal-nota-item')?.remove();
+  renderPedido();
+}
+function añadirAlPedido(prodId){
+  const prod=productos.find(p=>p.id===prodId);
+  if(!prod)return;
+  if(prod.variantes?.length){abrirModalVariantes(prodId);return;}
+  const ex=pedidoActual.items.find(i=>i.productoId===prodId);
+  if(ex){ex.cantidad++;renderPedido();return;}
+  const precioFinal=precioHF(prod.precio||0);
+  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null,tiempoPrep:prod.tiempoPrep||null});
   renderPedido();
 }
 function quitarDelPedido(idx){
