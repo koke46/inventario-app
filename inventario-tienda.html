@@ -1016,10 +1016,12 @@ body.demo-activo{padding-top:40px;}
           <div class="aj-head">👥 Clientes / Fidelización</div>
           <div class="aj-body">
             <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Registro de clientes habituales. Las visitas y el total gastado se actualizan automáticamente en cada cobro asignado.</div>
-            <div style="display:flex;gap:8px;margin-bottom:14px">
-              <input class="form-input" id="cl-nombre" type="text" placeholder="Nombre del cliente" maxlength="60" autocomplete="off" style="flex:1">
-              <input class="form-input" id="cl-tel" type="tel" placeholder="Teléfono" maxlength="20" autocomplete="off" style="flex:1">
-              <button class="btn-save" onclick="clAddCliente()" style="flex-shrink:0">➕ Añadir</button>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+              <input class="form-input" id="cl-nombre" type="text" placeholder="Nombre del cliente" maxlength="60" autocomplete="off">
+              <div style="display:flex;gap:8px">
+                <input class="form-input" id="cl-tel" type="tel" placeholder="Teléfono (opcional)" maxlength="20" autocomplete="off" style="flex:1">
+                <button onclick="clAddCliente()" style="flex-shrink:0;background:var(--amber);color:#1A1F2E;border:none;border-radius:8px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">➕ Añadir</button>
+              </div>
             </div>
             <div id="cl-lista"></div>
           </div>
