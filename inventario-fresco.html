@@ -4779,7 +4779,7 @@ function confirmarCobro(metodoPago){
     estado:'cerrada',cobrada:true,total,subtotal,
     descuento:desc||null,metodoPago,personas,camarero,
     propina:_propina>0?_propina:null,
-    divisionItems,nota:pedidoActual.nota||null,
+    divisionItems,nota:(document.getElementById('nota-ped-input')?.value||pedidoActual.nota||null)||null,
     pagoMixto:metodoPago==='mixto'?{efectivo:_mixtoEfectivo,tarjeta:Math.max(0,total-_mixtoEfectivo)}:null,
     fecha:new Date().toISOString(),fechaCierre:new Date().toISOString()};
   const warnings=[];
