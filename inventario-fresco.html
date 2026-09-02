@@ -1144,6 +1144,7 @@ body.demo-activo{padding-top:40px;}
               <input class="form-input" id="cl-nombre" type="text" placeholder="Nombre del cliente" maxlength="60" autocomplete="off">
               <div style="display:flex;gap:8px">
                 <input class="form-input" id="cl-tel" type="tel" placeholder="Teléfono (opcional)" maxlength="20" autocomplete="off" style="flex:1">
+                <input class="form-input" id="cl-dto" type="number" min="0" max="100" step="1" placeholder="Dto.%" title="Descuento fijo en %" inputmode="numeric" style="width:68px;flex-shrink:0">
                 <button onclick="clAddCliente()" style="flex-shrink:0;background:var(--amber);color:#1A1F2E;border:none;border-radius:8px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">➕ Añadir</button>
               </div>
             </div>
@@ -1190,6 +1191,7 @@ body.demo-activo{padding-top:40px;}
               <input class="form-input" id="pos-search" type="text" placeholder="🔍 Buscar producto..." autocomplete="off" oninput="buscarPOS(this.value)" style="padding-right:32px">
               <button onclick="buscarPOS('');document.getElementById('pos-search').value=''" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);display:none" id="pos-search-clear">✕</button>
             </div>
+            <button onclick="abrirPrecioLibre()" title="Añadir producto a precio libre" style="flex-shrink:0;background:var(--surface);color:var(--green);border:2px solid var(--green);border-radius:10px;width:40px;height:40px;font-size:20px;cursor:pointer">💰</button>
           </div>
           <!-- Banner hora feliz -->
           <div id="hf-banner-pos" style="display:none;align-items:center;gap:10px;background:var(--amber);color:#1A1F2E;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:600"></div>
@@ -1239,6 +1241,10 @@ body.demo-activo{padding-top:40px;}
               <button class="btn-reimprimir" id="btn-reimprimir" onclick="reimprimirUltimo()" style="display:none">🖨️ Reimprimir último</button>
               <button class="btn-limpiar-ped" onclick="limpiarPedido()">🗑️ Limpiar pedido</button>
               <button class="btn-reimprimir" onclick="abrirVisorCliente()" style="border-color:var(--amber);color:var(--amber)">📺 Visor cliente</button>
+              <button class="btn-reimprimir" onclick="toggleNotaPedido()" style="border-color:#8B5CF6;color:#8B5CF6">📝 Nota pedido</button>
+            </div>
+            <div id="nota-ped-wrap" style="display:none;padding:4px 0">
+              <input class="form-input" id="nota-ped-input" type="text" placeholder="Nota del pedido..." maxlength="200" autocomplete="off" oninput="pedidoActual.nota=this.value" style="font-size:13px">
             </div>
             <button class="numpad-toggle" onclick="var w=this.nextElementSibling;var v=w.style.display==='block';w.style.display=v?'none':'block';this.textContent=v?'🔢 Mostrar teclado':'🔼 Ocultar teclado'">🔢 Mostrar teclado</button>
             <div class="numpad-wrap">
@@ -1466,6 +1472,30 @@ body.demo-activo{padding-top:40px;}
     <div class="modal-ft">
       <button class="btn-cancel" onclick="cerrarModalPinCaja()">Cancelar</button>
       <button class="btn-save" onclick="confirmarPinCaja()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL PRECIO LIBRE ── -->
+<div class="modal-overlay" id="modal-precio-libre">
+  <div class="modal" style="width:340px">
+    <div class="modal-hd">
+      <h3>💰 Producto a precio libre</h3>
+      <button class="modal-close" onclick="cerrarPrecioLibre()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:10px">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" id="plib-nombre" type="text" placeholder="Nombre del producto..." maxlength="100" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('plib-precio').focus()">
+      </div>
+      <div>
+        <label class="form-label">Precio (€)</label>
+        <input class="form-input" id="plib-precio" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal" onkeydown="if(event.key==='Enter')confirmarPrecioLibre()">
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" onclick="cerrarPrecioLibre()">Cancelar</button>
+      <button class="btn-save" onclick="confirmarPrecioLibre()">➕ Añadir al pedido</button>
     </div>
   </div>
 </div>
@@ -4002,7 +4032,17 @@ function _reordenarCategorias(fromCat,toCat){
 
 let _posSearch='';
 function buscarPOS(q){
-  _posSearch=q.trim().toLowerCase();
+  const raw=q.trim();
+  if(/^\d{6,14}$/.test(raw)){
+    const match=productos.filter(p=>p.activo!==false&&p.barcode===raw);
+    if(match.length===1){
+      añadirAlPedido(match[0].id);
+      const el=document.getElementById('pos-search');if(el)el.value='';
+      const cb=document.getElementById('pos-search-clear');if(cb)cb.style.display='none';
+      return;
+    }
+  }
+  _posSearch=raw.toLowerCase();
   const clearBtn=document.getElementById('pos-search-clear');
   if(clearBtn) clearBtn.style.display=_posSearch?'block':'none';
   const catTabs=document.getElementById('pos-cat-tabs');
@@ -4455,14 +4495,16 @@ function _renderModalCobro(){
     </div>
     ${_clientes.length?`<div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
       <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">👥 CLIENTE (opcional)</div>
-      <select id="cobro-cliente-sel" onchange="_cobroClienteId=this.value||null" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px">
+      <select id="cobro-cliente-sel" onchange="_cobroClienteId=this.value||null;(function(){const _cx=_clientes.find(x=>x.id===_cobroClienteId);if(_cx&&(_cx.descuento||0)>0){setDescTipo('%');const _i=document.getElementById('desc-input');if(_i){_i.value=_cx.descuento;onDescInput();}}})();_renderModalCobro()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px">
         <option value="">— Sin cliente —</option>
-        ${_clientes.map(c=>`<option value="${c.id}"${_cobroClienteId===c.id?' selected':''}>${esc(c.nombre)}${c.tel?' ('+esc(c.tel)+')':''}</option>`).join('')}
+        ${_clientes.map(c=>`<option value="${c.id}"${_cobroClienteId===c.id?' selected':''}>${esc(c.nombre)}${c.tel?' ('+esc(c.tel)+')':''}${(c.descuento||0)>0?' – Dto. '+c.descuento+'%':''}</option>`).join('')}
       </select>
+      ${(()=>{const _cx=_clientes.find(x=>x.id===_cobroClienteId);return(_cx&&(_cx.descuento||0)>0)?`<div style="margin-top:6px;font-size:12px;color:var(--amber);font-weight:600">⚡ Descuento del ${_cx.descuento}% aplicado automáticamente</div>`:''})()}
     </div>`:''}
     <div class="cobro-btns">
       <button class="cobro-btn" onclick="_abrirEfectivo()" style="${_mostrarEfectivo?'border-color:var(--green);color:var(--green);background:rgba(16,185,129,.07)':''}">💵 Efectivo</button>
       <button class="cobro-btn" onclick="confirmarCobro('tarjeta')">💳 Tarjeta</button>
+      <button class="cobro-btn" onclick="_cobroExacto()" style="border-color:var(--green);color:var(--green);background:rgba(16,185,129,.07)">⚡ Exacto</button>
       <button class="cobro-btn" onclick="_abrirMixto()" style="flex-basis:calc(100% - 2px);margin-top:4px;${_cobroMixto?'border-color:#3B82F6;color:#3B82F6;background:rgba(59,130,246,.07)':''}">💵+💳 Mixto</button>
     </div>
     ${_mostrarEfectivo?`<div style="margin-top:10px;background:var(--surface2);border-radius:10px;border:1.5px solid var(--green);padding:12px">
@@ -4508,6 +4550,40 @@ function _asignarTodos(){
   _renderModalCobro();
 }
 function cerrarModalCobro(){document.getElementById('modal-cobro').classList.remove('open');}
+function _cobroExacto(){_efectivoEntregado=calcTotal();confirmarCobro('efectivo');}
+function abrirPrecioLibre(){
+  document.getElementById('modal-precio-libre').classList.add('open');
+  setTimeout(()=>{
+    const n=document.getElementById('plib-nombre');if(n){n.value='';n.focus();}
+    const p=document.getElementById('plib-precio');if(p)p.value='';
+  },50);
+}
+function cerrarPrecioLibre(){document.getElementById('modal-precio-libre').classList.remove('open');}
+function confirmarPrecioLibre(){
+  const nombre=(document.getElementById('plib-nombre')?.value||'').trim()||'Producto libre';
+  const precio=parseFloat(document.getElementById('plib-precio')?.value)||0;
+  pedidoActual.items.push({id:uid(),nombre,precio,cantidad:1,libre:true});
+  cerrarPrecioLibre();
+  renderPedido();
+}
+function toggleNotaPedido(){
+  const w=document.getElementById('nota-ped-wrap');if(!w)return;
+  const open=w.style.display!=='block';
+  w.style.display=open?'block':'none';
+  if(open){const i=document.getElementById('nota-ped-input');if(i){i.value=pedidoActual.nota||'';i.focus();}}
+}
+function reimprimirCierreAnterior(horaEnc){
+  const hora=decodeURIComponent(horaEnc);
+  const ci=cierresCaja.find(c=>c.hora===hora);
+  if(!ci){toast('⚠️ No se encontró el cierre');return;}
+  const fmt=v=>(v||0).toFixed(2).replace('.',',');
+  const fecha=new Date(ci.hora);
+  const fechaStr=fecha.toLocaleDateString('es-ES')+' '+fecha.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const nombre=comercio.nombre||'Mi Negocio';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cierre ${fechaStr}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}.row{display:flex;justify-content:space-between;padding:3px 0}.total-row{font-weight:700;font-size:15px;padding-top:8px}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">RESUMEN DE CIERRE · ${fechaStr}</div><hr><div class="row"><span>Nº Comandas</span><span>${ci.numComandas||0}</span></div><div class="row"><span>Ticket medio</span><span>${fmt(ci.ticketMedio||0)} €</span></div><hr>${ci.efectivo!=null?`<div class="row"><span>Efectivo contado</span><span>${fmt(ci.efectivo)} €</span></div>`:''} ${ci.esperado!=null?`<div class="row"><span>Esperado</span><span>${fmt(ci.esperado)} €</span></div>`:''} ${ci.descuadre!=null?`<div class="row"><span>Descuadre</span><span>${ci.descuadre>=0?'+':''}${fmt(ci.descuadre)} €</span></div>`:''}<div class="row total-row"><span>TOTAL FACTURADO</span><span>${fmt(ci.total)} €</span></div><hr>${ci.usuario?`<div class="row"><span>Empleado</span><span>${ci.usuario.emoji||'👤'} ${ci.usuario.nombre}</span></div>`:''} ${ci.nota?`<div class="row"><span>Nota</span><span>${ci.nota}</span></div>`:''}<div class="footer">Generado: ${new Date().toLocaleString('es-ES')}</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
+  const w=window.open('','_blank','width=380,height=540');
+  if(w){w.document.write(html);w.document.close();}
+}
 function _setPropina(v){
   _propina=v;
   const inp=document.getElementById('propina-input');
@@ -4569,7 +4645,7 @@ function _renderClientesPanel(){
     <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
       <div style="flex:1">
         <div style="font-weight:700;font-size:14px">${esc(c.nombre)}</div>
-        <div style="font-size:12px;color:var(--muted)">${c.tel?'📞 '+esc(c.tel)+' · ':''}<span style="color:var(--green)">${fmtEuro(c.totalGastado||0)}</span> · ${c.visitas||0} visita${(c.visitas||0)!==1?'s':''}</div>
+        <div style="font-size:12px;color:var(--muted)">${c.tel?'📞 '+esc(c.tel)+' · ':''}<span style="color:var(--green)">${fmtEuro(c.totalGastado||0)}</span> · ${c.visitas||0} visita${(c.visitas||0)!==1?'s':''}${(c.descuento||0)>0?' · <span style="color:var(--amber);font-weight:700">Dto. '+c.descuento+'%</span>':''}</div>
       </div>
       <button onclick="clEliminarCliente('${c.id}')" style="font-size:18px;background:none;border:none;cursor:pointer;color:var(--muted)">🗑</button>
     </div>`).join('');
@@ -4578,10 +4654,12 @@ function clAddCliente(){
   const nom=(document.getElementById('cl-nombre')?.value||'').trim();
   if(!nom){toast('⚠️ Introduce un nombre');return;}
   const tel=(document.getElementById('cl-tel')?.value||'').trim();
-  _clientes.push({id:uid(),nombre:nom,tel,visitas:0,totalGastado:0});
+  const descuento=Math.min(100,Math.max(0,parseFloat(document.getElementById('cl-dto')?.value)||0));
+  _clientes.push({id:uid(),nombre:nom,tel,descuento,visitas:0,totalGastado:0});
   saveJ('if_clientes',_clientes);
   document.getElementById('cl-nombre').value='';
   document.getElementById('cl-tel').value='';
+  const dtoEl=document.getElementById('cl-dto');if(dtoEl)dtoEl.value='';
   _renderClientesPanel();
   toast('✅ Cliente añadido');
 }
@@ -4701,7 +4779,7 @@ function confirmarCobro(metodoPago){
     estado:'cerrada',cobrada:true,total,subtotal,
     descuento:desc||null,metodoPago,personas,camarero,
     propina:_propina>0?_propina:null,
-    divisionItems,
+    divisionItems,nota:pedidoActual.nota||null,
     pagoMixto:metodoPago==='mixto'?{efectivo:_mixtoEfectivo,tarjeta:Math.max(0,total-_mixtoEfectivo)}:null,
     fecha:new Date().toISOString(),fechaCierre:new Date().toISOString()};
   const warnings=[];
@@ -4728,6 +4806,8 @@ function confirmarCobro(metodoPago){
   _cuentaCobroFin();
   document.getElementById('desc-input').value='';
   onDescInput();
+  const _nw=document.getElementById('nota-ped-wrap');if(_nw)_nw.style.display='none';
+  const _ni=document.getElementById('nota-ped-input');if(_ni)_ni.value='';
   const mesaSel=document.getElementById('ped-mesa-sel');
   const mesaWrap=document.getElementById('ped-mesa-nueva-wrap');
   if(mesaSel) mesaSel.value='';
@@ -5118,6 +5198,7 @@ function renderVentas(){
           ${ci.nota?`<span style="color:var(--muted)"> · ${esc(ci.nota)}</span>`:''}
           ${ci.efectivo!=null?`<div style="color:var(--muted);font-size:12px">Efectivo contado: ${fmtEuro(ci.efectivo)}${Math.abs(ci.efectivo-ci.total)>0.01?' · Diferencia: '+fmtEuro(ci.efectivo-ci.total):' · ✓ Cuadra'}</div>`:''}
         </div>
+        <button onclick="reimprimirCierreAnterior('${encodeURIComponent(ci.hora)}')" title="Reimprimir resumen de cierre" style="flex-shrink:0;font-size:13px;background:none;border:1.5px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--muted)">🖨️</button>
         <span style="font-family:var(--mono);font-weight:700;color:var(--green);font-size:14px">${fmtEuro(ci.total)}</span>
       </div>`).join(''):'';
     return`<div class="cad-box">
@@ -5721,7 +5802,7 @@ function imprimirTicket(com){
   const ivaRows=ivaGrupos.length?ivaGrupos.map(g=>`<tr style="font-size:10px;color:#555"><td>Base imp. ${g.tasa}%</td><td style="text-align:right">${fmt(g.base)} €</td></tr><tr style="font-size:10px;color:#555"><td>IVA ${g.tasa}%</td><td style="text-align:right">${fmt(g.cuota)} €</td></tr>`).join(''):'';
   const vfReg=registrosVF.find(r=>r.comandaId===com.id);
   const vfBlock=vfReg?`<hr><div style="text-align:center;margin:8px 0"><div style="font-size:9px;color:#555;margin-bottom:4px">Verificar en AEAT · ${vfReg.numSerie}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(vfReg.qrUrl)}" style="width:90px;height:90px" alt="QR VeriFactu"><div style="font-size:8px;color:#888;margin-top:3px;word-break:break-all">${vfReg.huella.slice(0,16)}...</div></div>`:'';
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr><tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}${vfBlock}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.nota?`<tr><td colspan="3" style="font-size:11px;color:#555;font-style:italic;padding:3px 0">📝 ${com.nota}</td></tr>`:''}${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr><tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}${vfBlock}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
   const w=window.open('','_blank','width=360,height=680');
   if(w){w.document.write(html);w.document.close();}
 }
