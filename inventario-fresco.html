@@ -4312,7 +4312,7 @@ function añadirAlPedido(prodId){
   const ex=pedidoActual.items.find(i=>i.productoId===prodId);
   if(ex){ex.cantidad++;renderPedido();return;}
   const precioFinal=precioHF(prod.precio||0);
-  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null,tiempoPrep:prod.tiempoPrep||null});
+  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',imagen:prod.imagen||null,precio:precioFinal,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||10,curso:prod.curso||null,tiempoPrep:prod.tiempoPrep||null});
   renderPedido();
 }
 function quitarDelPedido(idx){
@@ -4370,7 +4370,7 @@ function renderPedido(){
       const pEf=i.descuentoLinea?i.precio*(1-i.descuentoLinea/100):i.precio;
       return `
       <div class="ped-item-row" style="flex-wrap:wrap">
-        <span class="ped-item-emoji">${i.emoji}</span>
+        ${i.imagen?`<img src="${i.imagen}" style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0">`:`<span class="ped-item-emoji">${i.emoji||'📦'}</span>`}
         <div class="ped-item-info" style="flex:1;min-width:0">
           <div class="ped-item-nombre">${esc(i.nombre)}${i.curso?`<span style="font-size:10px;font-weight:700;background:var(--amber-lt);color:var(--amber);border-radius:4px;padding:1px 5px;margin-left:5px">${{1:'1º',2:'2º',3:'🍮'}[i.curso]||i.curso+'º'}</span>`:''}</div>
           <div class="ped-item-sub">${i.descuentoLinea?`<span style="text-decoration:line-through;opacity:.5">${fmtEuro(i.precio)}</span> <span style="color:var(--green);font-weight:700">-${i.descuentoLinea}%</span> `:''}${fmtEuro(pEf)} × ${i.cantidad} = ${fmtEuro(pEf*i.cantidad)}</div>

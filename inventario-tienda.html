@@ -4174,7 +4174,7 @@ function añadirAlPedido(prodId){
   if(prod.ingredientes?.length){abrirModalPersonalizar(prodId);return;}
   const ex=pedidoActual.items.find(i=>i.productoId===prodId&&!i.nota);
   if(ex){ex.cantidad++;renderPedido();_restarStockInventario(prod.nombre);return;}
-  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',precio:prod.precio||0,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||21});
+  pedidoActual.items.push({productoId:prodId,nombre:prod.nombre,emoji:prod.emoji||'📦',imagen:prod.imagen||null,precio:prod.precio||0,unidad:prod.unidad||'ud',cantidad:1,tipoIva:prod.tipoIva||21});
   renderPedido();
   _restarStockInventario(prod.nombre);
 }
@@ -4322,7 +4322,7 @@ function renderPedido(){
       const pEf=i.descuentoLinea?i.precio*(1-i.descuentoLinea/100):i.precio;
       return `
       <div class="ped-item-row" style="flex-wrap:wrap">
-        <span class="ped-item-emoji">${i.emoji}</span>
+        ${i.imagen?`<img src="${i.imagen}" style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0">`:`<span class="ped-item-emoji">${i.emoji||'📦'}</span>`}
         <div class="ped-item-info" style="flex:1;min-width:0">
           <div class="ped-item-nombre">${esc(i.nombre)}</div>
           <div class="ped-item-sub">${i.descuentoLinea?`<span style="text-decoration:line-through;opacity:.5">${fmtEuro(i.precio)}</span> <span style="color:var(--green);font-weight:700">-${i.descuentoLinea}%</span> `:''}${fmtEuro(pEf)} × ${i.cantidad} = ${fmtEuro(pEf*i.cantidad)}</div>
