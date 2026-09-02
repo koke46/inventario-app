@@ -1114,7 +1114,7 @@ body.demo-activo{padding-top:40px;}
               <button class="btn-reimprimir" onclick="toggleNotaPedido()" style="border-color:#8B5CF6;color:#8B5CF6">📝 Nota pedido</button>
             </div>
             <div id="nota-ped-wrap" style="display:none;padding:4px 0">
-              <input class="form-input" id="nota-ped-input" type="text" placeholder="Nota del pedido..." maxlength="200" autocomplete="off" oninput="pedidoActual.nota=this.value" style="font-size:13px">
+              <input class="form-input" id="nota-ped-input" type="text" placeholder="Nota del pedido..." maxlength="200" autocomplete="off" oninput="_notaPedido=this.value" style="font-size:13px">
             </div>
             <button class="numpad-toggle" onclick="var w=this.nextElementSibling;var v=w.style.display==='block';w.style.display=v?'none':'block';this.textContent=v?'🔢 Mostrar teclado':'🔼 Ocultar teclado'">🔢 Mostrar teclado</button>
             <div class="numpad-wrap">
@@ -3977,6 +3977,7 @@ function _reordenarCategorias(fromCat,toCat){
 }
 
 let _posSearch='';
+let _notaPedido='';
 function buscarPOS(q){
   const raw=q.trim();
   if(/^\d{6,14}$/.test(raw)){
@@ -4518,7 +4519,7 @@ function toggleNotaPedido(){
   const w=document.getElementById('nota-ped-wrap');if(!w)return;
   const open=w.style.display!=='block';
   w.style.display=open?'block':'none';
-  if(open){const i=document.getElementById('nota-ped-input');if(i){i.value=pedidoActual.nota||'';i.focus();}}
+  if(open){const i=document.getElementById('nota-ped-input');if(i){i.value=_notaPedido;i.focus();}}
 }
 function reimprimirCierreAnterior(horaEnc){
   const hora=decodeURIComponent(horaEnc);
@@ -4727,7 +4728,7 @@ function confirmarCobro(metodoPago){
     estado:'cerrada',cobrada:true,total,subtotal,
     descuento:desc||null,metodoPago,personas,camarero,
     propina:_propina>0?_propina:null,
-    divisionItems,nota:(document.getElementById('nota-ped-input')?.value||pedidoActual.nota||null)||null,
+    divisionItems,nota:_notaPedido.trim()||null,
     pagoMixto:metodoPago==='mixto'?{efectivo:_mixtoEfectivo,tarjeta:Math.max(0,total-_mixtoEfectivo)}:null,
     fecha:new Date().toISOString(),fechaCierre:new Date().toISOString()};
   const warnings=[];
@@ -4754,6 +4755,7 @@ function confirmarCobro(metodoPago){
   _cuentaCobroFin();
   document.getElementById('desc-input').value='';
   onDescInput();
+  _notaPedido='';
   const _nw=document.getElementById('nota-ped-wrap');if(_nw)_nw.style.display='none';
   const _ni=document.getElementById('nota-ped-input');if(_ni)_ni.value='';
   const mesaSel=document.getElementById('ped-mesa-sel');
