@@ -11,17 +11,23 @@ if (!gotLock) { app.quit(); }
 let win;
 
 function applyWindowOpenHandler(browserWin) {
-  browserWin.webContents.setWindowOpenHandler(() => ({
-    action: 'allow',
-    overrideBrowserWindowOptions: {
-      width: 1280,
-      height: 800,
-      minWidth: 900,
-      minHeight: 600,
-      title: 'El Miarma',
-      webPreferences: { nodeIntegration: false, contextIsolation: true }
+  browserWin.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('elmiarma://')) {
+      abrirDesdeProtocolo(url);
+      return { action: 'deny' };
     }
-  }));
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        width: 1280,
+        height: 800,
+        minWidth: 900,
+        minHeight: 600,
+        title: 'El Miarma',
+        webPreferences: { nodeIntegration: false, contextIsolation: true }
+      }
+    };
+  });
   browserWin.webContents.on('did-create-window', childWin => {
     applyWindowOpenHandler(childWin);
   });
