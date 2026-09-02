@@ -443,23 +443,28 @@ let _modalActiva=true;
 function sbHeaders(){
   return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
 }
+function sbFetch(url,options,ms=10000){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),ms);
+  return fetch(url,{...options,signal:ctrl.signal}).finally(()=>clearTimeout(t));
+}
 async function sbGet(){
-  const r=await fetch(SB_URL+'/rest/v1/licencias?select=*&order=created_at.desc',{headers:sbHeaders()});
+  const r=await sbFetch(SB_URL+'/rest/v1/licencias?select=*&order=created_at.desc',{headers:sbHeaders()});
   if(!r.ok) throw new Error('Error '+r.status);
   return r.json();
 }
 async function sbPost(body){
-  const r=await fetch(SB_URL+'/rest/v1/licencias',{method:'POST',headers:sbHeaders(),body:JSON.stringify(body)});
+  const r=await sbFetch(SB_URL+'/rest/v1/licencias',{method:'POST',headers:sbHeaders(),body:JSON.stringify(body)});
   if(!r.ok){const t=await r.text();throw new Error(t);}
   return r.json();
 }
 async function sbPatch(licenciaId,body){
-  const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'PATCH',headers:sbHeaders(),body:JSON.stringify(body)});
+  const r=await sbFetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'PATCH',headers:sbHeaders(),body:JSON.stringify(body)});
   if(!r.ok){const t=await r.text();throw new Error(t);}
   return r.json();
 }
 async function sbDelete(licenciaId){
-  const r=await fetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'DELETE',headers:sbHeaders()});
+  const r=await sbFetch(SB_URL+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licenciaId),{method:'DELETE',headers:sbHeaders()});
   if(!r.ok){const t=await r.text();throw new Error(t);}
 }
 
@@ -727,7 +732,7 @@ async function wizardGuardar(){
   const notasFinal=idDetectaTipo?notas:tipoPrefijo+notas;
 
   try{
-    await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
+    await sbFetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
       {method:'DELETE',headers:sbHeaders()}).catch(()=>{});
     const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,max_dispositivos:maxDisp,fecha_expiracion:fechaExp||null,force_reset:false});
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,created_at:new Date().toISOString()});
