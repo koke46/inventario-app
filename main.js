@@ -61,9 +61,10 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 function createWindow() {
-  const esTienda = process.execPath.toLowerCase().includes('tienda') || process.argv.includes('--tienda');
-  const htmlFile = esTienda ? 'inventario-tienda.html' : 'inventario-fresco.html';
-  const titulo   = esTienda ? 'El Miarma — Tienda' : 'El Miarma — Inventario';
+  const esPanel  = process.argv.includes('--panel');
+  const esTienda = !esPanel && (process.execPath.toLowerCase().includes('tienda') || process.argv.includes('--tienda'));
+  const htmlFile = esPanel ? 'panel-control.html' : esTienda ? 'inventario-tienda.html' : 'inventario-fresco.html';
+  const titulo   = esPanel ? 'El Miarma — Panel de control' : esTienda ? 'El Miarma — Tienda' : 'El Miarma — Inventario';
 
   win = new BrowserWindow({
     width: 1280,
