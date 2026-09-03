@@ -240,6 +240,37 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- SECCIÓN SOLICITUDES -->
+<div class="main" id="sec-solicitudes" style="margin-top:0;border-top:1px solid var(--border)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px 0">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:var(--fg)">📥 Solicitudes de acceso</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">Peticiones recibidas desde el formulario de contratación</div>
+    </div>
+    <button class="btn-nuevo" onclick="cargarSolicitudes()" style="background:var(--surface2);color:var(--fg);border:1px solid var(--border)">🔄 Actualizar</button>
+  </div>
+  <div class="table-wrap" style="margin-top:16px">
+    <table>
+      <thead>
+        <tr>
+          <th>Ref</th>
+          <th>Nombre</th>
+          <th>Negocio</th>
+          <th>Teléfono</th>
+          <th>Email</th>
+          <th>Tipo</th>
+          <th>Mensaje</th>
+          <th>Fecha</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-solicitudes">
+        <tr><td colspan="9" class="empty"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- WIZARD NUEVO CLIENTE -->
 <div class="overlay hidden" id="wizard-overlay">
   <div class="modal">
@@ -998,8 +1029,58 @@ function ponerDosMeses(){
   if(el) el.value=val;
 }
 
+// ── SOLICITUDES ──
+async function cargarSolicitudes(){
+  const tb=document.getElementById('tbody-solicitudes');
+  if(!tb) return;
+  tb.innerHTML='<tr><td colspan="9" class="empty"><div class="spinner"></div></td></tr>';
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/solicitudes?select=*&order=created_at.desc',{headers:sbHeaders()});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const rows=await r.json();
+    if(!rows.length){
+      tb.innerHTML='<tr><td colspan="9" class="empty"><div class="empty-ico">📭</div><div class="empty-txt">Sin solicitudes por ahora</div></td></tr>';
+      return;
+    }
+    tb.innerHTML=rows.map(s=>{
+      const fecha=s.created_at?new Date(s.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      const tipo=s.tipo==='bar'?'<span class="badge badge-bar">🍺 Bar</span>':'<span class="badge badge-tienda">🛒 Tienda</span>';
+      const msg=s.mensaje?`<span title="${s.mensaje.replace(/"/g,'&quot;')}" style="cursor:help;text-decoration:underline dotted">${s.mensaje.slice(0,30)}${s.mensaje.length>30?'…':''}</span>`:'<span style="color:var(--muted)">—</span>';
+      return `<tr>
+        <td><span class="lic-id">${s.ref||'—'}</span></td>
+        <td class="cliente-name">${s.nombre||'—'}</td>
+        <td>${s.negocio||'—'}</td>
+        <td>${s.telefono||'—'}</td>
+        <td>${s.email||'—'}</td>
+        <td>${tipo}</td>
+        <td class="notas-text">${msg}</td>
+        <td class="fecha-text">${fecha}</td>
+        <td class="actions">
+          <button class="btn btn-primary btn-sm" onclick="convertirSolicitud(${JSON.stringify(s).replace(/'/g,'&apos;')})" title="Crear licencia a partir de esta solicitud">✅ Activar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarSolicitud('${s.id}')" title="Eliminar solicitud">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    tb.innerHTML=`<tr><td colspan="9" class="empty empty-txt">Error: ${e.message}</td></tr>`;
+  }
+}
+function convertirSolicitud(s){
+  // Rellena el wizard con los datos de la solicitud para agilizar la activación
+  abrirModalNuevo();
+  setTimeout(()=>{
+    if(document.getElementById('w-tipo')) document.getElementById('w-tipo').value=s.tipo||'bar';
+    if(document.getElementById('w-cliente')) document.getElementById('w-cliente').value=s.negocio||s.nombre||'';
+  },100);
+}
+async function eliminarSolicitud(id){
+  if(!id||!confirm('¿Eliminar esta solicitud?')) return;
+  await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbHeaders()});
+  cargarSolicitudes();
+}
+
 // ── INICIO ──
-function iniciarPanel(){cargar();cargarDemos();}
+function iniciarPanel(){cargar();cargarDemos();cargarSolicitudes();}
 if(_sessionValida()) iniciarPanel();
 </script>
 </body>

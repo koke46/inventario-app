@@ -1991,8 +1991,11 @@ function _renderVFPanel(){
   const el=document.getElementById('vf-panel-body');if(!el)return;
   el.innerHTML=`
     <h3 style="margin:0 0 16px;color:var(--text)">🏛️ VeriFactu / TicketBAI</h3>
-    <div style="background:#1e3a5f22;border:1px solid #3B82F6;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--muted)">
+    <div style="background:#1e3a5f22;border:1px solid #3B82F6;border-radius:12px;padding:14px;margin-bottom:12px;font-size:13px;color:var(--muted)">
       Sistema de facturación verificable (AEAT). Actívalo cuando tengas tu certificado digital.
+    </div>
+    <div style="background:#451a0322;border:1px solid var(--amber);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--amber);line-height:1.5">
+      ⚠️ <strong>Aviso legal:</strong> Este módulo genera y almacena registros locales en formato VeriFactu, pero <strong>no los envía a la AEAT</strong>. La obligación legal de transmisión a Hacienda requiere un software homologado con certificado digital. Usa la opción "Exportar JSON" para llevarlos a tu gestor o software fiscal.
     </div>
     <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer">
       <input type="checkbox" id="vf-activo" ${vfConfig.activo?'checked':''} onchange="vfToggleActivo(this.checked)" style="width:18px;height:18px;accent-color:#3B82F6">
