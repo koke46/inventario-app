@@ -1030,6 +1030,7 @@ function ponerDosMeses(){
 }
 
 // ── SOLICITUDES ──
+let _solicitudes=[];
 async function cargarSolicitudes(){
   const tb=document.getElementById('tbody-solicitudes');
   if(!tb) return;
@@ -1038,12 +1039,12 @@ async function cargarSolicitudes(){
     const hGET={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
     const r=await fetch(SB_URL+'/rest/v1/solicitudes?select=*',{headers:hGET});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const rows=await r.json();
-    if(!rows.length){
+    _solicitudes=await r.json();
+    if(!_solicitudes.length){
       tb.innerHTML='<tr><td colspan="9" class="empty"><div class="empty-ico">📭</div><div class="empty-txt">Sin solicitudes por ahora</div></td></tr>';
       return;
     }
-    tb.innerHTML=rows.map(s=>{
+    tb.innerHTML=_solicitudes.map((s,i)=>{
       const fecha=s.created_at?new Date(s.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
       const tipo=s.tipo==='bar'?'<span class="badge badge-bar">🍺 Bar</span>':'<span class="badge badge-tienda">🛒 Tienda</span>';
       const msg=s.mensaje?`<span title="${s.mensaje.replace(/"/g,'&quot;')}" style="cursor:help;text-decoration:underline dotted">${s.mensaje.slice(0,30)}${s.mensaje.length>30?'…':''}</span>`:'<span style="color:var(--muted)">—</span>';
@@ -1057,8 +1058,8 @@ async function cargarSolicitudes(){
         <td class="notas-text">${msg}</td>
         <td class="fecha-text">${fecha}</td>
         <td class="actions">
-          <button class="btn btn-primary btn-sm" onclick="convertirSolicitud(${JSON.stringify(s).replace(/'/g,'&apos;')})" title="Crear licencia a partir de esta solicitud">✅ Activar</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarSolicitud('${s.id}')" title="Eliminar solicitud">🗑️</button>
+          <button class="btn btn-primary btn-sm" onclick="convertirSolicitud(${i})" title="Crear licencia a partir de esta solicitud">✅ Activar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarSolicitud(${i})" title="Eliminar solicitud">🗑️</button>
         </td>
       </tr>`;
     }).join('');
@@ -1066,18 +1067,22 @@ async function cargarSolicitudes(){
     tb.innerHTML=`<tr><td colspan="9" class="empty empty-txt">Error: ${e.message}</td></tr>`;
   }
 }
-function convertirSolicitud(s){
-  // Rellena el wizard con los datos de la solicitud para agilizar la activación
+function convertirSolicitud(i){
+  const s=_solicitudes[i];
+  if(!s) return;
   abrirModalNuevo();
   setTimeout(()=>{
-    if(document.getElementById('w-tipo')) document.getElementById('w-tipo').value=s.tipo||'bar';
-    if(document.getElementById('w-cliente')) document.getElementById('w-cliente').value=s.negocio||s.nombre||'';
-  },100);
+    const wTipo=document.getElementById('w-tipo');
+    const wCliente=document.getElementById('w-cliente');
+    if(wTipo) wTipo.value=s.tipo||'bar';
+    if(wCliente) wCliente.value=s.negocio||s.nombre||'';
+  },150);
 }
-async function eliminarSolicitud(id){
-  if(!id||!confirm('¿Eliminar esta solicitud?')) return;
+async function eliminarSolicitud(i){
+  const s=_solicitudes[i];
+  if(!s||!confirm('¿Eliminar la solicitud de '+s.nombre+'?')) return;
   const hDEL={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
-  await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:hDEL});
+  await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(s.id),{method:'DELETE',headers:hDEL});
   cargarSolicitudes();
 }
 
