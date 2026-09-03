@@ -1074,8 +1074,10 @@ function convertirSolicitud(i){
   setTimeout(()=>{
     const wTipo=document.getElementById('w-tipo');
     const wCliente=document.getElementById('w-cliente');
+    const wExp=document.getElementById('w-expiracion');
     if(wTipo) wTipo.value=s.tipo||'bar';
     if(wCliente) wCliente.value=s.negocio||s.nombre||'';
+    if(wExp){const d=new Date();d.setMonth(d.getMonth()+2);wExp.value=d.toISOString().slice(0,10);}
   },150);
 }
 async function eliminarSolicitud(i){
