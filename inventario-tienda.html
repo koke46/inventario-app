@@ -2150,7 +2150,7 @@ function showPage(p,btn){
 function getLotesConDias(){
   return lotes
     .filter(l=>l.cantidad>0)
-    .map(l=>({...l,prod:almacen.find(p=>p.id===l.productoId),dias:diasHasta(l.fechaCaducidad)}))
+    .map(l=>({...l,prod:almacen.find(p=>p.id===l.productoId)||productos.find(p=>p.id===l.productoId),dias:diasHasta(l.fechaCaducidad)}))
     .filter(l=>l.prod)
     .sort((a,b)=>a.fechaCaducidad.localeCompare(b.fechaCaducidad));
 }
@@ -2159,7 +2159,7 @@ function updateStats(){
   const numVenc=ld.filter(l=>l.dias<0).length;
   const numProx=ld.filter(l=>l.dias>=0&&l.dias<=comercio.umbral).length;
   document.getElementById('stat-lotes').textContent=ld.length;
-  document.getElementById('stat-prods').textContent=almacen.length;
+  document.getElementById('stat-prods').textContent=productos.length;
   document.getElementById('stat-prox').textContent=numProx;
   document.getElementById('stat-prox-sub').textContent='en '+comercio.umbral+' días';
   document.getElementById('stat-venc').textContent=numVenc;
@@ -2176,7 +2176,7 @@ function renderInventario(){
   const filtro=document.getElementById('inv-filtro')?.value||'todos';
   updateStats();
 
-  let prods=almacen;
+  let prods=productos.filter(p=>p.activo!==false);
   if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q)||(p.categoria||'').toLowerCase().includes(q));
 
   const rows=prods.map(p=>{
@@ -2192,7 +2192,7 @@ function renderInventario(){
     if(filtro==='caducado'&&(dias===null||dias>=0)) return '';
 
     const bc=dias!==null?badgeClass(dias):'b-neutro';
-    const bl=dias!==null?badgeLabel(dias):(stockTotal>0?'Sin caducidad':'Sin stock');
+    const bl=dias!==null&&primerLote?.fechaCaducidad!=='2099-12-31'?badgeLabel(dias):(stockTotal>0?'En stock':'Sin stock');
     const diasStr=dias!==null?(dias<0?String(dias):'+'+dias):'—';
     const diasColor=dias===null?'var(--muted)':dias<0?'var(--red)':dias<=3?'var(--orange)':dias<=7?'var(--amber)':'var(--green)';
 
@@ -2210,7 +2210,7 @@ function renderInventario(){
       <div class="td"><span class="badge ${bc}">${bl}</span></div>
       <div class="td" style="display:flex;gap:4px;align-items:center">
         <button class="act-btn" onclick="abrirDetalleProd('${esc(p.id)}')" title="Ver producto" style="padding:4px 8px">Ver</button>
-        <button class="del-btn" onclick="eliminarAlmacenItem('${esc(p.id)}')">✕</button>
+        <button class="del-btn" onclick="eliminarProducto('${esc(p.id)}')">✕</button>
       </div>
     </div>`;
   }).filter(Boolean);
@@ -2663,13 +2663,25 @@ function eliminarAlmacenItem(id){
   const p=almacen.find(x=>x.id===id);
   if(!p) return;
   const nLotes=lotes.filter(l=>l.productoId===id).length;
-  const msg=nLotes>0
-    ?`¿Eliminar "${p.nombre}"?\n\nTambién se eliminarán sus ${nLotes} lote(s) y movimientos asociados.`
-    :`¿Eliminar "${p.nombre}" del almacén?`;
+  const msg=nLotes>0?`¿Eliminar "${p.nombre}"?\n\nTambién se eliminarán sus ${nLotes} lote(s).`:`¿Eliminar "${p.nombre}" del almacén?`;
   if(!confirm(msg)) return;
   lotes=lotes.filter(l=>l.productoId!==id);
   movimientos=movimientos.filter(m=>lotes.find(l=>l.id===m.loteId));
   almacen=almacen.filter(x=>x.id!==id);
+  save();updateStats();renderInventario();
+  toast(`✓ "${p.nombre}" eliminado`);
+}
+function eliminarProducto(id){
+  const p=productos.find(x=>x.id===id)||almacen.find(x=>x.id===id);
+  if(!p) return;
+  const enProductos=!!productos.find(x=>x.id===id);
+  const nLotes=lotes.filter(l=>l.productoId===id).length;
+  const msg=nLotes>0?`¿Eliminar "${p.nombre}"?\n\nTambién se eliminarán sus ${nLotes} lote(s) de stock.`:`¿Eliminar "${p.nombre}"?`;
+  if(!confirm(msg)) return;
+  lotes=lotes.filter(l=>l.productoId!==id);
+  movimientos=movimientos.filter(m=>lotes.find(l=>l.id===m.loteId));
+  if(enProductos){productos=productos.filter(x=>x.id!==id);saveJ('if_productos',productos);}
+  else{almacen=almacen.filter(x=>x.id!==id);}
   save();updateStats();renderInventario();
   toast(`✓ "${p.nombre}" eliminado`);
 }
@@ -2999,7 +3011,7 @@ function renderModalP1(barcode){
   document.getElementById('modal-anadir-titulo').textContent='Nuevo producto';
   document.getElementById('modal-anadir-ok').textContent='✓ Guardar producto';
   const cats=_anadirConLote
-    ?[...new Set([...CATS_ALMACEN,...almacen.map(p=>p.categoria).filter(Boolean)])].sort()
+    ?[...new Set([...(comercio.categorias||[]),...productos.map(p=>p.categoria).filter(Boolean)])].sort()
     :[...new Set([...(comercio.categorias||[]),...productos.map(p=>p.categoria).filter(Boolean)])].sort();
   document.getElementById('modal-anadir-body').innerHTML=`
     <div class="form-group">
@@ -3079,13 +3091,17 @@ function renderModalP1(barcode){
     ${_anadirConLote?`
     <div class="form-row">
       <div class="form-group" style="flex:1">
-        <label class="form-label">Cantidad *</label>
-        <input class="form-input" id="p1-stock" type="number" min="0" step="1" placeholder="Ej: 10" inputmode="numeric">
+        <label class="form-label">Precio de venta (€)</label>
+        <input class="form-input" id="p1-precio" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal">
       </div>
       <div class="form-group" style="flex:1">
-        <label class="form-label">Fecha de caducidad * (DD/MM/AAAA)</label>
-        <input class="form-input" id="p1-caducidad" type="text" placeholder="31/12/2025" maxlength="10" oninput="autoFmt(this)" inputmode="numeric">
+        <label class="form-label">Cantidad en stock</label>
+        <input class="form-input" id="p1-stock" type="number" min="0" step="1" placeholder="Ej: 10" inputmode="numeric">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Caducidad (DD/MM/AAAA) — opcional</label>
+      <input class="form-input" id="p1-caducidad" type="text" placeholder="31/12/2025" maxlength="10" oninput="autoFmt(this)" inputmode="numeric">
     </div>
     <span style="display:none" id="p1-pred-q"></span>
     <div id="p1-pred-res" style="display:none"></div>`:`
@@ -3269,19 +3285,20 @@ function crearProductoYContinuar(){
   const barcode=(document.getElementById('p1-barcode')?.value||'').trim()||undefined;
   _alergSel=new Set();_admiteNota=false;
   if(_anadirConLote){
-    // Artículo de almacén/cocina — separado de los productos de venta
     const unidad=(document.getElementById('p1-unidad')?.value)||'ud';
     const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
     const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,stockMinimo,proveedorId,barcode};
-    almacen.push(productoActivo);
-    // Si hay barcode, sincronizarlo en el producto de venta con el mismo nombre
-    if(barcode){const pv=productos.find(p=>(p.nombre||'').trim().toLowerCase()===(nombre||'').trim().toLowerCase());if(pv&&!pv.barcode){pv.barcode=barcode;}}
+    const precio=parseFloat(document.getElementById('p1-precio')?.value)||0;
+    const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,tipoIva:10,stockMinimo,proveedorId,barcode,precioHistorial};
+    productos.push(productoActivo);
+    saveJ('if_productos',productos);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
     const stockVal=parseFloat(document.getElementById('p1-stock')?.value)||0;
     if(stockVal>0){
-      const fechaISO=parseFechaES((document.getElementById('p1-caducidad')?.value||'').trim());
-      if(!fechaISO){toast('⚠️ Introduce la fecha de caducidad para el stock');return;}
+      const fechaStr=(document.getElementById('p1-caducidad')?.value||'').trim();
+      const fechaISO=fechaStr?parseFechaES(fechaStr):'2099-12-31';
+      if(fechaStr&&!fechaISO){toast('⚠️ Fecha inválida. Usa DD/MM/AAAA');return;}
       const lote={id:uid(),productoId:productoActivo.id,cantidad:stockVal,fechaCaducidad:fechaISO};
       lotes.push(lote);
       movimientos.push({id:uid(),loteId:lote.id,tipo:'entrada',cantidad:stockVal,fecha:new Date().toISOString().slice(0,10)});
@@ -3369,7 +3386,7 @@ let detalleId=null;
 let tipoSalida='salida';
 
 function abrirDetalleProd(prodId){
-  const p=almacen.find(x=>x.id===prodId);if(!p) return;
+  const p=productos.find(x=>x.id===prodId)||almacen.find(x=>x.id===prodId);if(!p) return;
   const prodLotes=lotes.filter(l=>l.productoId===prodId&&l.cantidad>0)
     .sort((a,b)=>a.fechaCaducidad.localeCompare(b.fechaCaducidad));
   const stockTotal=prodLotes.reduce((s,l)=>s+l.cantidad,0);
@@ -3408,7 +3425,7 @@ function abrirDetalleProd(prodId){
           <input class="form-input" id="det-add-cant" type="number" min="0.01" step="1" placeholder="Ej: 10" inputmode="numeric">
         </div>
         <div class="form-group" style="flex:1">
-          <label class="form-label">Caducidad (DD/MM/AAAA)</label>
+          <label class="form-label">Caducidad (DD/MM/AAAA) — opcional</label>
           <input class="form-input" id="det-add-fecha" type="text" placeholder="31/12/2025" maxlength="10" oninput="autoFmt(this)" inputmode="numeric">
         </div>
       </div>
@@ -3417,17 +3434,18 @@ function abrirDetalleProd(prodId){
   document.getElementById('modal-detalle').classList.add('open');
 }
 function guardarLoteProd(prodId){
-  const p=almacen.find(x=>x.id===prodId);if(!p) return;
+  const p=productos.find(x=>x.id===prodId)||almacen.find(x=>x.id===prodId);if(!p) return;
   const cant=parseFloat(document.getElementById('det-add-cant')?.value)||0;
   if(cant<=0){toast('⚠️ Introduce una cantidad válida');return;}
-  const fechaISO=parseFechaES((document.getElementById('det-add-fecha')?.value||'').trim());
-  if(!fechaISO){toast('⚠️ Fecha inválida. Usa DD/MM/AAAA');return;}
+  const fechaStr=(document.getElementById('det-add-fecha')?.value||'').trim();
+  const fechaISO=fechaStr?parseFechaES(fechaStr):'2099-12-31';
+  if(fechaStr&&!fechaISO){toast('⚠️ Fecha inválida. Usa DD/MM/AAAA');return;}
   const lote={id:uid(),productoId:prodId,cantidad:cant,fechaCaducidad:fechaISO};
   lotes.push(lote);
   movimientos.push({id:uid(),loteId:lote.id,tipo:'entrada',cantidad:cant,fecha:new Date().toISOString().slice(0,10)});
   save();updateStats();renderInventario();
   cerrarDetalle();
-  toast(`✓ Lote añadido a "${p.nombre}"`);
+  toast(`✓ Stock añadido a "${p.nombre}"`);
 }
 function abrirDetalle(id){
   detalleId=id;tipoSalida='salida';
@@ -3442,7 +3460,7 @@ function cerrarDetalle(){
 function renderDetalle(){
   const lote=lotes.find(l=>l.id===detalleId);
   if(!lote){cerrarDetalle();return;}
-  const prod=almacen.find(p=>p.id===lote.productoId);
+  const prod=almacen.find(p=>p.id===lote.productoId)||productos.find(p=>p.id===lote.productoId);
   if(!prod){cerrarDetalle();return;}
   const dias=diasHasta(lote.fechaCaducidad);
   const bc=badgeClass(dias);const bl=badgeLabel(dias);
@@ -7774,7 +7792,7 @@ function _devolverStockInventario(nombre,cantidad=1){
   save();
 }
 function _quitarBarcodeAlmacen(prodId){
-  const p=almacen.find(x=>x.id===prodId);
+  const p=almacen.find(x=>x.id===prodId)||productos.find(x=>x.id===prodId);
   if(!p) return;
   if(!confirm('¿Quitar el código de barras de "'+p.nombre+'"?')) return;
   delete p.barcode;
