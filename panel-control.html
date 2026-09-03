@@ -1035,7 +1035,8 @@ async function cargarSolicitudes(){
   if(!tb) return;
   tb.innerHTML='<tr><td colspan="9" class="empty"><div class="spinner"></div></td></tr>';
   try{
-    const r=await fetch(SB_URL+'/rest/v1/solicitudes?select=*&order=created_at.desc',{headers:sbHeaders()});
+    const hGET={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+    const r=await fetch(SB_URL+'/rest/v1/solicitudes?select=*',{headers:hGET});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows=await r.json();
     if(!rows.length){
@@ -1075,7 +1076,8 @@ function convertirSolicitud(s){
 }
 async function eliminarSolicitud(id){
   if(!id||!confirm('¿Eliminar esta solicitud?')) return;
-  await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbHeaders()});
+  const hDEL={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+  await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:hDEL});
   cargarSolicitudes();
 }
 
