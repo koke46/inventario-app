@@ -198,7 +198,6 @@ tr:hover td{background:var(--surface2)}
           <th>ID Licencia</th>
           <th>Tipo</th>
           <th>Estado</th>
-          <th>Plan</th>
           <th>Expira</th>
           <th>Usuario</th>
           <th>Notas</th>
@@ -208,7 +207,7 @@ tr:hover td{background:var(--surface2)}
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="11" class="empty"><div class="spinner"></div></td></tr>
+        <tr><td colspan="10" class="empty"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -324,15 +323,6 @@ tr:hover td{background:var(--surface2)}
             <input class="form-input" id="w-licencia-id" style="font-family:var(--mono)" autocomplete="off">
           </div>
           <div class="form-group">
-            <label class="form-label">Plan</label>
-            <select class="form-input" id="w-plan">
-              <option value="">— Sin plan (acceso ilimitado) —</option>
-              <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
-              <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
-              <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
-            </select>
-          </div>
-          <div class="form-group">
             <label class="form-label">Fecha expiración</label>
             <div style="display:flex;gap:8px;align-items:center">
               <input class="form-input" id="w-expiracion" type="date" style="flex:1">
@@ -388,15 +378,6 @@ tr:hover td{background:var(--surface2)}
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('m-contrasena').value=genPass()" title="Generar">🔀</button>
         </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Plan</label>
-      <select class="form-input" id="m-plan">
-        <option value="">— Sin plan (acceso ilimitado) —</option>
-        <option value="basico">💻 Plan Básico — 1 PC — 15€/mes</option>
-        <option value="pro">💻💻 Plan Pro — 2 PCs — 25€/mes</option>
-        <option value="premium">💻💻💻 Plan Premium — 3 PCs — 35€/mes</option>
-      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Fecha de expiración de licencia</label>
@@ -518,16 +499,6 @@ async function cargar(){
   }
 }
 
-// ── PLANES ──
-function planToMaxDisp(plan){return {basico:1,pro:2,premium:3}[plan]??null;}
-function maxDispToPlan(n){return {1:'basico',2:'pro',3:'premium'}[n]||'';}
-function planBadge(r){
-  const n=r.max_dispositivos;
-  if(n===1) return '<span class="badge" style="background:#1e3a5f;color:#93c5fd">💻 Básico</span>';
-  if(n===2) return '<span class="badge" style="background:#451a03;color:#f59e0b">💻💻 Pro</span>';
-  if(n===3) return '<span class="badge" style="background:#14532d;color:#4ade80">💻💻💻 Premium</span>';
-  return '<span style="font-size:11px;color:var(--muted)">—</span>';
-}
 function expiraBadge(r){
   if(!r.fecha_expiracion) return '<span style="font-size:11px;color:var(--muted)">—</span>';
   const dias=Math.ceil((new Date(r.fecha_expiracion)-new Date())/86400000);
@@ -595,7 +566,6 @@ function renderTabla(){
       <td><span class="lic-id">${esc(r.licencia_id||'')}</span></td>
       <td>${tipoBadge}</td>
       <td>${estadoBadge}</td>
-      <td>${planBadge(r)}</td>
       <td>${expiraBadge(r)}</td>
       <td><span class="lic-id">${esc(r.usuario||'—')}</span></td>
       <td><div class="notas-text" title="${esc(notas)}">${esc(notas)||'—'}</div></td>
@@ -702,7 +672,6 @@ function abrirModalNuevo(){
   document.getElementById('w-contrasena').value=genPass();
   document.getElementById('w-cliente').value='';
   document.getElementById('w-notas').value='';
-  document.getElementById('w-plan').value='';
   document.getElementById('w-expiracion').value='';
   wizardGenerarId();
   _wizardMostrarPaso(1);
@@ -749,8 +718,6 @@ async function wizardGuardar(){
   const usuario=(document.getElementById('w-usuario').value||'admin').trim();
   const contrasena=(document.getElementById('w-contrasena').value||'').trim();
   const notas=(document.getElementById('w-notas').value||'').trim();
-  const plan=(document.getElementById('w-plan')?.value)||'';
-  const maxDisp=planToMaxDisp(plan);
   const fechaExp=(document.getElementById('w-expiracion')?.value)||null;
 
   if(!cliente){toast('⚠️ Escribe el nombre del comercio',true);return;}
@@ -768,7 +735,7 @@ async function wizardGuardar(){
   try{
     await sbFetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
       {method:'DELETE',headers:sbHeaders()}).catch(()=>{});
-    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,max_dispositivos:maxDisp,fecha_expiracion:fechaExp||null,force_reset:false});
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,max_dispositivos:null,fecha_expiracion:fechaExp||null,force_reset:false});
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas:notasFinal,usuario,contrasena,activa:true,created_at:new Date().toISOString()});
     cerrarWizard();
     renderStats();renderTabla();
@@ -796,7 +763,6 @@ function abrirModalEditar(licenciaId){
   document.getElementById('m-usuario').value=r.usuario||'admin';
   document.getElementById('m-contrasena').value=r.contrasena||'';
   document.getElementById('m-notas').value=getNotas(r);
-  const mp2=document.getElementById('m-plan');if(mp2) mp2.value=maxDispToPlan(r.max_dispositivos);
   const mExp2=document.getElementById('m-expiracion');if(mExp2) mExp2.value=r.fecha_expiracion||'';
   _modalActiva=r.activa;
   actualizarToggleModal();
@@ -839,8 +805,6 @@ async function guardarCliente(){
   const usuario=(document.getElementById('m-usuario').value||'admin').trim();
   const contrasena=(document.getElementById('m-contrasena').value||'').trim();
   const notasRaw=(document.getElementById('m-notas').value||'').trim();
-  const mPlan=(document.getElementById('m-plan')?.value)||'';
-  const mMaxDisp=planToMaxDisp(mPlan);
   const mFechaExp=(document.getElementById('m-expiracion')?.value)||null;
   const editando=!!document.getElementById('m-id').value;
 
@@ -855,16 +819,16 @@ async function guardarCliente(){
 
   try{
     if(editando){
-      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null});
+      await sbPatch(licenciaId,{cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:null,fecha_expiracion:mFechaExp||null});
       const idx=_datos.findIndex(x=>x.licencia_id===licenciaId);
-      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null};
+      if(idx>=0) _datos[idx]={..._datos[idx],cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:null,fecha_expiracion:mFechaExp||null};
       toast('✅ Cliente actualizado');
     }else{
       if(_datos.find(r=>r.licencia_id===licenciaId)){toast('⚠️ Ese ID ya existe',true);return;}
       const h2=sbHeaders();
       await fetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
         {method:'DELETE',headers:h2}).catch(()=>{});
-      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:mMaxDisp,fecha_expiracion:mFechaExp||null,force_reset:false});
+      const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,max_dispositivos:null,fecha_expiracion:mFechaExp||null,force_reset:false});
       _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:_modalActiva,created_at:new Date().toISOString()});
       cerrarModal();
       renderStats();renderTabla();
@@ -1162,7 +1126,7 @@ async function convertirSolicitud(i){
   const fechaExp=d.toISOString().slice(0,10);
   if(!confirm('¿Activar 2 meses de prueba para "'+cliente+'"?\n\nID: '+licenciaId+'\nUsuario: '+usuario+'\nContraseña: '+contrasena)) return;
   try{
-    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:true,max_dispositivos:1,fecha_expiracion:fechaExp,force_reset:false});
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:true,max_dispositivos:null,fecha_expiracion:fechaExp,force_reset:false});
     _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:true,created_at:new Date().toISOString(),fecha_expiracion:fechaExp});
     const hDEL={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
     await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(s.id),{method:'DELETE',headers:hDEL}).catch(()=>{});
