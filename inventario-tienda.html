@@ -566,6 +566,12 @@ body.demo-activo{padding-top:40px;}
   <button class="demo-banner-btn" onclick="window.open('tel:699279994')">📞 Contratar — 699 27 99 94</button>
 </div>
 
+<!-- Botones siempre accesibles por encima de cualquier modal -->
+<div id="demo-float-btns" style="position:fixed;top:10px;right:12px;z-index:100000;display:flex;gap:6px">
+  <button id="btn-theme-float" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema" style="font-size:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">🌙</button>
+  <button class="mode-btn" onclick="bloquearPantalla()" title="Bloquear pantalla" style="font-size:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">🔒</button>
+</div>
+
 <!-- ── DEMO MODAL ACTIVACIÓN ── -->
 <div id="demo-modal" class="hidden">
   <div class="demo-card">
@@ -6728,6 +6734,8 @@ function _updateThemeBtns(){
   const isDark=cur==='dark'||((!cur)&&sys);
   const btn=document.getElementById('btn-theme');
   if(btn) btn.textContent=isDark?'☀️':'🌙';
+  const btnF=document.getElementById('btn-theme-float');
+  if(btnF) btnF.textContent=isDark?'☀️':'🌙';
   const aj=document.getElementById('aj-theme-btn');
   if(aj) aj.textContent=isDark?'☀️ Claro':'🌙 Oscuro';
 }
