@@ -3318,7 +3318,8 @@ function crearProductoYContinuar(){
     const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
     const precio=parseFloat(document.getElementById('p1-precio')?.value)||0;
     const precioHistorial=precio>0?[{fecha:new Date().toISOString().slice(0,10),precio}]:[];
-    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,tipoIva:10,stockMinimo,proveedorId,barcode,precioHistorial};
+    const descripcion=(document.getElementById('p1-descripcion')?.value||'').trim()||undefined;
+    productoActivo={id:uid(),nombre,imagen:imagenActiva||undefined,emoji:imagenActiva?undefined:'📦',categoria,unidad,precio,tipoIva:10,stockMinimo,proveedorId,barcode,precioHistorial,descripcion};
     productos.push(productoActivo);
     saveJ('if_productos',productos);
     if(categoria){if(!comercio.categorias)comercio.categorias=[];if(!comercio.categorias.includes(categoria))comercio.categorias.push(categoria);}
