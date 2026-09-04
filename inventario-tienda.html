@@ -3139,7 +3139,7 @@ function renderModalP1(barcode){
     </div>
     <div class="form-group">
       <label class="form-label">Descripción (opcional)</label>
-      <textarea class="form-input" id="p1-descripcion" rows="2" maxlength="200" placeholder="Ej: Con lechuga, tomate, queso cheddar y salsa especial..." style="resize:none;line-height:1.4"></textarea>
+      <textarea class="form-input" id="p1-descripcion" rows="2" maxlength="200" placeholder="Ej: Con lechuga, tomate, queso cheddar y salsa especial..." style="resize:none;line-height:1.4">${esc(p?.descripcion||'')}</textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Nombre en inglés 🇬🇧 <span style="font-weight:400;color:var(--muted)">(opcional — para carta bilingüe)</span></label>
@@ -3306,6 +3306,7 @@ function crearProductoYContinuar(){
     prod.nombre=nombre;prod.categoria=categoria;prod.unidad=unidad;prod.stockMinimo=stockMinimo;prod.proveedorId=proveedorId;prod.barcode=barcode;prod.sku=sku;
     if(precio>0&&precio!==prod.precio){if(!prod.precioHistorial)prod.precioHistorial=[];prod.precioHistorial.push({fecha:new Date().toISOString().slice(0,10),precio});}
     prod.precio=precio;
+    prod.descripcion=(document.getElementById('p1-descripcion')?.value||'').trim()||undefined;
     if(imagenActiva){prod.imagen=imagenActiva;delete prod.emoji;}else if(!prod.imagen){prod.emoji=prod.emoji||'📦';}
     if(categoria&&!comercio.categorias?.includes(categoria)){if(!comercio.categorias)comercio.categorias=[];comercio.categorias.push(categoria);}
     save();cerrarModalAnadir();updateStats();renderInventario();toast(`✓ "${nombre}" actualizado`);return;
