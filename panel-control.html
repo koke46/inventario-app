@@ -313,7 +313,7 @@ tr:hover td{background:var(--surface2)}
       <div class="modal-title">Nuevo cliente — Nombre del comercio</div>
       <div class="form-group">
         <label class="form-label">Nombre del comercio</label>
-        <input class="form-input" id="w-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="off" onkeydown="if(event.key==='Enter')wizardGuardar()">
+        <input class="form-input" id="w-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="new-password" onkeydown="if(event.key==='Enter')wizardGuardar()">
       </div>
       <details style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px">
         <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;user-select:none">Opciones avanzadas</summary>
@@ -551,7 +551,7 @@ function renderTabla(){
 
   const tbody=document.getElementById('tbody');
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Sin resultados</div></div></td></tr>`;
     return;
   }
 
@@ -697,6 +697,7 @@ function wizardPaso2(){
   const p=(document.getElementById('w-contrasena').value||'').trim();
   if(!u){toast('⚠️ Escribe el usuario',true);return;}
   if(!p){toast('⚠️ La contraseña no puede estar vacía',true);return;}
+  document.getElementById('w-cliente').value='';
   _wizardMostrarPaso(2);
   setTimeout(()=>document.getElementById('w-cliente').focus(),50);
 }
