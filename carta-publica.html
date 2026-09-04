@@ -47,7 +47,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
 /* PRODUCTO */
 .producto{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface);margin-bottom:1px}
-.prod-ico{font-size:34px;width:46px;text-align:center;flex-shrink:0}
+.prod-ico{font-size:34px;width:56px;text-align:center;flex-shrink:0}
+.prod-img{width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0}
 .prod-info{flex:1;min-width:0}
 .prod-nombre{font-size:15px;font-weight:600;line-height:1.3}
 .prod-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
@@ -139,6 +140,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="header-sub" id="hdr-sub">Toca un producto para añadirlo</div>
     </div>
     <button class="lang-btn" id="lang-btn" onclick="toggleLang()">🇬🇧 EN</button>
+    <button class="lang-btn" onclick="_recargarCarta()" title="Actualizar carta" style="font-size:16px;padding:5px 8px">↻</button>
   </div>
   <nav class="cat-nav" id="cat-nav"></nav>
   <div id="productos-lista"></div>
@@ -287,6 +289,26 @@ function mostrarError(msg){
   document.getElementById('error-msg').innerHTML=msg;
   document.getElementById('error-screen').style.display='flex';
 }
+async function _recargarCarta(){
+  if(!LICENCIA_ID) return;
+  try{
+    const r=await fetch(
+      SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(LICENCIA_ID)+'&select=datos&limit=1',
+      {headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}}
+    );
+    if(!r.ok) return;
+    const d=await r.json();
+    if(!d.length||!d[0].datos) return;
+    const sd=d[0].datos;
+    comercioData=sd.comercio||{};
+    const nuevosProd=(sd.productos||[]).filter(p=>p.precio&&p.precio>0);
+    if(JSON.stringify(nuevosProd.map(p=>p.id+p.nombre+p.precio))!==JSON.stringify(productos.map(p=>p.id+p.nombre+p.precio))){
+      productos=nuevosProd;
+      renderCarta();
+    }
+  }catch(e){}
+}
+setInterval(_recargarCarta,90000);
 
 // ── RENDER ──
 function renderCarta(){
@@ -327,7 +349,7 @@ function renderProductos(){
     const desc=(_lang==='en'&&p.descripcionEn)||p.descripcion;
     const personLabel=_lang==='en'?'Customizable 🥗':'Personalizable 🥗';
     return `<div class="producto">
-      <div class="prod-ico">${p.emoji||'📦'}</div>
+      ${p.imagen?`<img class="prod-img" src="${p.imagen}" alt="" loading="lazy">`:`<div class="prod-ico">${p.emoji||'📦'}</div>`}
       <div class="prod-info">
         <div class="prod-nombre">${esc(nombre)}</div>
         ${desc?`<div class="prod-desc">${esc(desc)}</div>`:''}
