@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard } = require('electron');
 const path = require('path');
 
 // Habilitar Web Bluetooth en Electron
@@ -77,6 +77,23 @@ function createWindow() {
 
   win.loadFile(htmlFile);
   applyWindowOpenHandler(win);
+
+  // Menú contextual (clic derecho) con Cortar / Copiar / Pegar
+  win.webContents.on('context-menu', (e, params) => {
+    const menu = new Menu();
+    if (params.isEditable) {
+      if (params.selectionText) {
+        menu.append(new MenuItem({ label: 'Cortar',  role: 'cut' }));
+        menu.append(new MenuItem({ label: 'Copiar', role: 'copy' }));
+      }
+      menu.append(new MenuItem({ label: 'Pegar', role: 'paste', enabled: clipboard.readText().length > 0 }));
+      menu.append(new MenuItem({ type: 'separator' }));
+      menu.append(new MenuItem({ label: 'Seleccionar todo', role: 'selectAll' }));
+    } else if (params.selectionText) {
+      menu.append(new MenuItem({ label: 'Copiar', role: 'copy' }));
+    }
+    if (menu.items.length > 0) menu.popup({ window: win });
+  });
 
   // Selector de dispositivo Bluetooth para Web Bluetooth API
   let _btCallback = null;
