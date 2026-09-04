@@ -169,7 +169,7 @@ body.demo-activo{padding-top:40px;}
 
 /* ── MAIN / TOPBAR ── */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;flex-shrink:0;position:relative;z-index:100000;}
 .topbar-title{font-size:16px;font-weight:700;}
 .topbar-sub{font-size:12px;color:var(--muted);margin-left:4px;}
 .topbar-spacer{flex:1;}
@@ -616,12 +616,6 @@ body.demo-activo{padding-top:40px;}
   <button class="demo-banner-btn" onclick="window.open('tel:699279994')">📞 Contratar — 699 27 99 94</button>
 </div>
 
-<!-- Botones siempre accesibles por encima de cualquier modal -->
-<div id="demo-float-btns" style="position:fixed;top:10px;right:12px;z-index:100000;display:flex;gap:6px">
-  <button id="btn-theme-float" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema" style="font-size:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">🌙</button>
-  <button class="mode-btn" onclick="bloquearPantalla()" title="Bloquear pantalla" style="font-size:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">🔒</button>
-</div>
-
 <!-- ── DEMO MODAL ACTIVACIÓN ── -->
 <div id="demo-modal" class="hidden">
   <div class="demo-card">
@@ -725,6 +719,10 @@ body.demo-activo{padding-top:40px;}
     </div>
     <div class="topbar-spacer"></div>
     <div id="sync-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#EF4444;flex-shrink:0;cursor:default;transition:background .4s" title="Sin conexión cloud"></div>
+    <div class="mode-toggle">
+      <button id="btn-theme" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+      <button class="mode-btn" onclick="bloquearPantalla()" title="Bloquear pantalla (PIN)">🔒</button>
+    </div>
     <div id="topbar-user-chip" style="display:none;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px 5px 8px;cursor:pointer;margin-left:8px" onclick="cambiarUsuario()" title="Cambiar usuario">
       <span id="topbar-user-emoji" style="font-size:17px">👤</span>
       <span id="topbar-usuario-nombre" style="font-size:13px;font-weight:600;color:var(--fg)">—</span>
