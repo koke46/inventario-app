@@ -5829,9 +5829,10 @@ function imprimirTicket(com){
   const filas=(com.items||[]).map(i=>`<tr><td style="padding:3px 0">${i.nombre}</td><td style="text-align:center;padding:3px 8px">${i.cantidad}</td><td style="text-align:right;padding:3px 0">${fmt((i.precio||0)*(i.cantidad||1))} €</td></tr>`).join('');
   const ivaGrupos=_calcIva(com.items);
   const ivaRows=ivaGrupos.length?ivaGrupos.map(g=>`<tr style="font-size:10px;color:#555"><td>Base imp. ${g.tasa}%</td><td style="text-align:right">${fmt(g.base)} €</td></tr><tr style="font-size:10px;color:#555"><td>IVA ${g.tasa}%</td><td style="text-align:right">${fmt(g.cuota)} €</td></tr>`).join(''):'';
+  const dir=[comercio.dir,[comercio.cp,comercio.ciudad].filter(Boolean).join(' ')].filter(Boolean).join(', ');
   const vfReg=registrosVF.find(r=>r.comandaId===com.id);
   const vfBlock=vfReg?`<hr><div style="text-align:center;margin:8px 0"><div style="font-size:9px;color:#555;margin-bottom:4px">Verificar en AEAT · ${vfReg.numSerie}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(vfReg.qrUrl)}" style="width:90px;height:90px" alt="QR VeriFactu"><div style="font-size:8px;color:#888;margin-top:3px;word-break:break-all">${vfReg.huella.slice(0,16)}...</div></div>`:'';
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1><div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.nota?`<tr><td colspan="3" style="font-size:11px;color:#555;font-style:italic;padding:3px 0">📝 ${com.nota}</td></tr>`:''}${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr>${com.propina?`<tr><td style="font-size:12px;color:#555">Propina</td><td></td><td style="text-align:right;font-size:12px;color:#555">+${fmt(com.propina)} €</td></tr>`:''}${com.efectivoEntregado>0&&com.metodoPago==='efectivo'?`<tr><td style="font-size:12px;color:#555">Entregado</td><td></td><td style="text-align:right;font-size:12px;color:#555">${fmt(com.efectivoEntregado)} €</td></tr><tr><td style="font-size:13px;font-weight:700">Vuelta</td><td></td><td style="text-align:right;font-size:13px;font-weight:700">${fmt(Math.max(0,com.efectivoEntregado-(com.total||0)-(com.propina||0)))} €</td></tr>`:''}<tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}${vfBlock}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${num}</title><style>body{font-family:monospace;font-size:13px;max-width:280px;margin:0 auto;padding:20px;color:#000}h1{font-size:16px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:11px;margin-bottom:12px}hr{border:none;border-top:1px dashed #000;margin:10px 0}table{width:100%;border-collapse:collapse}thead th{font-size:11px;padding-bottom:4px}.total-row td{font-weight:bold;font-size:15px;padding-top:8px}.metodo{font-size:11px;color:#555}.footer{text-align:center;font-size:11px;color:#555;margin-top:12px}@media print{body{padding:0}}</style></head><body><h1>${nombre}</h1>${dir?`<div style="text-align:center;font-size:11px;color:#555;margin:1px 0">${dir}</div>`:''}${comercio.nif?`<div style="text-align:center;font-size:11px;color:#555;margin:1px 0">NIF: ${comercio.nif}</div>`:''}<div class="sub">${fechaStr} · Ticket #${num}${com.nombre?` · ${com.nombre}`:''}</div><hr><table><thead><tr><th style="text-align:left">Artículo</th><th style="text-align:center">Ud</th><th style="text-align:right">€</th></tr></thead><tbody>${filas}</tbody></table><hr><table>${com.nota?`<tr><td colspan="3" style="font-size:11px;color:#555;font-style:italic;padding:3px 0">📝 ${com.nota}</td></tr>`:''}${com.descuento?`<tr><td style="font-size:12px;color:#555">Descuento</td><td></td><td style="text-align:right;font-size:12px;color:#555">-${fmt(com.descuento)} €</td></tr>`:''}<tr class="total-row"><td>TOTAL</td><td style="text-align:right" colspan="2">${fmt(com.total)} €</td></tr>${com.propina?`<tr><td style="font-size:12px;color:#555">Propina</td><td></td><td style="text-align:right;font-size:12px;color:#555">+${fmt(com.propina)} €</td></tr>`:''}${com.efectivoEntregado>0&&com.metodoPago==='efectivo'?`<tr><td style="font-size:12px;color:#555">Entregado</td><td></td><td style="text-align:right;font-size:12px;color:#555">${fmt(com.efectivoEntregado)} €</td></tr><tr><td style="font-size:13px;font-weight:700">Vuelta</td><td></td><td style="text-align:right;font-size:13px;font-weight:700">${fmt(Math.max(0,com.efectivoEntregado-(com.total||0)-(com.propina||0)))} €</td></tr>`:''}<tr><td class="metodo" colspan="2">Pago: ${metodo}</td></tr></table>${ivaRows?`<hr><table style="width:100%">${ivaRows}</table><div style="font-size:10px;color:#555;text-align:center;margin-top:4px">Precios con IVA incluido</div>`:''}${vfBlock}<div class="footer">¡Gracias por su visita!</div><script>window.onload=function(){window.print()}<\/script></body></html>`;
   const w=window.open('','_blank','width=360,height=680');
   if(w){w.document.write(html);w.document.close();}
 }
@@ -5931,11 +5932,14 @@ async function imprimirCierreBT(){
   const fmt=v=>v.toFixed(2).replace('.',',');
   const W=_getImpCfg().ancho;
   const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const btDir=[comercio.dir,[comercio.cp,comercio.ciudad].filter(Boolean).join(' ')].filter(Boolean).join(', ');
   const bytes=[
     ..._ep.init(),..._ep.page(),
     ..._ep.align('c'),..._ep.bold(true),..._ep.dbl(),
-    ..._ep.text((comercio.nombre||'Cierre').slice(0,16)),..._ep.lf(),
+    ..._ep.text((comercio.nombre||'Cierre').slice(0,W)),..._ep.lf(),
     ..._ep.norm(),..._ep.bold(false),
+    ...(btDir?[..._ep.text(btDir.slice(0,W)),..._ep.lf()]:[]),
+    ...(comercio.nif?[..._ep.text(('NIF: '+comercio.nif).slice(0,W)),..._ep.lf()]:[]),
     ..._ep.text('CIERRE DE CAJA'),..._ep.lf(),
     ..._ep.text(new Date(hoyStr+'T00:00:00').toLocaleDateString('es-ES')),..._ep.lf(),
     ..._ep.text('Hora: '+hora),..._ep.lf(),
@@ -6371,11 +6375,15 @@ async function imprimirTicketBT(com){
   if(!_btChar){imprimirTicket(com);return;}
   const fmt=v=>v.toFixed(2).replace('.',',');
   const W=_getImpCfg().ancho;
+  const btDir=[comercio.dir,[comercio.cp,comercio.ciudad].filter(Boolean).join(' ')].filter(Boolean).join(', ');
   const bytes=[
     ..._ep.init(),..._ep.page(),
     ..._ep.align('c'),..._ep.bold(true),..._ep.dbl(),
-    ..._ep.text((comercio.nombre||'Ticket').slice(0,16)),..._ep.lf(),
-    ..._ep.norm(),..._ep.bold(false),..._ep.align('l'),
+    ..._ep.text((comercio.nombre||'Ticket').slice(0,W)),..._ep.lf(),
+    ..._ep.norm(),..._ep.bold(false),
+    ...(btDir?[..._ep.text(btDir.slice(0,W)),..._ep.lf()]:[]),
+    ...(comercio.nif?[..._ep.text(('NIF: '+comercio.nif).slice(0,W)),..._ep.lf()]:[]),
+    ..._ep.align('l'),
     ..._ep.line('-'.repeat(W)),
   ];
   if(com.nombre||com.mesa){bytes.push(..._ep.text('Mesa: '+(com.nombre||com.mesa||'')),..._ep.lf());}
