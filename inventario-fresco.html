@@ -2431,6 +2431,7 @@ function renderInventario(){
       <div class="td"><span class="badge ${bc}">${bl}</span></div>
       <div class="td" style="display:flex;gap:4px;align-items:center">
         <button class="act-btn" onclick="abrirDetalleProd('${esc(p.id)}')" title="Ver producto" style="padding:4px 8px">Ver</button>
+        <button class="act-btn" onclick="abrirEditarAlmacenItem('${esc(p.id)}')" title="Editar producto" style="padding:4px 8px">✏️</button>
         <button class="del-btn" onclick="eliminarAlmacenItem('${esc(p.id)}')">✕</button>
       </div>
     </div>`;
@@ -3078,23 +3079,31 @@ const EMOJIS=['🍎','🍊','🍋','🍇','🍓','🍌','🥦','🥕','🧅','�
 let modalPaso='p1'; // 'p1' | 'p2'
 let productoActivo=null;
 let imagenActiva=null;
+let _editandoProdId=null;
 let _anadirConLote=false;
 
 function abrirModalAnadir(){
   _anadirConLote=false;
-  modalPaso='p1';productoActivo=null;imagenActiva=null;
+  modalPaso='p1';productoActivo=null;imagenActiva=null;_editandoProdId=null;
   document.getElementById('modal-anadir').classList.add('open');
   renderModalP1('');
 }
 function abrirAnadirInventario(){
   _anadirConLote=true;
-  modalPaso='p1';productoActivo=null;imagenActiva=null;
+  modalPaso='p1';productoActivo=null;imagenActiva=null;_editandoProdId=null;
   document.getElementById('modal-anadir').classList.add('open');
   renderModalP1('');
 }
 function cerrarModalAnadir(){
   document.getElementById('modal-anadir').classList.remove('open');
-  modalPaso='p1';productoActivo=null;_anadirConLote=false;
+  modalPaso='p1';productoActivo=null;_anadirConLote=false;_editandoProdId=null;
+}
+function abrirEditarAlmacenItem(prodId){
+  const p=almacen.find(x=>x.id===prodId);if(!p) return;
+  _editandoProdId=prodId;_anadirConLote=true;
+  productoActivo=p;imagenActiva=p.imagen||null;
+  document.getElementById('modal-anadir').classList.add('open');
+  renderModalP1('');
 }
 function modalAnadirOk(){
   crearProductoYContinuar();
@@ -3102,13 +3111,13 @@ function modalAnadirOk(){
 
 function renderModalP1(barcode){
   const p=productoActivo;
-  document.getElementById('modal-anadir-titulo').textContent='Nuevo producto';
-  document.getElementById('modal-anadir-ok').textContent='✓ Guardar producto';
+  document.getElementById('modal-anadir-titulo').textContent=_editandoProdId?'Editar producto':'Nuevo producto';
+  document.getElementById('modal-anadir-ok').textContent=_editandoProdId?'✓ Guardar cambios':'✓ Guardar producto';
   const cats=_anadirConLote
     ?[...new Set([...CATS_ALMACEN,...almacen.map(p=>p.categoria).filter(Boolean)])].sort()
     :[...new Set([...(comercio.categorias||[]),...productos.map(p=>p.categoria).filter(Boolean)])].sort();
   document.getElementById('modal-anadir-body').innerHTML=`
-    <div class="form-group">
+    ${_editandoProdId?'':`<div class="form-group">
       <label class="form-label">Buscar producto existente</label>
       <input class="form-input" id="p1-buscar" type="text" placeholder="Escribe nombre o código..." oninput="filtrarProds()" autocomplete="off">
       <div id="p1-resultados" style="margin-top:8px"></div>
@@ -3116,13 +3125,13 @@ function renderModalP1(barcode){
     <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
     <div class="form-group">
       <label class="form-label">— o crea un producto nuevo —</label>
-    </div>
+    </div>`}
     <div class="form-group">
       <label class="form-label">Foto del producto</label>
       <div class="img-upload-area" onclick="document.getElementById('p1-imagen-input').click()">
-        <img id="img-preview" class="img-upload-preview" src="" alt="">
-        <div id="img-ico" style="font-size:32px;margin-bottom:6px">📷</div>
-        <div style="font-size:13px;font-weight:600;color:var(--muted)" id="img-txt">Toca para añadir foto</div>
+        <img id="img-preview" class="img-upload-preview" src="${imagenActiva||''}" alt="" ${imagenActiva?'style="display:block"':''}>
+        <div id="img-ico" style="font-size:32px;margin-bottom:6px">${imagenActiva?'✓':'📷'}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--muted)" id="img-txt">${imagenActiva?'Foto seleccionada · toca para cambiar':'Toca para añadir foto'}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">Cámara o galería</div>
       </div>
       <input type="file" id="p1-imagen-input" accept="image/*" style="display:none" onchange="onImageSelect(this)">
@@ -3130,14 +3139,14 @@ function renderModalP1(barcode){
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Nombre del producto *</label>
-        <input class="form-input" id="p1-nombre" type="text" placeholder="Ej: Leche entera 1L" maxlength="80" ${barcode?'':'autofocus'} autocomplete="off">
+        <input class="form-input" id="p1-nombre" type="text" placeholder="Ej: Leche entera 1L" maxlength="80" ${barcode?'':'autofocus'} autocomplete="off" value="${esc(p?.nombre||'')}">
       </div>
       <div class="form-group">
         <label class="form-label">Categoría</label>
         <div style="display:flex;gap:6px;align-items:center">
           <select class="form-input" id="p1-categoria-sel" onchange="onCatSelChange()" style="cursor:pointer;flex:1">
             <option value="">Sin categoría</option>
-            ${cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+            ${cats.map(c=>`<option value="${esc(c)}" ${p?.categoria===c?'selected':''}>${esc(c)}</option>`).join('')}
             <option value="__nueva__">➕ Nueva categoría...</option>
           </select>
           <button type="button" id="p1-cat-del-btn" onclick="eliminarCatDesdeModal()" class="del-btn" style="display:none;padding:7px 10px;flex-shrink:0" title="Eliminar esta categoría">✕</button>
@@ -3148,7 +3157,7 @@ function renderModalP1(barcode){
     <div class="form-group">
       <label class="form-label">Código de barras <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
       <div style="display:flex;gap:8px;align-items:center">
-        <input class="form-input" id="p1-barcode" type="text" maxlength="50" placeholder="Ej: 8410076530201" autocomplete="off" inputmode="numeric" value="${barcode||''}">
+        <input class="form-input" id="p1-barcode" type="text" maxlength="50" placeholder="Ej: 8410076530201" autocomplete="off" inputmode="numeric" value="${barcode||(p?.barcode||'')}">
       </div>
     </div>
     <div class="form-group">
@@ -3176,7 +3185,7 @@ function renderModalP1(barcode){
         </select>
       </div>
     </div>
-    ${_anadirConLote?`
+    ${_anadirConLote&&!_editandoProdId?`
     <div class="form-row">
       <div class="form-group" style="flex:1">
         <label class="form-label">Cantidad *</label>
@@ -3384,6 +3393,17 @@ function crearProductoYContinuar(){
   const catSel=document.getElementById('p1-categoria-sel')?.value||'';
   const categoria=(catSel==='__nueva__'?(document.getElementById('p1-categoria-nueva')?.value||'').trim():catSel)||undefined;
   const barcode=(document.getElementById('p1-barcode')?.value||'').trim()||undefined;
+  if(_editandoProdId){
+    const prod=almacen.find(x=>x.id===_editandoProdId)||productos.find(x=>x.id===_editandoProdId);
+    if(!prod){toast('⚠️ Producto no encontrado');return;}
+    const unidad=(document.getElementById('p1-unidad')?.value)||prod.unidad||'ud';
+    const stockMinimo=parseFloat(document.getElementById('p1-stock-min')?.value)||0;
+    const proveedorId=document.getElementById('p1-proveedor')?.value||undefined;
+    prod.nombre=nombre;prod.categoria=categoria;prod.unidad=unidad;prod.stockMinimo=stockMinimo;prod.proveedorId=proveedorId;prod.barcode=barcode;
+    if(imagenActiva){prod.imagen=imagenActiva;delete prod.emoji;}else if(!prod.imagen){prod.emoji=prod.emoji||'📦';}
+    if(categoria&&!comercio.categorias?.includes(categoria)){if(!comercio.categorias)comercio.categorias=[];comercio.categorias.push(categoria);}
+    save();cerrarModalAnadir();updateStats();renderInventario();toast(`✓ "${nombre}" actualizado`);return;
+  }
   _alergSel=new Set();_admiteNota=false;
   if(_anadirConLote){
     // Artículo de almacén/cocina — separado de los productos de venta
