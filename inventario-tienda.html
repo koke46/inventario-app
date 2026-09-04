@@ -5677,7 +5677,7 @@ function imprimirTicket(com){
   const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
   const num=String(com.nTicket||comercio.ultimoPedido||'').padStart(4,'0');
   const fmt=v=>v.toFixed(2).replace('.',',');
-  const filas=(com.items||[]).map(i=>`<tr><td style="padding:3px 0">${i.nombre}</td><td style="text-align:center;padding:3px 8px">${i.cantidad}</td><td style="text-align:right;padding:3px 0">${fmt((i.precio||0)*(i.cantidad||1))} €</td></tr>`).join('');
+  const filas=(com.items||[]).map(i=>{const notaRow=i.nota?`<tr><td colspan="3" style="font-size:10px;color:#555;font-style:italic;padding:0 0 4px 10px">↳ ${i.nota.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td></tr>`:'';return`<tr><td style="padding:3px 0">${i.nombre}</td><td style="text-align:center;padding:3px 8px">${i.cantidad}</td><td style="text-align:right;padding:3px 0">${fmt((i.precio||0)*(i.cantidad||1))} €</td></tr>${notaRow}`;}).join('');
   const ivaGrupos=_calcIva(com.items);
   const ivaRows=ivaGrupos.length?ivaGrupos.map(g=>`<tr style="font-size:10px;color:#555"><td>Base imp. ${g.tasa}%</td><td style="text-align:right">${fmt(g.base)} €</td></tr><tr style="font-size:10px;color:#555"><td>IVA ${g.tasa}%</td><td style="text-align:right">${fmt(g.cuota)} €</td></tr>`).join(''):'';
   const vfReg=registrosVF.find(r=>r.comandaId===com.id);
@@ -5700,7 +5700,7 @@ function enviarTicketWhatsApp(com){
   const fecha=new Date(com.fecha||Date.now()).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const metodos={efectivo:'💵 Efectivo',tarjeta:'💳 Tarjeta',bizum:'📱 Bizum'};
   const metodo=metodos[com.metodoPago]||com.metodoPago||'—';
-  const lineas=(com.items||[]).map(i=>`  ${i.cantidad}x ${i.nombre}  ${fmt((i.precio||0)*(i.cantidad||1))} €`).join('\n');
+  const lineas=(com.items||[]).map(i=>`  ${i.cantidad}x ${i.nombre}  ${fmt((i.precio||0)*(i.cantidad||1))} €`+(i.nota?`\n     ↳ ${i.nota}`:'')).join('\n');
   const dir=[comercio.dir,comercio.cp&&comercio.ciudad?`${comercio.cp} ${comercio.ciudad}`:comercio.cp||comercio.ciudad].filter(Boolean).join(', ');
   const cabecera=[
     `🧾 *${nombre}*`,
@@ -6229,6 +6229,7 @@ async function imprimirTicketBT(com){
   for(const i of (com.items||[])){
     const sub=(i.precio||0)*(i.cantidad||1);
     bytes.push(..._ep.two(`${i.cantidad}x ${i.nombre}`,fmt(sub)+' E',W),..._ep.lf());
+    if(i.nota){bytes.push(..._ep.text(('  '+i.nota).slice(0,W)),..._ep.lf());}
   }
   bytes.push(..._ep.line('='.repeat(W)));
   const ivaG=_calcIva(com.items||[]);
