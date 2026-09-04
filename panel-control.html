@@ -890,30 +890,51 @@ function abrirApp(licenciaId){
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
   window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
 }
-function _getAppBase(){
+function _inputDialog(label,valorActual){
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center';
+    ov.innerHTML=`<div style="background:var(--surface,#1e1e2e);border:1px solid var(--border,#333);padding:28px 24px;border-radius:14px;width:440px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.5)">
+      <div style="font-size:14px;color:var(--text,#fff);margin-bottom:14px;white-space:pre-line">${label}</div>
+      <input id="_dlg_inp" style="width:100%;padding:9px 12px;border:1px solid var(--border,#555);border-radius:8px;font-size:13px;background:var(--bg,#13131f);color:var(--text,#fff);outline:none;box-sizing:border-box" value="${valorActual||''}">
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+        <button id="_dlg_cancel" style="padding:7px 18px;border-radius:8px;border:1px solid var(--border,#555);background:transparent;color:var(--text,#fff);cursor:pointer;font-size:13px">Cancelar</button>
+        <button id="_dlg_ok" style="padding:7px 18px;border-radius:8px;border:none;background:#7c3aed;color:#fff;cursor:pointer;font-size:13px;font-weight:600">Guardar</button>
+      </div>
+    </div>`;
+    const ok=()=>{const v=ov.querySelector('#_dlg_inp').value.trim();ov.remove();resolve(v||null);};
+    const cancel=()=>{ov.remove();resolve(null);};
+    ov.querySelector('#_dlg_ok').onclick=ok;
+    ov.querySelector('#_dlg_cancel').onclick=cancel;
+    ov.querySelector('#_dlg_inp').addEventListener('keydown',e=>{if(e.key==='Enter')ok();if(e.key==='Escape')cancel();});
+    document.body.appendChild(ov);
+    setTimeout(()=>ov.querySelector('#_dlg_inp').focus(),50);
+  });
+}
+async function _getAppBase(){
   if(location.protocol!=='file:') return location.href.replace(/[^/]*$/,'');
   let b=localStorage.getItem('_panel_app_base')||'';
   if(!b){
-    b=prompt('Primera vez: introduce la URL pública de la app\n(ej: https://koke46.github.io/inventario-app/)','https://');
+    b=await _inputDialog('Introduce la URL pública de la app\n(ej: https://koke46.github.io/inventario-app/)','https://');
     if(!b) return '';
     if(!b.endsWith('/')) b+='/';
     localStorage.setItem('_panel_app_base',b);
   }
   return b;
 }
-function cambiarUrlBase(){
+async function cambiarUrlBase(){
   const actual=localStorage.getItem('_panel_app_base')||'';
-  const b=prompt('URL pública de la app:',actual);
+  const b=await _inputDialog('URL pública de la app:',actual);
   if(b===null) return;
   const limpio=b.trim().replace(/\/?$/,'/');
   localStorage.setItem('_panel_app_base',limpio);
   toast('✅ URL guardada: '+limpio);
 }
-function enviarEmail(licenciaId){
+async function enviarEmail(licenciaId){
   const r=_datos.find(x=>x.licencia_id===licenciaId);if(!r) return;
   const tipo=getTipo(r);
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
-  const base=_getAppBase();
+  const base=await _getAppBase();
   if(!base) return;
   const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
   const emailMatch=r.notas&&r.notas.match(/Email:\s*(\S+)/);
@@ -1147,7 +1168,7 @@ async function convertirSolicitud(i){
     await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(s.id),{method:'DELETE',headers:hDEL}).catch(()=>{});
     renderStats();renderTabla();cargarSolicitudes();cargarDemos();
     toast('✅ '+cliente+' activado — 2 meses de prueba');
-    enviarEmail(licenciaId);
+    await enviarEmail(licenciaId);
   }catch(e){toast('❌ Error: '+e.message,true);}
 }
 async function eliminarSolicitud(i){
