@@ -604,6 +604,7 @@ function renderTabla(){
           <button class="toggle-btn ${r.activa?'on':'off'}" title="${r.activa?'Bloquear':'Activar'}" onclick="toggleActiva('${esc(r.licencia_id)}',${r.activa})"></button>
           <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${esc(r.licencia_id)}')">✏️</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirApp('${esc(r.licencia_id)}')" title="Abrir app del cliente">📱</button>
+          <button class="btn btn-ghost btn-sm" onclick="enviarWhatsApp('${esc(r.licencia_id)}')" title="Enviar credenciales por WhatsApp">📲</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirSoporte('${esc(r.licencia_id)}')" title="Abrir app en modo soporte">🔧</button>
           <button class="btn btn-ghost btn-sm" onclick="resetearHoyCliente('${esc(r.licencia_id)}','${esc(r.cliente||'')}')" title="Resetear facturado hoy a 0">📊</button>
           <button class="btn btn-ghost btn-sm" onclick="limpiarCaja('${esc(r.licencia_id)}','${esc(r.cliente||'')}')">🧹</button>
@@ -886,6 +887,15 @@ function abrirApp(licenciaId){
   const tipo=row?getTipo(row):'bar';
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
   window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
+}
+function enviarWhatsApp(licenciaId){
+  const r=_datos.find(x=>x.licencia_id===licenciaId);if(!r) return;
+  const tipo=getTipo(r);
+  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+  const base=location.href.replace(/[^/]*$/,'');
+  const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
+  const msg=`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a *El Miarma* 🎉\n\n🔗 App: ${url}\n👤 Usuario: ${r.usuario||'—'}\n🔑 Contraseña: ${r.contrasena||'—'}\n\nTienes 2 meses de prueba gratuita. Cualquier duda me escribes 😊`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
 // ── SOPORTE ──
