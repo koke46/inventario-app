@@ -226,7 +226,8 @@ tr:hover td{background:var(--surface2)}
     <table>
       <thead>
         <tr>
-          <th>IP</th>
+          <th>Cliente / IP</th>
+          <th>Tipo</th>
           <th>Activado el</th>
           <th>Días usados</th>
           <th>Días restantes</th>
@@ -234,7 +235,7 @@ tr:hover td{background:var(--surface2)}
         </tr>
       </thead>
       <tbody id="tbody-demos">
-        <tr><td colspan="5" class="empty"><div class="spinner"></div></td></tr>
+        <tr><td colspan="6" class="empty"><div class="spinner"></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -956,16 +957,40 @@ setInterval(cargar,60000);
 // ── DEMOS ACTIVOS ──
 async function cargarDemos(){
   const tb=document.getElementById('tbody-demos');
-  tb.innerHTML='<tr><td colspan="5" class="empty"><div class="spinner"></div></td></tr>';
+  tb.innerHTML='<tr><td colspan="6" class="empty"><div class="spinner"></div></td></tr>';
   try{
+    // Clientes con licencia en periodo de prueba (tienen fecha_expiracion)
+    const licTrialRows=_datos.filter(r=>r.activa&&r.fecha_expiracion);
+    // IPs demo libres (sin licencia)
     const r=await fetch(SB_URL+'/rest/v1/demo_activaciones?select=*&order=activado_en.asc',{headers:sbHeaders()});
-    const rows=await r.json();
-    if(!rows||!rows.length){
-      tb.innerHTML='<tr><td colspan="5" class="empty">Sin demos activos</td></tr>';
-      return;
-    }
+    const ipRows=await r.json()||[];
     const ahora=Date.now();
-    tb.innerHTML=rows.map(d=>{
+
+    // Combinar: primero clientes de licencia en prueba, luego IPs
+    const filas=[];
+    licTrialRows.forEach(d=>{
+      const inicio=new Date(d.created_at||d.fecha_expiracion).getTime();
+      const exp=new Date(d.fecha_expiracion).getTime();
+      const usados=Math.floor((ahora-inicio)/86400000);
+      const restantes=Math.max(0,Math.ceil((exp-ahora)/86400000));
+      let badge='';
+      if(restantes<=0) badge='<span style="color:var(--red);font-weight:700">Expirado</span>';
+      else if(restantes<=3) badge='<span style="color:var(--red);font-weight:700">'+restantes+'d</span>';
+      else if(restantes<=7) badge='<span style="color:var(--amber);font-weight:700">'+restantes+'d</span>';
+      else badge='<span style="color:var(--green)">'+restantes+'d</span>';
+      filas.push(`<tr>
+        <td><strong>${esc(d.cliente||'—')}</strong> <span class="lic-id" style="font-size:11px">${esc(d.licencia_id||'')}</span></td>
+        <td>📱 Licencia</td>
+        <td>${new Date(d.created_at||'').toLocaleDateString('es-ES')}</td>
+        <td>${usados} día${usados!==1?'s':''}</td>
+        <td>${badge}</td>
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="enviarWhatsApp('${esc(d.licencia_id)}')">📲</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirApp('${esc(d.licencia_id)}')">📱</button>
+        </div></td>
+      </tr>`);
+    });
+    ipRows.forEach(d=>{
       const inicio=new Date(d.activado_en).getTime();
       const usados=Math.floor((ahora-inicio)/86400000);
       const restantes=Math.max(0,60-usados);
@@ -974,23 +999,23 @@ async function cargarDemos(){
       else if(restantes<=3) badge='<span style="color:var(--red);font-weight:700">'+restantes+'d</span>';
       else if(restantes<=7) badge='<span style="color:var(--amber);font-weight:700">'+restantes+'d</span>';
       else badge='<span style="color:var(--green)">'+restantes+'d</span>';
-      const activadoFmt=new Date(d.activado_en).toLocaleDateString('es-ES');
-      return `<tr>
-        <td><code style="font-size:13px">${esc(d.ip)}</code></td>
-        <td>${activadoFmt}</td>
+      filas.push(`<tr>
+        <td><code style="font-size:12px">${esc(d.ip)}</code></td>
+        <td>🌐 IP libre</td>
+        <td>${new Date(d.activado_en).toLocaleDateString('es-ES')}</td>
         <td>${usados} día${usados!==1?'s':''}</td>
         <td>${badge}</td>
-        <td>
-          <div class="actions">
-            <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',15)" title="Extender 15 días">+15d</button>
-            <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',30)" title="Extender 30 días">+30d</button>
-            <button class="btn btn-ghost btn-sm" onclick="eliminarDemo('${esc(d.ip)}')" title="Eliminar demo (resetea el IP)" style="color:var(--red)">🗑️</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
+        <td><div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',15)">+15d</button>
+          <button class="btn btn-ghost btn-sm" onclick="extenderDemo('${esc(d.ip)}',30)">+30d</button>
+          <button class="btn btn-ghost btn-sm" onclick="eliminarDemo('${esc(d.ip)}')" style="color:var(--red)">🗑️</button>
+        </div></td>
+      </tr>`);
+    });
+    if(!filas.length){tb.innerHTML='<tr><td colspan="6" class="empty">Sin demos activos</td></tr>';return;}
+    tb.innerHTML=filas.join('');
   }catch(e){
-    tb.innerHTML='<tr><td colspan="5" class="empty">Error: '+esc(e.message)+'</td></tr>';
+    tb.innerHTML='<tr><td colspan="6" class="empty">Error: '+esc(e.message)+'</td></tr>';
   }
 }
 
@@ -1077,18 +1102,29 @@ async function cargarSolicitudes(){
     tb.innerHTML=`<tr><td colspan="9" class="empty empty-txt">Error: ${e.message}</td></tr>`;
   }
 }
-function convertirSolicitud(i){
-  const s=_solicitudes[i];
-  if(!s) return;
-  abrirModalNuevo();
-  setTimeout(()=>{
-    const wTipo=document.getElementById('w-tipo');
-    const wCliente=document.getElementById('w-cliente');
-    const wExp=document.getElementById('w-expiracion');
-    if(wTipo) wTipo.value=s.tipo||'bar';
-    if(wCliente) wCliente.value=s.negocio||s.nombre||'';
-    if(wExp){const d=new Date();d.setMonth(d.getMonth()+2);wExp.value=d.toISOString().slice(0,10);}
-  },150);
+async function convertirSolicitud(i){
+  const s=_solicitudes[i];if(!s) return;
+  const tipo=s.tipo||'bar';
+  const prefijo=tipo==='tienda'?'TIENDA':'BAR';
+  const existentes=_datos.map(r=>r.licencia_id||'').filter(id=>id.startsWith(prefijo+'_'));
+  let n=1;while(existentes.includes(prefijo+'_'+String(n).padStart(4,'0'))) n++;
+  const licenciaId=prefijo+'_'+String(n).padStart(4,'0');
+  const usuario='admin';
+  const contrasena=genPass();
+  const cliente=s.negocio||s.nombre||'';
+  const notas=(s.telefono?'Tel: '+s.telefono+' ':'')+('['+tipo+']');
+  const d=new Date();d.setMonth(d.getMonth()+2);
+  const fechaExp=d.toISOString().slice(0,10);
+  if(!confirm('¿Activar 2 meses de prueba para "'+cliente+'"?\n\nID: '+licenciaId+'\nUsuario: '+usuario+'\nContraseña: '+contrasena)) return;
+  try{
+    const [nuevo]=await sbPost({licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:true,max_dispositivos:1,fecha_expiracion:fechaExp,force_reset:false});
+    _datos.unshift(nuevo||{id:'',licencia_id:licenciaId,cliente,notas,usuario,contrasena,activa:true,created_at:new Date().toISOString(),fecha_expiracion:fechaExp});
+    const hDEL={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+    await fetch(SB_URL+'/rest/v1/solicitudes?id=eq.'+encodeURIComponent(s.id),{method:'DELETE',headers:hDEL}).catch(()=>{});
+    renderStats();renderTabla();cargarSolicitudes();cargarDemos();
+    toast('✅ '+cliente+' activado — 2 meses de prueba');
+    enviarWhatsApp(licenciaId);
+  }catch(e){toast('❌ Error: '+e.message,true);}
 }
 async function eliminarSolicitud(i){
   const s=_solicitudes[i];
