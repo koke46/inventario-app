@@ -2043,6 +2043,7 @@ let _rtWs=null,_rtRef=1,_rtHbTimer=null,_rtReconnTimer=null;
 const _RT_TOPIC='realtime:sync_'+LICENCIA_ID;
 
 function _rtUpdateIndicator(s){
+  if(!LICENCIA_ID||LICENCIA_ID==='__DEMO__') return;
   const el=document.getElementById('sync-dot');if(!el)return;
   el.style.display='';
   if(s==='ok'){el.style.background='#10B981';el.title='Sincronizado ✓';}
@@ -2080,7 +2081,7 @@ function _initRealtime(){
     }catch(_){}
   };
   const _onClose=()=>{
-    _rtUpdateIndicator('offline');clearInterval(_rtHbTimer);
+    clearInterval(_rtHbTimer);
     _rtReconnTimer=setTimeout(_initRealtime,6000);
   };
   _rtWs.onclose=_rtWs.onerror=_onClose;
