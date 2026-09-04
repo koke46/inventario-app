@@ -121,6 +121,15 @@ function createWindow() {
       ]
     },
     {
+      label: 'Editar',
+      submenu: [
+        { role: 'cut',       label: 'Cortar' },
+        { role: 'copy',      label: 'Copiar' },
+        { role: 'paste',     label: 'Pegar' },
+        { role: 'selectAll', label: 'Seleccionar todo' }
+      ]
+    },
+    {
       label: 'Ver',
       submenu: [
         { role: 'reload' },
