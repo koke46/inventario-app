@@ -4406,6 +4406,8 @@ let _mostrarEfectivo=false;
 let _efectivoEntregado=0;
 let _cobroMixto=false;
 let _mixtoEfectivo=0;
+let _cobrandoCocinaId=null;
+let _cobrandoCocinaOrigPedido=null;
 function abrirModalCobro(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
   _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;_efectivoEntregado=0;_cobroMixto=false;_mixtoEfectivo=0;_cobroClienteId=null;
@@ -4543,7 +4545,13 @@ function _asignarTodos(){
   pedidoActual.items.forEach((_,i)=>{_itemPersonas[i]=(i%np)+1;});
   _renderModalCobro();
 }
-function cerrarModalCobro(){document.getElementById('modal-cobro').classList.remove('open');}
+function cerrarModalCobro(){
+  document.getElementById('modal-cobro').classList.remove('open');
+  if(_cobrandoCocinaOrigPedido){
+    pedidoActual=_cobrandoCocinaOrigPedido;
+    _cobrandoCocinaOrigPedido=null;_cobrandoCocinaId=null;
+  }
+}
 function _cobroExacto(){_efectivoEntregado=calcTotal();confirmarCobro('efectivo');}
 function abrirPrecioLibre(){
   document.getElementById('modal-precio-libre').classList.add('open');
@@ -4755,8 +4763,15 @@ function _checkPin(){
   }
 }
 function confirmarCobro(metodoPago){
-  cerrarModalCobro();
-  const mesa=getMesaNombre();guardarMesaNueva(mesa);
+  // Guardar estado cocina ANTES de tocar pedidoActual
+  const _cocinaId=_cobrandoCocinaId;
+  const _cocinaOrigPedido=_cobrandoCocinaOrigPedido;
+  const _cocinaComanda=_cocinaId?comandas.find(c=>c.id===_cocinaId):null;
+  // Cerrar modal directamente (sin restaurar pedidoActual, para que calcSubtotal use los items de cocina)
+  document.getElementById('modal-cobro').classList.remove('open');
+  _cobrandoCocinaId=null;_cobrandoCocinaOrigPedido=null;
+  const mesa=_cocinaComanda?_cocinaComanda.nombre:getMesaNombre();
+  if(!_cocinaId) guardarMesaNueva(mesa);
   const subtotal=calcSubtotal();
   const total=calcTotal();
   const desc=getDescuento();
@@ -4798,7 +4813,12 @@ function confirmarCobro(metodoPago){
   comandas.push(comanda);save();
   if(vfConfig.activo) _generarRegistroVF(comanda);
   if(_cobroClienteId){comanda.clienteId=_cobroClienteId;clActualizarStats(_cobroClienteId,total);}
-  _cuentaCobroFin();
+  if(_cocinaId){
+    comandas=comandas.filter(x=>x.id!==_cocinaId);
+    pedidoActual=_cocinaOrigPedido||{items:[]};
+  } else {
+    _cuentaCobroFin();
+  }
   document.getElementById('desc-input').value='';
   onDescInput();
   _notaPedido='';
@@ -4880,25 +4900,14 @@ function renderCocinaSection(){
 function cobrarCocina(id){
   const comanda=comandas.find(c=>c.id===id);
   if(!comanda) return;
-  const today=new Date().toISOString().slice(0,10);
-  const warnings=[];
-  for(const item of comanda.items){
-    let rem=item.cantidad;
-    const lots=lotes.filter(l=>l.productoId===item.productoId&&l.cantidad>0)
-      .sort((a,b)=>a.fechaCaducidad.localeCompare(b.fechaCaducidad));
-    for(const lot of lots){
-      if(rem<=0) break;
-      const taken=Math.min(lot.cantidad,rem);
-      lot.cantidad=Math.round((lot.cantidad-taken)*10000)/10000;
-      movimientos.push({id:uid(),loteId:lot.id,tipo:'comanda',cantidad:taken,fecha:today,comandaId:comanda.id});
-      rem=Math.round((rem-taken)*10000)/10000;
-    }
-    if(rem>0) warnings.push(item.nombre);
-  }
-  comanda.estado='cerrada';comanda.cobrada=true;comanda.fechaCierre=new Date().toISOString();
-  save();renderPOS();updateStats();
-  if(warnings.length) toast('✓ Cobrado · Sin stock: '+warnings.join(', '),4000);
-  else toast('✓ Pedido "'+comanda.nombre+'" cobrado: '+fmtEuro(comanda.total||0));
+  _cobrandoCocinaId=id;
+  _cobrandoCocinaOrigPedido=pedidoActual;
+  pedidoActual={items:comanda.items.map(i=>({...i}))};
+  _cobroPersonas=1;_propina=0;_cobromodoItems=false;_mostrarEfectivo=false;
+  _efectivoEntregado=0;_cobroMixto=false;_mixtoEfectivo=0;_cobroClienteId=null;
+  _itemPersonas={};_nPersonasItems=2;
+  _renderModalCobro();
+  document.getElementById('modal-cobro').classList.add('open');
 }
 function cancelarCocina(id){
   const c=comandas.find(x=>x.id===id);
