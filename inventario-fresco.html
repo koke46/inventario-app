@@ -2097,7 +2097,7 @@ function _renderPostSync(){
 // ────────────────────────────────────────────────
 
 function _autoSyncSupabase(){
-  if(!LIC_SB_URL||!LIC_SB_KEY) return;
+  if(!LIC_SB_URL||!LIC_SB_KEY||!LICENCIA_ID||LICENCIA_ID==='__DEMO__') return;
   clearTimeout(_syncTimer);
   _syncTimer=setTimeout(async()=>{
     const ts=new Date().toISOString();
@@ -2105,13 +2105,15 @@ function _autoSyncSupabase(){
     _rtUpdateIndicator('sync');
     const datos={comercio,productos,lotes,movimientos,almacen,comandas,cierresCaja,proveedores,pedidosCompra,reservas,usuarios,registrosVF,vfConfig};
     try{
-      await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
+      const r=await fetch(LIC_SB_URL+'/rest/v1/sincronizaciones',{
         method:'POST',
         headers:{'apikey':LIC_SB_KEY,'Authorization':'Bearer '+LIC_SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
         body:JSON.stringify({licencia_id:LICENCIA_ID,datos,actualizado_en:ts})
       });
+      if(!r.ok) throw new Error('HTTP '+r.status);
       _rtUpdateIndicator('ok');
       _rtBroadcast();
+      setTimeout(()=>{const el=document.getElementById('sync-dot');if(el)el.style.display='none';},3000);
     }catch(e){_rtUpdateIndicator('offline');}
   },1500);
 }
