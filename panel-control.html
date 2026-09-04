@@ -156,6 +156,7 @@ tr:hover td{background:var(--surface2)}
   <div class="topbar-right">
     <button class="btn btn-ghost btn-sm" onclick="cargar()" id="btn-refresh">🔄 Actualizar</button>
     <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">➕ Nuevo cliente</button>
+    <button class="btn btn-ghost btn-sm" onclick="cambiarUrlBase()" title="Cambiar URL pública de la app">🔗 URL app</button>
     <button class="btn btn-ghost btn-sm" onclick="cerrarSesionPanel()" title="Cerrar sesión" style="color:var(--muted)">🔒 Salir</button>
   </div>
 </div>
@@ -889,11 +890,31 @@ function abrirApp(licenciaId){
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
   window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
 }
+function _getAppBase(){
+  if(location.protocol!=='file:') return location.href.replace(/[^/]*$/,'');
+  let b=localStorage.getItem('_panel_app_base')||'';
+  if(!b){
+    b=prompt('Primera vez: introduce la URL pública de la app\n(ej: https://koke46.github.io/inventario-app/)','https://');
+    if(!b) return '';
+    if(!b.endsWith('/')) b+='/';
+    localStorage.setItem('_panel_app_base',b);
+  }
+  return b;
+}
+function cambiarUrlBase(){
+  const actual=localStorage.getItem('_panel_app_base')||'';
+  const b=prompt('URL pública de la app:',actual);
+  if(b===null) return;
+  const limpio=b.trim().replace(/\/?$/,'/');
+  localStorage.setItem('_panel_app_base',limpio);
+  toast('✅ URL guardada: '+limpio);
+}
 function enviarEmail(licenciaId){
   const r=_datos.find(x=>x.licencia_id===licenciaId);if(!r) return;
   const tipo=getTipo(r);
   const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
-  const base=location.href.replace(/[^/]*$/,'');
+  const base=_getAppBase();
+  if(!base) return;
   const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
   const emailMatch=r.notas&&r.notas.match(/Email:\s*(\S+)/);
   const toEmail=emailMatch?emailMatch[1]:'';
