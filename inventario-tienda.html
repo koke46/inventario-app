@@ -665,6 +665,10 @@ body.demo-activo{padding-top:40px;}
       <span class="topbar-sub" id="page-sub">Todos los lotes ordenados por caducidad</span>
     </div>
     <div class="topbar-spacer"></div>
+    <div style="display:flex;align-items:center;gap:0;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
+      <button id="btn-refrescar" class="mode-btn" onclick="refrescarDatos()" title="Recargar datos desde la nube">🔄</button>
+      <button class="mode-btn" onclick="guardarManual()" title="Guardar ahora">💾</button>
+    </div>
     <div id="sync-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#EF4444;flex-shrink:0;cursor:default;transition:background .4s" title="Sin conexión cloud"></div>
     <div class="mode-toggle">
       <button id="btn-theme" class="mode-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
@@ -1810,6 +1814,20 @@ function save(){
   saveJ('if_vf_registros',registrosVF);
   saveJ('if_vf_config',vfConfig);
   _autoSyncSupabase();
+}
+function guardarManual(){
+  save();
+  toast('💾 Guardado');
+}
+async function refrescarDatos(){
+  const btn=document.getElementById('btn-refrescar');
+  if(btn){btn.disabled=true;btn.style.opacity='.5';}
+  toast('🔄 Actualizando...');
+  await cargarDatosSupabase();
+  save();
+  _renderPostSync();
+  if(btn){btn.disabled=false;btn.style.opacity='';}
+  toast('✅ Actualizado');
 }
 
 let _syncTimer=null;
