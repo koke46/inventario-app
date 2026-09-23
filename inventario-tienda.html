@@ -1623,7 +1623,8 @@ body.demo-activo{padding-top:40px;}
 // ══════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════
-function _ns(k){try{const id=LICENCIA_ID;if(!id||id==='__DEMO__')return k;return k.replace(/^if_/,id.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_');}catch{return k;}}
+function _getInstallId(){let id=localStorage.getItem('IF_INSTALL_ID');if(!id){id='inst_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem('IF_INSTALL_ID',id);}return id;}
+function _ns(k){try{const id=LICENCIA_ID;if(!id)return k;const pfx=id==='__DEMO__'?_getInstallId():id.toLowerCase().replace(/[^a-z0-9]/g,'_');return k.replace(/^if_/,pfx+'_');}catch{return k;}}
 function loadJ(k,d){try{const v=localStorage.getItem(_ns(k));return v?JSON.parse(v):d}catch{return d}}
 function saveJ(k,v){localStorage.setItem(_ns(k),JSON.stringify(v))}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
