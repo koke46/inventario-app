@@ -2237,8 +2237,6 @@ function renderInventario(){
       <div class="td"><span class="badge ${bc}">${bl}</span></div>
       <div class="td" style="display:flex;gap:4px;align-items:center">
         <button class="act-btn" onclick="abrirDetalleProd('${esc(p.id)}')" title="Ver producto" style="padding:4px 8px">Ver</button>
-        <button class="act-btn" onclick="abrirEditarProductoInv('${esc(p.id)}')" title="Editar producto" style="padding:4px 8px">✏️</button>
-        <button class="del-btn" onclick="eliminarProducto('${esc(p.id)}')">✕</button>
       </div>
     </div>`;
   }).filter(Boolean);
