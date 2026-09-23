@@ -7965,6 +7965,37 @@ document.addEventListener('keydown',function(e){
       break;
   }
 });
+
+// ── LECTOR USB DE CÓDIGO DE BARRAS ───────────────────────────
+// Los lectores USB emulan teclado: escriben el código muy rápido y pulsan Enter.
+// Si llegan ≥4 caracteres en <100ms seguidos de Enter, se trata como escaneo.
+(function(){
+  let _buf='', _t=null;
+  document.addEventListener('keydown', function(e){
+    const modal=document.getElementById('modal-asignar-bc');
+    const scannerOpen=document.getElementById('modal-scanner')?.style.display==='flex';
+    const qrOpen=document.getElementById('modal-qr-scanner')?.style.display==='flex';
+    if(scannerOpen||qrOpen) return;
+    if(modal&&modal.style.display==='flex') return;
+    if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if(e.key==='Enter'){
+      const code=_buf.trim();
+      _buf='';
+      if(_t){clearTimeout(_t);_t=null;}
+      if(code.length>=4){
+        const pagActiva=document.querySelector('.page.active')?.id||'';
+        const modo=pagActiva==='ventas'?'venta':'inventario';
+        _qrProcesar(modo,code);
+      }
+      return;
+    }
+    if(e.key.length===1){
+      _buf+=e.key;
+      if(_t) clearTimeout(_t);
+      _t=setTimeout(()=>{_buf='';_t=null;},100);
+    }
+  },true);
+})();
 </script>
 
 <!-- Modal asignar barcode a producto de venta -->
