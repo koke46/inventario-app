@@ -6766,42 +6766,6 @@ function _updateThemeBtns(){
 function arrancarApp(){
   document.getElementById('loading-screen')?.remove();
   if(!comercio.categorias) comercio.categorias=[];
-  // Categorías y productos por defecto para clientes nuevos
-  if(!comercio.categorias.length && !comercio._catsInit){
-    comercio.categorias=['Alimentación','Refresco','Bocadillo','Alcohol'];
-    comercio.catFotos={
-      'Alimentación':'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&q=80',
-      'Refresco':'https://images.unsplash.com/photo-1527960471264-932f39eb5846?w=300&q=80',
-      'Bocadillo':'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=300&q=80',
-      'Alcohol':'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&q=80'
-    };
-    comercio._catsInit=true;
-    saveJ('if_comercio',comercio);
-    // Refrescos con barcodes reales — fotos se cargan desde Open Food Facts
-    if(!productos.length){
-      [
-        {nombre:'Coca-Cola 33cl',        barcode:'5449000000996'},
-        {nombre:'Coca-Cola Zero 33cl',   barcode:'5449000131836'},
-        {nombre:'Fanta Naranja 33cl',    barcode:'5449000054227'},
-        {nombre:'Fanta Limón 33cl',      barcode:'5449000133861'},
-        {nombre:'Sprite 33cl',           barcode:'5449000054593'},
-        {nombre:'Aquarius Naranja 50cl', barcode:'5449000000491'},
-        {nombre:'Aquarius Limón 50cl',   barcode:'5449000000507'},
-        {nombre:'Red Bull 25cl',         barcode:'9002490100285'},
-        {nombre:'Monster Energy 50cl',   barcode:'5060337503619'},
-        {nombre:'Pepsi 33cl',            barcode:'4006381333351'},
-        {nombre:'7UP 33cl',              barcode:'5449000228444'},
-        {nombre:'Nestea Limón 33cl',     barcode:'5449000028723'},
-      ].forEach(r=>{
-        productos.push({id:uid(),nombre:r.nombre,emoji:'🥤',categoria:'Refresco',
-          unidad:'ud',precio:0,precioCoste:0,tipoIva:21,stockMinimo:0,
-          barcode:r.barcode,precioHistorial:[]});
-      });
-      saveJ('if_productos',productos);
-      // Carga fotos desde Open Food Facts en segundo plano
-      _cargarFotosDefecto();
-    }
-  }
   document.getElementById('topbar-comercio').textContent=comercio.nombre||'Mi Comercio';
   if(_modoSoporte){
     let badge=document.getElementById('soporte-badge');
