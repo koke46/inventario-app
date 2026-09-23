@@ -7629,7 +7629,7 @@ function _qrProcesar(modo,code){
       _mostrarAsignarBarcode(code,'venta',invMatch?invMatch.nombre:'');
     }
   }else{
-    const prod=almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
+    const prod=productos.find(p=>p.barcode&&p.barcode.trim()===code.trim())||almacen.find(p=>p.barcode&&p.barcode.trim()===code.trim());
     if(prod){abrirDetalleProd(prod.id);toast('✓ '+prod.nombre+' — añade el lote');}
     else _mostrarAsignarBarcode(code,'inventario');
   }
