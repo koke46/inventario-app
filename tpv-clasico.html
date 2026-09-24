@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TPV Tienda — Clásico</title>
+<style>
+/* ══ COLORES ══ */
+:root {
+  --bg: #b8c6d6;
+  --sidebar-w: 190px;
+  --btn-from: #5c7ca0;
+  --btn-to: #4a6788;
+  --visor-bg: #161616;
+  --visor-green: #5dde5d;
+  --visor-warn: #ff4444;
+  --status-bg: #34506e;
+  --numpad-from: #3a3a3a;
+  --numpad-to: #111111;
+  --ticket-sel: #1a3a5e;
+  --cobrar-from: #2ecc71;
+  --cobrar-to: #1e8449;
+  --anular: #c0392b;
+  --font: Arial, sans-serif;
+  --r: 5px;
+}
+
+/* ══ RESET / BASE ══ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 58px 1fr 28px;
+  gap: 0;
+}
+
+/* ══ BOTÓN BASE AZUL ══ */
+.btn {
+  background: linear-gradient(to bottom, var(--btn-from), var(--btn-to));
+  color: #fff;
+  border: 1px solid #3a5878;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  user-select: none;
+}
+.btn:active { filter: brightness(.82); }
+.btn .ico { font-size: 1.3em; line-height: 1; }
+.btn .lbl { font-size: 10px; line-height: 1.2; text-align: center; }
+
+/* ══ HERRAMIENTAS 3×2 (arriba izquierda) ══ */
+#tools {
+  grid-column: 1; grid-row: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  padding: 4px 3px 3px 4px;
+  background: var(--bg);
+}
+#tools .btn { font-size: 10px; }
+
+/* ══ ACCIONES (arriba derecha) ══ */
+#actions {
+  grid-column: 2; grid-row: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  padding: 4px 4px 3px 2px;
+  background: var(--bg);
+}
+#actions .btn { flex: 1; min-width: 54px; }
+#actions .sep { flex: 0.4; }
+#btn-cobrar {
+  flex: 2.2 !important;
+  background: linear-gradient(to bottom, var(--cobrar-from), var(--cobrar-to));
+  border-color: #155a32;
+  font-size: 13px;
+  font-weight: 700;
+}
+#btn-anular {
+  flex: 0 0 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#btn-anular .cx {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--anular);
+  border: 2px solid #7b241c;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+#btn-anular:active .cx { filter: brightness(.8); }
+
+/* ══ COLUMNA IZQUIERDA ══ */
+#left-col {
+  grid-column: 1; grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 3px 3px 4px;
+  overflow: hidden;
+}
+
+/* Visor */
+#visor {
+  background: var(--visor-bg);
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 5px 8px 4px;
+  color: var(--visor-green);
+  font-family: 'Courier New', monospace;
+  flex-shrink: 0;
+}
+.v-top { display: flex; justify-content: space-between; font-size: 10px; opacity: .65; margin-bottom: 1px; }
+.v-total { font-size: 30px; font-weight: 700; line-height: 1.05; letter-spacing: 1px; }
+.v-sub { font-size: 10px; opacity: .6; margin-top: 1px; }
+.v-warn { font-size: 10px; color: var(--visor-warn); min-height: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Flechas */
+#arrows { display: flex; gap: 3px; flex-shrink: 0; height: 26px; }
+#arrows .btn { flex: 1; font-size: 14px; flex-direction: row; }
+
+/* Ticket */
+#ticket-wrap {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #8a9aaa;
+  border-radius: 3px;
+  overflow-y: auto;
+  min-height: 0;
+  font-size: 11px;
+}
+.t-head {
+  display: grid;
+  grid-template-columns: 32px 1fr 54px;
+  padding: 2px 4px;
+  background: #d0d8e4;
+  border-bottom: 1px solid #b0b8c8;
+  font-size: 10px;
+  font-weight: 700;
+  color: #444;
+  position: sticky; top: 0;
+}
+.t-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 54px;
+  padding: 3px 4px;
+  border-bottom: 1px solid #eef;
+  cursor: pointer;
+  align-items: center;
+}
+.t-row:hover { background: #e8f0f8; }
+.t-row.sel { background: var(--ticket-sel); color: #fff; }
+.t-row.dev { color: #c00; }
+.t-row.sel.dev { color: #faa; }
+.t-qty { text-align: right; font-weight: 700; padding-right: 4px; }
+.t-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-imp { text-align: right; font-family: 'Courier New', monospace; }
+.t-empty { padding: 14px; text-align: center; color: #aaa; font-size: 11px; }
+
+/* IVA */
+#iva-box {
+  background: #f0f4f8;
+  border: 1px solid #8a9aaa;
+  border-radius: 3px;
+  padding: 3px 6px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #333;
+}
+.iva-head { font-weight: 700; color: #555; margin-bottom: 2px; }
+.iva-row { display: flex; justify-content: space-between; gap: 4px; }
+.iva-row span { font-family: 'Courier New', monospace; }
+
+/* Numpad */
+#numpad {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.nk {
+  background: linear-gradient(to bottom, var(--numpad-from), var(--numpad-to));
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: var(--r);
+  height: 36px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  display: flex; align-items: center; justify-content: center;
+  user-select: none;
+}
+.nk:active { filter: brightness(1.35); }
+.nk-c { color: #f90; }
+.nk-coma { font-size: 13px; }
+
+/* ══ COLUMNA CENTRO ══ */
+#center-col {
+  grid-column: 2; grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 4px 3px 2px;
+  overflow: hidden;
+}
+
+/* Búsqueda */
+#search-row {
+  display: flex; gap: 4px;
+  flex-shrink: 0;
+}
+#search-in {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 2px solid #6a8faf;
+  border-radius: var(--r);
+  background: #fff;
+  font-family: var(--font);
+  outline: none;
+}
+#search-in:focus { border-color: var(--btn-from); }
+#btn-buscar { padding: 0 12px; font-size: 10px; flex-shrink: 0; width: 64px; }
+
+/* Rejilla productos */
+#pgrid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 78px);
+  gap: 4px;
+  align-content: start;
+  padding: 2px;
+}
+
+/* Carpeta familia */
+.fam-btn {
+  width: 90px; height: 88px;
+  border-radius: var(--r);
+  cursor: pointer;
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 1px solid rgba(0,0,0,.25);
+  color: #fff;
+  font-family: var(--font);
+  user-select: none;
+  margin-top: 10px;
+}
+.fam-btn::before {
+  content: '';
+  position: absolute;
+  top: -9px; left: 8px;
+  width: 38px; height: 10px;
+  background: inherit;
+  border-radius: 4px 4px 0 0;
+  filter: brightness(1.25);
+}
+.fam-btn:active { filter: brightness(.85); }
+.fam-ico { font-size: 28px; }
+.fam-nom { font-size: 10px; font-weight: 700; text-align: center; margin-top: 4px; line-height: 1.2; }
+
+/* Botón producto */
+.prd {
+  width: 78px; height: 78px;
+  background: linear-gradient(to bottom, var(--btn-from), var(--btn-to));
+  border: 1px solid #3a5878;
+  border-radius: var(--r);
+  cursor: pointer;
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+.prd:active:not(.out) { filter: brightness(.82); }
+.prd.out { opacity: .48; cursor: not-allowed; }
+.prd-ico { font-size: 26px; }
+.prd-nom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(20,40,70,.88);
+  color: #fff; font-size: 9px;
+  text-align: center; padding: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.prd-price {
+  position: absolute; top: 2px; right: 2px;
+  background: #111; color: #fff;
+  font-size: 9px; font-weight: 700;
+  padding: 1px 3px; border-radius: 3px;
+}
+.prd-stock {
+  position: absolute; top: 2px; left: 2px;
+  font-size: 9px; font-weight: 700;
+  padding: 1px 3px; border-radius: 3px;
+  background: rgba(0,0,0,.4); color: #bdf;
+}
+.prd-stock.bajo { color: #ffa500; }
+.prd-stock.cero { color: #f33; }
+
+/* Cajeros */
+#cashiers {
+  display: flex; gap: 4px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.caj {
+  padding: 5px 14px;
+  border-radius: var(--r);
+  border: 2px solid transparent;
+  color: #fff; font-weight: 700;
+  font-size: 12px; font-family: var(--font);
+  cursor: pointer; white-space: nowrap;
+}
+.caj.on { border-color: #fff; box-shadow: 0 0 0 1px #fff inset; }
+
+/* ══ BARRA ESTADO ══ */
+#statusbar {
+  grid-column: 1/-1; grid-row: 3;
+  background: var(--status-bg);
+  color: #fff;
+  display: flex; align-items: center;
+  gap: 18px; padding: 0 10px;
+  font-size: 11px;
+}
+.sv { font-weight: 700; }
+
+/* ══ MODAL COBRO ══ */
+#ov {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.72);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200;
+}
+#ov.open { display: flex; }
+#mbox {
+  background: #dde8f0;
+  border-radius: 10px; padding: 20px;
+  width: 390px; max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,.55);
+}
+#mbox h2 { text-align: center; font-size: 14px; margin-bottom: 8px; color: #333; }
+#m-total { text-align: center; font-size: 50px; font-weight: 700; color: #1a5c2a; font-family: 'Courier New', monospace; margin-bottom: 12px; }
+.ptabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.ptab { flex: 1; padding: 10px; border: 2px solid #888; border-radius: 6px; background: #e8e8e8; cursor: pointer; font-size: 14px; font-weight: 700; font-family: var(--font); }
+.ptab.on { border-color: #4a6788; background: #4a6788; color: #fff; }
+#ef-panel { display: none; }
+#ef-panel.open { display: block; }
+#ef-in { width: 100%; padding: 8px; font-size: 22px; font-family: 'Courier New', monospace; border: 2px solid #888; border-radius: 6px; margin-bottom: 8px; text-align: right; }
+.billetes { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.bil { padding: 7px 12px; border-radius: 5px; border: 1px solid #3a7a3a; background: linear-gradient(to bottom, #4a9a4a, #2e6e2e); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--font); }
+.bil:active { filter: brightness(.85); }
+#cambio { font-size: 22px; font-weight: 700; text-align: center; padding: 8px; background: #fff; border-radius: 6px; margin-bottom: 12px; font-family: 'Courier New', monospace; }
+.mbtns { display: flex; gap: 8px; }
+.mbtns button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font); }
+#m-ok { background: linear-gradient(to bottom, #2ecc71, #1e8449); color: #fff; }
+#m-ok:active { filter: brightness(.88); }
+#m-cancel { background: #ccc; color: #333; }
+
+/* Modal peso */
+#pov { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: none; align-items: center; justify-content: center; z-index: 300; }
+#pov.open { display: flex; }
+#pbox { background: #dde8f0; border-radius: 10px; padding: 20px; width: 270px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.55); }
+#pbox h3 { margin-bottom: 6px; font-size: 16px; }
+#p-nom { font-size: 11px; color: #555; margin-bottom: 8px; }
+#p-in { width: 100%; padding: 8px; font-size: 24px; text-align: right; border: 2px solid #888; border-radius: 6px; margin-bottom: 10px; font-family: 'Courier New', monospace; }
+.pbtns { display: flex; gap: 8px; }
+.pbtns button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-family: var(--font); font-size: 13px; }
+#p-ok { background: linear-gradient(to bottom, #2ecc71, #1e8449); color: #fff; }
+#p-cancel { background: #ccc; color: #333; }
+
+/* ══ RESPONSIVE MÓVIL ══ */
+@media (max-width: 759px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr 1fr auto; height: auto; overflow: auto; }
+  #tools    { grid-column: 1; grid-row: 1; }
+  #actions  { grid-column: 1; grid-row: 2; flex-wrap: wrap; height: auto; min-height: 58px; }
+  #left-col { grid-column: 1; grid-row: 3; height: 55vh; }
+  #center-col { grid-column: 1; grid-row: 4; height: 55vh; }
+  #statusbar { grid-column: 1; grid-row: 5; }
+  #pgrid { grid-template-columns: repeat(auto-fill, 78px); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HERRAMIENTAS 3×2 ══ -->
+<div id="tools">
+  <button class="btn" onclick="acEliminar()"><span class="ico">🗑️</span><span class="lbl">Eliminar</span></button>
+  <button class="btn" onclick="acDevolucion()"><span class="ico">↩️</span><span class="lbl">Devolución</span></button>
+  <button class="btn" onclick="acDtoLinea()"><span class="ico">%</span><span class="lbl">Dto. línea</span></button>
+  <button class="btn" onclick="acCantPrec()"><span class="ico">✏️</span><span class="lbl">Cant/Prec</span></button>
+  <button class="btn" onclick="acDtoTotal()"><span class="ico">🏷️</span><span class="lbl">Dto. total</span></button>
+  <button class="btn" onclick="acCliente()"><span class="ico">👤</span><span class="lbl">Cliente</span></button>
+</div>
+
+<!-- ══ ACCIONES ══ -->
+<div id="actions">
+  <button class="btn" onclick="acCajon()"><span class="ico">📂</span><span class="lbl">Abrir cajón</span></button>
+  <button class="btn" onclick="irInicio()"><span class="ico">🏠</span><span class="lbl">Inicio</span></button>
+  <button class="btn" onclick="acAparcar()"><span class="ico">⏸️</span><span class="lbl">Aparcar</span></button>
+  <button class="btn" onclick="acRecuperar()"><span class="ico">▶️</span><span class="lbl">Recuperar</span></button>
+  <div class="sep"></div>
+  <button class="btn" onclick="acReimprimir()"><span class="ico">🖨️</span><span class="lbl">Reimprimir</span></button>
+  <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
+  <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
+</div>
+
+<!-- ══ COLUMNA IZQUIERDA ══ -->
+<div id="left-col">
+
+  <!-- Visor -->
+  <div id="visor">
+    <div class="v-top">
+      <span>Ticket <span id="v-num">0001</span></span>
+      <span id="v-cli">— Sin cliente —</span>
+    </div>
+    <div class="v-total" id="v-total">0,00 €</div>
+    <div class="v-sub" id="v-items">0 artículos</div>
+    <div class="v-warn" id="v-warn"></div>
+  </div>
+
+  <!-- Flechas -->
+  <div id="arrows">
+    <button class="btn" onclick="mover(-1)">▲</button>
+    <button class="btn" onclick="mover(1)">▼</button>
+  </div>
+
+  <!-- Ticket -->
+  <div id="ticket-wrap">
+    <div class="t-head">
+      <span>Ud.</span><span>Producto</span><span style="text-align:right">Importe</span>
+    </div>
+    <div id="tbody"></div>
+  </div>
+
+  <!-- Desglose IVA -->
+  <div id="iva-box">
+    <div class="iva-head">Desglose IVA</div>
+    <div id="iva-body"></div>
+  </div>
+
+  <!-- Teclado numérico -->
+  <div id="numpad">
+    <button class="nk" onclick="np('7')">7</button>
+    <button class="nk" onclick="np('8')">8</button>
+    <button class="nk" onclick="np('9')">9</button>
+    <button class="nk" onclick="np('4')">4</button>
+    <button class="nk" onclick="np('5')">5</button>
+    <button class="nk" onclick="np('6')">6</button>
+    <button class="nk" onclick="np('1')">1</button>
+    <button class="nk" onclick="np('2')">2</button>
+    <button class="nk" onclick="np('3')">3</button>
+    <button class="nk nk-c" onclick="nc()">C</button>
+    <button class="nk" onclick="np('0')">0</button>
+    <button class="nk nk-coma" onclick="np(',')">&#44;</button>
+  </div>
+</div>
+
+<!-- ══ COLUMNA CENTRO ══ -->
+<div id="center-col">
+
+  <!-- Búsqueda -->
+  <div id="search-row">
+    <input id="search-in" type="text" placeholder="🔍  Código de barras o nombre..." autocomplete="off"
+      onkeydown="if(event.key==='Enter')buscar()">
+    <button class="btn" id="btn-buscar" onclick="buscar()">
+      <span class="ico">🔍</span><span class="lbl">Buscar</span>
+    </button>
+  </div>
+
+  <!-- Grid productos / familias -->
+  <div id="pgrid"></div>
+
+  <!-- Cajeros -->
+  <div id="cashiers"></div>
+</div>
+
+<!-- ══ BARRA ESTADO ══ -->
+<div id="statusbar">
+  <span>Cajero: <span class="sv" id="s-caj">—</span></span>
+  <span>🖥️ <span class="sv">Caja 1</span></span>
+  <span>⏸️ Aparcadas: <span class="sv" id="s-ap">0</span></span>
+  <span>🧾 Ventas: <span class="sv" id="s-vtas">0</span></span>
+  <span>💶 Caja: <span class="sv" id="s-caja">0,00 €</span></span>
+</div>
+
+<!-- ══ MODAL COBRO ══ -->
+<div id="ov">
+  <div id="mbox">
+    <h2>💳 COBRO</h2>
+    <div id="m-total">0,00 €</div>
+    <div class="ptabs">
+      <button class="ptab on" id="t-ef" onclick="setTab('ef')">💵 Efectivo</button>
+      <button class="ptab" id="t-tj" onclick="setTab('tj')">💳 Tarjeta</button>
+    </div>
+    <div id="ef-panel" class="open">
+      <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
+      <div class="billetes" id="billetes"></div>
+      <div id="cambio" style="color:#1a5c2a">Cambio: 0,00 €</div>
+    </div>
+    <div class="mbtns">
+      <button id="m-ok" onclick="confirmar()">✅ Confirmar cobro</button>
+      <button id="m-cancel" onclick="cerrarModal()">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PESO ══ -->
+<div id="pov">
+  <div id="pbox">
+    <h3>⚖️ Introduce los kilos</h3>
+    <div id="p-nom"></div>
+    <input id="p-in" type="number" min="0.001" step="0.001" placeholder="0.000">
+    <div class="pbtns">
+      <button id="p-ok" onclick="confirmarPeso()">✅ Añadir</button>
+      <button id="p-cancel" onclick="cerrarPeso()">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════
+   CATÁLOGO
+══════════════════════ */
+const STOCK_BAJO = 5;
+
+const CAJEROS = [
+  { id:1, nombre:'María',  color:'#c0392b' },
+  { id:2, nombre:'Carlos', color:'#2980b9' },
+  { id:3, nombre:'Ana',    color:'#27ae60' },
+  { id:4, nombre:'Pedro',  color:'#8e44ad' },
+];
+
+const FAMILIAS = [
+  { id:'alimentacion', nombre:'Alimentación',   emoji:'🛒', color:'#d35400' },
+  { id:'fruta',        nombre:'Fruta y verdura', emoji:'🥦', color:'#1e8449' },
+  { id:'bebidas',      nombre:'Bebidas',         emoji:'🥤', color:'#1a5276' },
+  { id:'panaderia',    nombre:'Panadería',       emoji:'🍞', color:'#b7950b' },
+  { id:'drogueria',    nombre:'Droguería',       emoji:'🧹', color:'#7d3c98' },
+  { id:'snacks',       nombre:'Snacks',          emoji:'🍿', color:'#922b21' },
+];
+
+const CAT = [
+  /* ── Alimentación ── */
+  { codigo:'8410076470060', nombre:'Leche Entera',       precio:1.25, iva:4,  emoji:'🥛', familia:'alimentacion', stock:30 },
+  { codigo:'8410350570118', nombre:'Aceite Girasol 1L',  precio:1.89, iva:10, emoji:'🫙', familia:'alimentacion', stock:15 },
+  { codigo:'8432904001518', nombre:'Atún en aceite',     precio:1.10, iva:10, emoji:'🐟', familia:'alimentacion', stock:40 },
+  { codigo:'8421691000022', nombre:'Arroz largo 1kg',    precio:1.30, iva:4,  emoji:'🍚', familia:'alimentacion', stock:25 },
+  { codigo:'8412600007148', nombre:'Tomate frito brik',  precio:0.99, iva:10, emoji:'🍅', familia:'alimentacion', stock:20 },
+  /* ── Fruta y verdura ── */
+  { codigo:'2000001', nombre:'Manzana',   precio:2.50, iva:4, emoji:'🍎', familia:'fruta', stock:50, peso:true },
+  { codigo:'2000002', nombre:'Plátano',   precio:1.80, iva:4, emoji:'🍌', familia:'fruta', stock:40, peso:true },
+  { codigo:'2000003', nombre:'Tomate',    precio:1.60, iva:4, emoji:'🍅', familia:'fruta', stock:30, peso:true },
+  { codigo:'2000004', nombre:'Lechuga',   precio:0.90, iva:4, emoji:'🥬', familia:'fruta', stock:15 },
+  { codigo:'2000005', nombre:'Naranja',   precio:1.40, iva:4, emoji:'🍊', familia:'fruta', stock:60, peso:true },
+  { codigo:'2000006', nombre:'Zanahoria', precio:1.20, iva:4, emoji:'🥕', familia:'fruta', stock:3,  peso:true },
+  /* ── Bebidas ── */
+  { codigo:'5449000000996', nombre:'Coca-Cola 33cl',  precio:1.35, iva:21, emoji:'🥤', familia:'bebidas', stock:48 },
+  { codigo:'8410910012048', nombre:'Agua 1.5L',       precio:0.50, iva:21, emoji:'💧', familia:'bebidas', stock:36 },
+  { codigo:'8480000176264', nombre:'Cerveza lata',    precio:0.85, iva:21, emoji:'🍺', familia:'bebidas', stock:24 },
+  { codigo:'8414490010062', nombre:'Zumo naranja 1L', precio:1.65, iva:10, emoji:'🍊', familia:'bebidas', stock:12 },
+  { codigo:'4006381349420', nombre:'Red Bull',        precio:1.95, iva:21, emoji:'⚡', familia:'bebidas', stock:8 },
+  /* ── Panadería ── */
+  { codigo:'8410013003001', nombre:'Pan de molde',  precio:1.45, iva:4,  emoji:'🍞', familia:'panaderia', stock:10 },
+  { codigo:'8410013003002', nombre:'Baguette',      precio:0.80, iva:4,  emoji:'🥖', familia:'panaderia', stock:6 },
+  { codigo:'8410013003003', nombre:'Croissant',     precio:0.70, iva:10, emoji:'🥐', familia:'panaderia', stock:4 },
+  { codigo:'8410013003004', nombre:'Magdalenas x6', precio:1.20, iva:10, emoji:'🧁', familia:'panaderia', stock:15 },
+  { codigo:'8410013003005', nombre:'Pan integral',  precio:1.65, iva:4,  emoji:'🍞', familia:'panaderia', stock:3 },
+  /* ── Droguería ── */
+  { codigo:'8410438012009', nombre:'Lejía 1.5L',         precio:1.20, iva:21, emoji:'🧴', familia:'drogueria', stock:20 },
+  { codigo:'8410438012010', nombre:'Limpiahogar',        precio:1.85, iva:21, emoji:'🧹', familia:'drogueria', stock:12 },
+  { codigo:'8710908000012', nombre:'Papel higiénico 4u', precio:2.50, iva:21, emoji:'🧻', familia:'drogueria', stock:18 },
+  { codigo:'8710908000013', nombre:'Jabón de manos',     precio:1.90, iva:21, emoji:'🧼', familia:'drogueria', stock:7 },
+  { codigo:'8710908000014', nombre:'Friegaplatos',       precio:1.50, iva:21, emoji:'🫧', familia:'drogueria', stock:2 },
+  /* ── Snacks ── */
+  { codigo:'8410235001001', nombre:'Patatas Lays',  precio:1.50, iva:21, emoji:'🥔', familia:'snacks', stock:30 },
+  { codigo:'8410235001002', nombre:'Doritos',       precio:1.75, iva:21, emoji:'🌽', familia:'snacks', stock:20 },
+  { codigo:'8410235001003', nombre:'Gominolas',     precio:1.25, iva:21, emoji:'🍬', familia:'snacks', stock:25 },
+  { codigo:'8410235001004', nombre:'Chocolate',     precio:1.80, iva:21, emoji:'🍫', familia:'snacks', stock:15 },
+  { codigo:'8410235001005', nombre:'Pipas',         precio:0.90, iva:21, emoji:'🌻', familia:'snacks', stock:0 },
+];
+// Añadir índice global a cada producto
+CAT.forEach((p, i) => { p._i = i; });
+
+/* ══════════════════════
+   ESTADO
+══════════════════════ */
+let ticket    = [];
+let selIdx    = -1;
+let nbuf      = '';        // buffer numpad
+let cliente   = '';
+let nTicket   = 1;
+let cajero    = CAJEROS[0];
+let aparcadas = [];
+let ventasHoy = 0;
+let cajaHoy   = 0;
+let famActual = null;      // null = mostrar familias
+let payMode   = 'ef';
+let pendPeso  = null;      // producto esperando kg
+
+/* ══════════════════════
+   FORMATO
+══════════════════════ */
+const fmtE = (n, d=2) => n.toFixed(d).replace('.', ',') + ' €';
+const fmtN = (n, d=2) => n.toFixed(d).replace('.', ',');
+
+/* ══════════════════════
+   VISOR
+══════════════════════ */
+function warn(msg, ms=3000) {
+  document.getElementById('v-warn').textContent = msg;
+  if (ms) setTimeout(() => { document.getElementById('v-warn').textContent = ''; }, ms);
+}
+
+function updVisor() {
+  const tot = calcTotal();
+  const uds = ticket.reduce((s, l) => s + Math.abs(l.cantidad), 0);
+  document.getElementById('v-num').textContent   = String(nTicket).padStart(4, '0');
+  document.getElementById('v-cli').textContent   = cliente || '— Sin cliente —';
+  document.getElementById('v-total').textContent = fmtE(tot);
+  document.getElementById('v-items').textContent = uds + (uds === 1 ? ' artículo' : ' artículos');
+}
+
+function calcTotal() {
+  return ticket.reduce((s, l) => s + l.importe, 0);
+}
+
+/* ══════════════════════
+   TICKET
+══════════════════════ */
+function renderTicket() {
+  const el = document.getElementById('tbody');
+  if (!ticket.length) {
+    el.innerHTML = '<div class="t-empty">Ticket vacío</div>';
+    selIdx = -1;
+  } else {
+    el.innerHTML = ticket.map((l, i) => {
+      const sel = i === selIdx ? ' sel' : '';
+      const dev = l.dev ? ' dev' : '';
+      const qty = l.peso ? fmtN(l.cantidad, 3) + ' kg' : fmtN(l.cantidad, 0);
+      const nom = (l.dev ? '↩ ' : '') + l.nombre;
+      return `<div class="t-row${sel}${dev}" onclick="selLinea(${i})">
+        <span class="t-qty">${qty}</span>
+        <span class="t-nom" title="${l.nombre}">${nom}</span>
+        <span class="t-imp">${fmtE(l.importe)}</span>
+      </div>`;
+    }).join('');
+  }
+  updIVA();
+  updVisor();
+  updStatus();
+}
+
+function selLinea(i) { selIdx = i; renderTicket(); }
+
+function mover(d) {
+  if (!ticket.length) return;
+  selIdx = Math.max(0, Math.min(ticket.length - 1, selIdx + d));
+  renderTicket();
+}
+
+/* ══════════════════════
+   DESGLOSE IVA
+══════════════════════ */
+function updIVA() {
+  const grupos = {};
+  ticket.forEach(l => {
+    if (!grupos[l.iva]) grupos[l.iva] = { base: 0, cuota: 0 };
+    const base = l.importe / (1 + l.iva / 100);
+    grupos[l.iva].base  += base;
+    grupos[l.iva].cuota += l.importe - base;
+  });
+  const keys = Object.keys(grupos).sort((a, b) => a - b);
+  document.getElementById('iva-body').innerHTML = keys.length
+    ? keys.map(t => `<div class="iva-row">
+        <span>IVA ${t}%</span>
+        <span>Base: ${fmtN(grupos[t].base)} €</span>
+        <span>Cuota: ${fmtN(grupos[t].cuota)} €</span>
+      </div>`).join('')
+    : '<div class="iva-row"><span style="color:#aaa">—</span></div>';
+}
+
+/* ══════════════════════
+   NUMPAD
+══════════════════════ */
+function np(k) {
+  if (k === ',' && nbuf.includes(',')) return;
+  nbuf += k;
+  warn('Cant: ' + nbuf, 0);
+}
+function nc() { nbuf = ''; document.getElementById('v-warn').textContent = ''; }
+function getN() {
+  const v = parseFloat(nbuf.replace(',', '.'));
+  return isNaN(v) ? null : v;
+}
+
+/* ══════════════════════
+   AÑADIR PRODUCTO
+══════════════════════ */
+function añadir(idx, cantForzada = null) {
+  const prod = CAT[idx];
+  let cant = cantForzada !== null ? cantForzada : (getN() || 1);
+
+  // Aviso de stock
+  const enTicket = ticket.filter(l => l.codigo === prod.codigo && !l.dev).reduce((s, l) => s + l.cantidad, 0);
+  if (prod.stock >= 0 && enTicket + cant > prod.stock) {
+    warn(`⚠ Solo ${prod.stock} uds en stock`, 3500);
+  }
+
+  // Buscar línea existente (no devolución, sin dto. de línea, no peso)
+  const li = ticket.findIndex(l => l.codigo === prod.codigo && !l.dev && !l.dto && !prod.peso);
+  if (li >= 0) {
+    ticket[li].cantidad += cant;
+    ticket[li].importe   = ticket[li].cantidad * ticket[li].pUnit;
+    selIdx = li;
+  } else {
+    ticket.push({
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      iva:    prod.iva,
+      pUnit:  prod.precio,
+      cantidad: cant,
+      importe:  prod.precio * cant,
+      peso:     !!prod.peso,
+      dev:      false,
+      dto:      0,
+    });
+    selIdx = ticket.length - 1;
+  }
+  nbuf = '';
+  document.getElementById('v-warn').textContent = '';
+  renderTicket();
+}
+
+/* ══════════════════════
+   PESO
+══════════════════════ */
+function pedirPeso(idx) {
+  pendPeso = idx;
+  const prod = CAT[idx];
+  document.getElementById('p-nom').textContent = prod.nombre + ' — ' + fmtE(prod.precio) + '/kg';
+  document.getElementById('p-in').value = '';
+  document.getElementById('pov').classList.add('open');
+  setTimeout(() => document.getElementById('p-in').focus(), 80);
+}
+function confirmarPeso() {
+  const kg = parseFloat(document.getElementById('p-in').value.replace(',', '.'));
+  if (!kg || kg <= 0) return;
+  cerrarPeso();
+  añadir(pendPeso, kg);
+}
+function cerrarPeso() {
+  document.getElementById('pov').classList.remove('open');
+  pendPeso = null;
+}
+
+/* ══════════════════════
+   CLICK PRODUCTO
+══════════════════════ */
+function clickPrd(idx) {
+  const prod = CAT[idx];
+  if (prod.stock === 0) return;
+  if (prod.peso && !nbuf) { pedirPeso(idx); return; }
+  añadir(idx);
+}
+
+/* ══════════════════════
+   CATÁLOGO / FAMILIAS
+══════════════════════ */
+function renderCat() {
+  const g = document.getElementById('pgrid');
+  if (!famActual) {
+    // Pantalla familias
+    g.style.gridTemplateColumns = 'repeat(auto-fill, 90px)';
+    g.innerHTML = FAMILIAS.map(f =>
+      `<button class="fam-btn" style="background:${f.color}" onclick="abrirFam('${f.id}')">
+        <span class="fam-ico">${f.emoji}</span>
+        <span class="fam-nom">${f.nombre}</span>
+      </button>`
+    ).join('');
+  } else {
+    g.style.gridTemplateColumns = 'repeat(auto-fill, 78px)';
+    const prods = CAT.filter(p => p.familia === famActual || famActual === '__srch__');
+    const lista = famActual === '__srch__' ? g._srch || [] : prods;
+    g.innerHTML = lista.map(p => {
+      const out = p.stock === 0;
+      const bajo = p.stock > 0 && p.stock <= STOCK_BAJO;
+      const sc = out ? 'cero' : bajo ? 'bajo' : '';
+      const lbl = p.peso ? fmtN(p.precio) + '/kg €' : fmtE(p.precio);
+      return `<button class="prd${out ? ' out' : ''}" onclick="${out ? '' : 'clickPrd(' + p._i + ')'}">
+        <span class="prd-ico">${p.emoji}</span>
+        <span class="prd-price">${lbl}</span>
+        <span class="prd-stock ${sc}">${p.stock}</span>
+        <span class="prd-nom">${p.nombre}</span>
+      </button>`;
+    }).join('');
+  }
+}
+
+function abrirFam(id) { famActual = id; renderCat(); }
+function irInicio()    { famActual = null; renderCat(); }
+
+/* ══════════════════════
+   BÚSQUEDA
+══════════════════════ */
+function buscar() {
+  const q = document.getElementById('search-in').value.trim();
+  if (!q) return;
+  const exact = CAT.find(p => p.codigo === q);
+  if (exact) { clickPrd(exact._i); document.getElementById('search-in').value = ''; return; }
+  const ql = q.toLowerCase();
+  const res = CAT.filter(p => p.nombre.toLowerCase().includes(ql));
+  if (res.length === 1) {
+    clickPrd(res[0]._i);
+  } else if (res.length > 1) {
+    famActual = '__srch__';
+    document.getElementById('pgrid')._srch = res;
+    renderCat();
+  } else {
+    warn('⚠ Producto no encontrado: ' + q, 3000);
+  }
+  document.getElementById('search-in').value = '';
+}
+
+/* ══════════════════════
+   ACCIONES HERRAMIENTAS
+══════════════════════ */
+function acEliminar() {
+  if (selIdx < 0 || selIdx >= ticket.length) return;
+  ticket.splice(selIdx, 1);
+  selIdx = Math.min(selIdx, ticket.length - 1);
+  renderTicket();
+}
+function acDevolucion() {
+  if (selIdx < 0 || selIdx >= ticket.length) return;
+  const l = ticket[selIdx];
+  l.dev      = true;
+  l.cantidad = -Math.abs(l.cantidad);
+  l.importe  = l.cantidad * l.pUnit;
+  renderTicket();
+}
+function acDtoLinea() {
+  if (selIdx < 0 || selIdx >= ticket.length) return;
+  const pct = parseFloat(prompt('Descuento en % para esta línea:'));
+  if (isNaN(pct) || pct < 0 || pct > 100) return;
+  const l = ticket[selIdx];
+  l.dto     = pct;
+  l.importe = l.cantidad * l.pUnit * (1 - pct / 100);
+  renderTicket();
+}
+function acCantPrec() {
+  if (selIdx < 0 || selIdx >= ticket.length) return;
+  const l    = ticket[selIdx];
+  const cant = parseFloat(prompt('Nueva cantidad:', l.cantidad));
+  if (isNaN(cant)) return;
+  const prec = parseFloat(prompt('Nuevo precio unitario:', l.pUnit));
+  if (isNaN(prec)) return;
+  l.cantidad = cant;
+  l.pUnit    = prec;
+  l.importe  = cant * prec * (1 - (l.dto || 0) / 100);
+  renderTicket();
+}
+function acDtoTotal() {
+  const pct = parseFloat(prompt('Descuento total en %:'));
+  if (isNaN(pct) || pct < 0 || pct > 100) return;
+  ticket.forEach(l => {
+    l.dto     = pct;
+    l.importe = l.cantidad * l.pUnit * (1 - pct / 100);
+  });
+  renderTicket();
+}
+function acCliente() {
+  const c = prompt('Nombre o NIF del cliente:', cliente);
+  if (c !== null) { cliente = c.trim(); updVisor(); }
+}
+
+/* ══════════════════════
+   ACCIONES SUPERIORES
+══════════════════════ */
+function acCajon()     { warn('📂 Cajón abierto', 1500); }
+function acReimprimir(){ warn('🖨️ Reimprimiendo...', 1500); }
+
+function acAparcar() {
+  if (!ticket.length) return;
+  aparcadas.push({ ticket: JSON.parse(JSON.stringify(ticket)), cliente });
+  ticket = []; cliente = ''; selIdx = -1;
+  renderTicket(); updStatus();
+  warn('⏸️ Venta aparcada', 1500);
+}
+function acRecuperar() {
+  if (!aparcadas.length) { warn('⚠ No hay ventas aparcadas', 2000); return; }
+  const v = aparcadas.pop();
+  ticket  = v.ticket;
+  cliente = v.cliente;
+  selIdx  = ticket.length - 1;
+  renderTicket(); updStatus();
+}
+function acAnular() {
+  if (!ticket.length) return;
+  if (!confirm('¿Anular la venta actual?')) return;
+  ticket = []; cliente = ''; selIdx = -1; nbuf = '';
+  renderTicket();
+}
+
+/* ══════════════════════
+   COBRO
+══════════════════════ */
+function abrirCobro() {
+  if (!ticket.length) return;
+  const tot = calcTotal();
+  document.getElementById('m-total').textContent = fmtE(tot);
+  document.getElementById('ef-in').value = '';
+  document.getElementById('cambio').textContent = 'Cambio: 0,00 €';
+  document.getElementById('cambio').style.color = '#1a5c2a';
+  // Billetes rápidos: exacto redondeado + denominaciones que cubran
+  const exacto = Math.ceil(tot / 0.05) * 0.05;
+  const denoms = [5, 10, 20, 50, 100].filter(b => b >= tot);
+  const set = [...new Set([exacto, ...denoms])].sort((a, b) => a - b);
+  document.getElementById('billetes').innerHTML = set.map(b =>
+    `<button class="bil" onclick="setBil(${b})">${b === exacto ? '✓ ' : ''}${fmtN(b, b % 1 === 0 ? 0 : 2)} €</button>`
+  ).join('');
+  setTab('ef');
+  document.getElementById('ov').classList.add('open');
+  setTimeout(() => document.getElementById('ef-in').focus(), 80);
+}
+function cerrarModal() { document.getElementById('ov').classList.remove('open'); }
+function setTab(t) {
+  payMode = t;
+  document.getElementById('t-ef').classList.toggle('on', t === 'ef');
+  document.getElementById('t-tj').classList.toggle('on', t === 'tj');
+  document.getElementById('ef-panel').classList.toggle('open', t === 'ef');
+}
+function setBil(v) { document.getElementById('ef-in').value = v; calcCambio(); }
+function calcCambio() {
+  const tot  = calcTotal();
+  const ent  = parseFloat(document.getElementById('ef-in').value) || 0;
+  const cam  = ent - tot;
+  const el   = document.getElementById('cambio');
+  if (cam < 0) {
+    el.style.color = '#c00';
+    el.textContent = 'Faltan: ' + fmtE(Math.abs(cam));
+  } else {
+    el.style.color = '#1a5c2a';
+    el.textContent = 'Cambio: ' + fmtE(cam);
+  }
+}
+function confirmar() {
+  const tot = calcTotal();
+  if (payMode === 'ef') {
+    const ent = parseFloat(document.getElementById('ef-in').value) || 0;
+    if (ent < tot) { alert('Importe insuficiente'); return; }
+  }
+  // Actualizar stock
+  ticket.forEach(l => {
+    const p = CAT.find(x => x.codigo === l.codigo);
+    if (p) p.stock = Math.max(0, p.stock + (l.dev ? Math.abs(l.cantidad) : -l.cantidad));
+  });
+  ventasHoy++;
+  cajaHoy += tot;
+  nTicket++;
+  ticket = []; cliente = ''; selIdx = -1; nbuf = '';
+  cerrarModal();
+  renderTicket();
+  renderCat();
+  updStatus();
+  warn('✅ Venta cobrada', 2000);
+}
+
+/* ══════════════════════
+   CAJEROS
+══════════════════════ */
+function renderCajeros() {
+  document.getElementById('cashiers').innerHTML = CAJEROS.map(c =>
+    `<button class="caj${cajero.id === c.id ? ' on' : ''}" style="background:${c.color}" onclick="setCaj(${c.id})">${c.nombre}</button>`
+  ).join('');
+}
+function setCaj(id) {
+  cajero = CAJEROS.find(c => c.id === id);
+  renderCajeros();
+  updStatus();
+}
+
+/* ══════════════════════
+   BARRA ESTADO
+══════════════════════ */
+function updStatus() {
+  document.getElementById('s-caj').textContent  = cajero.nombre;
+  document.getElementById('s-ap').textContent   = aparcadas.length;
+  document.getElementById('s-vtas').textContent = ventasHoy;
+  document.getElementById('s-caja').textContent = fmtE(cajaHoy);
+}
+
+/* ══════════════════════
+   INIT
+══════════════════════ */
+irInicio();
+renderCajeros();
+renderTicket();
+updStatus();
+document.getElementById('search-in').focus();
+</script>
+</body>
+</html>
