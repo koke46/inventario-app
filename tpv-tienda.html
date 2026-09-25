@@ -3770,9 +3770,11 @@ async function fetchActivos() {
 
 function renderPedidos() {
   const list = document.getElementById('pedidos-list');
-  const empty = document.getElementById('pedidos-empty');
-  if (!pedidos.length) { list.innerHTML = ''; list.appendChild(empty); empty.style.display = ''; return; }
-  empty.style.display = 'none';
+  if (!list) return;
+  if (!pedidos.length) {
+    list.innerHTML = '<div id="pedidos-empty" style="text-align:center;color:#555;padding:40px 0;font-size:14px">Sin pedidos pendientes</div>';
+    return;
+  }
   list.innerHTML = pedidos.map(p => {
     const hora = new Date(p.created_at).toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
     const items = (p.items||[]).map(x => `${x.q}× ${x.n}`).join(' · ');
