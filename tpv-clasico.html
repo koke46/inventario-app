@@ -212,6 +212,13 @@ body {
 .nk:active { filter: brightness(1.35); }
 .nk-c { color: #f90; }
 .nk-coma { font-size: 13px; }
+.nk-enter {
+  grid-column: 1 / -1;
+  background: linear-gradient(to bottom, #2ecc71, #1e8449);
+  border-color: #155a32;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
 
 /* ══ COLUMNA DERECHA (ticket) ══ */
 #right-col {
@@ -479,6 +486,7 @@ body {
     <button class="nk nk-c" onclick="nc()">C</button>
     <button class="nk" onclick="np('0')">0</button>
     <button class="nk nk-coma" onclick="np(',')">&#44;</button>
+    <button class="nk nk-enter" onclick="npEnter()">ENTER ⏎</button>
   </div>
 </div>
 
@@ -715,6 +723,22 @@ function np(k) {
   warn('Cant: ' + nbuf, 0);
 }
 function nc() { nbuf = ''; document.getElementById('v-warn').textContent = ''; }
+function npEnter() {
+  const n = getN();
+  if (n !== null && selIdx >= 0 && selIdx < ticket.length) {
+    // Actualizar cantidad de la línea seleccionada
+    const l = ticket[selIdx];
+    l.cantidad = n;
+    l.importe  = parseFloat((l.pUnit * n).toFixed(2));
+    nbuf = '';
+    document.getElementById('v-warn').textContent = '';
+    renderTicket();
+  } else if (n === null) {
+    // Sin buffer: ir a buscar
+    document.getElementById('search-in').focus();
+  }
+  // Con buffer pero sin línea seleccionada: esperar al siguiente producto (no hacer nada)
+}
 function getN() {
   const v = parseFloat(nbuf.replace(',', '.'));
   return isNaN(v) ? null : v;
