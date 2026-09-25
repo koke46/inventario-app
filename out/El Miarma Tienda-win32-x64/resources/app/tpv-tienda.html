@@ -2728,6 +2728,7 @@ function abrirConfig() {
   document.getElementById('cfg-dir').value     = config.direccion || '';
   document.getElementById('cfg-tel').value     = config.tel     || '';
   document.getElementById('cfg-pie').value     = config.pie     || '¡Gracias por su compra!';
+  document.getElementById('cfg-url-menu').value = config.urlMenu || '';
   document.getElementById('ov-cfg').classList.add('open');
 }
 function guardarConfig() {
@@ -2736,6 +2737,7 @@ function guardarConfig() {
   config.direccion = document.getElementById('cfg-dir').value.trim();
   config.tel       = document.getElementById('cfg-tel').value.trim();
   config.pie       = document.getElementById('cfg-pie').value.trim() || '¡Gracias por su compra!';
+  config.urlMenu   = document.getElementById('cfg-url-menu').value.trim();
   localStorage.setItem('tpvt_config', JSON.stringify(config));
   cerrarModal('ov-cfg');
   warn('✅ Configuración guardada', 2000);
@@ -3607,6 +3609,8 @@ function guardarFam() { guardarFamEdit(); }
       <input id="cfg-tel" type="text" placeholder="600 000 000" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
       <label style="font-size:12px;color:#555">Pie de ticket</label>
       <input id="cfg-pie" type="text" placeholder="¡Gracias por su compra!" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
+      <label style="font-size:12px;color:#555">URL pública del menú <span style="color:#888">(para el QR de pedidos)</span></label>
+      <input id="cfg-url-menu" type="text" placeholder="https://tudominio.com" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
     </div>
     <button style="margin-top:14px;width:100%;padding:10px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarConfig()">💾 Guardar</button>
   </div>
