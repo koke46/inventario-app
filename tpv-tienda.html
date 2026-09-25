@@ -80,15 +80,27 @@ body {
 }
 #actions .btn { flex: 1; min-width: 54px; }
 #actions .sep { flex: 0.4; }
-#btn-cobrar {
-  flex: 2.2 !important;
-  background: linear-gradient(to bottom, var(--cobrar-from), var(--cobrar-to));
-  border-color: #155a32;
-  font-size: 13px;
-  font-weight: 700;
+#cobrar-row {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 52px;
 }
+#btn-cobrar {
+  flex: 1;
+  background: linear-gradient(to bottom, var(--cobrar-from), var(--cobrar-to));
+  border: 2px solid #155a32;
+  border-radius: var(--r);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .5px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+#btn-cobrar:active { filter: brightness(.85); }
 #btn-anular {
-  flex: 0 0 44px;
+  flex: 0 0 52px;
   background: none;
   border: none;
   cursor: pointer;
@@ -97,12 +109,12 @@ body {
   justify-content: center;
 }
 #btn-anular .cx {
-  width: 38px; height: 38px;
+  width: 44px; height: 44px;
   border-radius: 50%;
   background: var(--anular);
   border: 2px solid #7b241c;
   color: #fff;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 900;
   display: flex; align-items: center; justify-content: center;
 }
@@ -733,8 +745,6 @@ body {
   <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
   <button class="btn" onclick="abrirNota()"><span class="ico">📋</span><span class="lbl">Nota</span></button>
   <button class="btn" onclick="abrirConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
-  <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
-  <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
 </div>
 
 
@@ -782,6 +792,10 @@ body {
     <button class="nk" onclick="np('0')">0</button>
     <button class="nk nk-coma" onclick="np(',')">&#44;</button>
     <button class="nk nk-enter" onclick="npEnter()">ENTER ⏎</button>
+  </div>
+  <div id="cobrar-row">
+    <button id="btn-anular" onclick="acAnular()" title="Anular venta (F2)"><div class="cx">✕</div></button>
+    <button id="btn-cobrar" onclick="abrirCobro()">💳 COBRAR</button>
   </div>
 </div>
 
