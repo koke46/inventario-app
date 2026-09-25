@@ -1685,13 +1685,14 @@ function buildTicketHtml(v) {
      <div style="margin-top:6px;font-size:11px">Ticket nº <b>${numStr}</b> · ${fecha} ${hora}</div>
      <div style="font-size:11px">Cajero: ${cajNom}${cliNom ? ' · Cliente: '+cliNom : ''}</div>`;
 
-  document.getElementById('tick-lines').innerHTML = lineas.filter(l=>!l.dev).map(l =>
-    `<div class="tick-line">
+  document.getElementById('tick-lines').innerHTML = lineas.filter(l=>!l.dev).map(l => {
+    const multi = l.peso || l.cantidad !== 1;
+    const subline = multi ? `<div style="padding-left:8px;font-size:10px;color:#666">${fmtN(l.cantidad,l.peso?3:0)} × ${fmtE(l.pUnit)}</div>` : '';
+    return `<div class="tick-line">
        <span class="tl-nom">${l.nombre}${l.dto?` -${l.dto}%`:''}</span>
-       <span style="white-space:nowrap">${fmtN(l.cantidad,l.peso?3:0)} × ${fmtE(l.pUnit)}</span>
        <span style="white-space:nowrap">${fmtE(l.importe)}</span>
-     </div>`
-  ).join('');
+     </div>${subline}`;
+  }).join('');
 
   document.getElementById('tick-totales').innerHTML =
     ivaRows +
