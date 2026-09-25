@@ -1467,10 +1467,10 @@ function buscarDevTicket() {
   devTicket = res; devSel = new Set();
   const rows = (res.lineas||[]).map((l,i) => `
     <div class="dev-row${devSel.has(i)?' sel':''}" onclick="toggleDevSel(${i},this)">
-      <input type="checkbox" ${devSel.has(i)?'checked':''} onclick="toggleDevSel(${i},this.closest('.dev-row'))">
-      <span>${l.cantidad}</span>
+      <input type="checkbox" ${devSel.has(i)?'checked':''} onclick="event.stopPropagation();toggleDevSel(${i},this.closest('.dev-row'))">
+      <span>${fmtN(l.cantidad,l.peso?3:0)}</span>
       <span>${l.nombre}${l.dto?` <span style="color:#e74c3c;font-size:9px">-${l.dto}%</span>`:''}</span>
-      <span style="text-align:right;font-family:'Courier New',monospace">${fmtE(l.importe)}</span>
+      <span style="text-align:right;font-family:'Courier New',monospace">${fmtE(Math.abs(l.importe))}</span>
     </div>`).join('');
   document.getElementById('dev-ticket').innerHTML = `<div style="padding:6px 8px;background:#f0f4f8;border-bottom:1px solid #ccc;font-size:11px;font-weight:700">Ticket ${String(res.nTicket).padStart(4,'0')} · ${res.hora} · ${res.cajero}${res.cliente?' · '+res.cliente:''}</div>${rows}`;
 }
