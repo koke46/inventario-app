@@ -3190,11 +3190,14 @@ function abrirFormProd(idx) {
     _pfIngs = new Set(p.ings || []); _pfSals = new Set(p.sals || []);
     renderIngFormFields(p);
   }
-  document.getElementById('prods-list').scrollTop = 0;
+  document.querySelector('.prods-toolbar').style.display = 'none';
+  document.getElementById('prods-list').style.display = 'none';
 }
 
 function cerrarFormProd() {
   document.getElementById('prod-form').classList.remove('open');
+  document.querySelector('.prods-toolbar').style.display = '';
+  document.getElementById('prods-list').style.display = '';
   prodEditIdx = null;
 }
 
