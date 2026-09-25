@@ -741,7 +741,7 @@ async function wizardGuardar(){
     cerrarWizard();
     renderStats();renderTabla();
     toast('✅ '+cliente+' creado — abriendo app...');
-    const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+    const archivo=tipo==='tienda'?'tpv-tienda.html':'inventario-fresco.html';
     window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
   }catch(e){
     toast('❌ Error: '+e.message,true);
@@ -852,7 +852,7 @@ function genPass(){
 function abrirApp(licenciaId){
   const row=_datos.find(r=>r.licencia_id===licenciaId);
   const tipo=row?getTipo(row):'bar';
-  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+  const archivo=tipo==='tienda'?'tpv-tienda.html':'inventario-fresco.html';
   window.open(archivo+'?lic='+encodeURIComponent(licenciaId),'_blank');
 }
 function _inputDialog(label,valorActual){
@@ -898,7 +898,7 @@ async function cambiarUrlBase(){
 async function enviarEmail(licenciaId){
   const r=_datos.find(x=>x.licencia_id===licenciaId);if(!r) return;
   const tipo=getTipo(r);
-  const archivo=tipo==='tienda'?'inventario-tienda.html':'inventario-fresco.html';
+  const archivo=tipo==='tienda'?'tpv-tienda.html':'inventario-fresco.html';
   const base=await _getAppBase();
   if(!base) return;
   const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
@@ -912,7 +912,7 @@ async function enviarEmail(licenciaId){
 // ── SOPORTE ──
 const MASTER_PASS='IF.SOPORTE.2026';
 const APP_BARES  ='inventario-fresco.html';
-const APP_TIENDA ='inventario-tienda.html';
+const APP_TIENDA ='tpv-tienda.html';
 function abrirSoporte(licenciaId){
   const row=_datos.find(r=>r.licencia_id===licenciaId);
   const tipo=row?getTipo(row):'bar';
