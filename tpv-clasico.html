@@ -663,6 +663,13 @@ body {
 #fiad-panel { display:none;padding:12px 0; }
 #fiad-panel.open { display:block; }
 .fiad-info { background:#fff8e1;border:2px solid #f0c040;border-radius:8px;padding:12px;font-size:14px;text-align:center; }
+#div-panel { display:none;padding:8px 0; }
+#div-panel.open { display:block; }
+.div-np-btn { width:36px;height:36px;border-radius:50%;border:none;background:#4a6788;color:#fff;font-size:20px;font-weight:700;cursor:pointer;line-height:1; }
+.div-pay-btn { flex:1;padding:10px 6px;border:none;border-radius:7px;background:linear-gradient(to bottom,var(--btn-from),var(--btn-to));color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font); }
+.div-parte-row { display:flex;justify-content:space-between;align-items:center;background:#d5f5e3;border-radius:5px;padding:6px 10px;font-size:12px; }
+.div-parte-row .dp-met { font-weight:700;color:#1a5c2a; }
+.div-parte-row .dp-imp { font-weight:700; }
 .fiad-deuda { color:#c0392b;font-weight:700; }
 #tgt-panel { display:none;padding:8px 0; }
 #tgt-panel.open { display:block; }
@@ -816,6 +823,7 @@ body {
       <button class="ptab"    id="t-val"  onclick="setTab('val')">🎫 Vale</button>
       <button class="ptab"    id="t-fiad" onclick="setTab('fiad')">🏠 Fiado</button>
       <button class="ptab"    id="t-tgt"  onclick="setTab('tgt')">🎁 Tarjeta</button>
+      <button class="ptab"    id="t-div"  onclick="setTab('div')">÷ Dividir</button>
     </div>
     <div id="ef-panel" class="open">
       <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
@@ -840,6 +848,25 @@ body {
       <input class="vale-inp" id="tgt-code" type="text" placeholder="TGT-XXXXXX" oninput="this.value=this.value.toUpperCase()">
       <button style="width:100%;padding:8px;background:var(--btn-to);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:6px" onclick="validarTgt()">🔍 Validar tarjeta</button>
       <div class="tgt-info" id="tgt-cobro-info"></div>
+    </div>
+    <div id="div-panel">
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px">
+        <button class="div-np-btn" onclick="setSplitN(splitN-1)">－</button>
+        <span style="font-size:22px;font-weight:700" id="div-n">2</span>
+        <span style="font-size:14px;color:#555">personas</span>
+        <button class="div-np-btn" onclick="setSplitN(splitN+1)">＋</button>
+      </div>
+      <div id="div-xpersona" style="text-align:center;font-size:18px;font-weight:700;color:#1a3a5c;margin-bottom:6px"></div>
+      <div id="div-progreso" style="text-align:center;font-size:12px;color:#666;margin-bottom:10px"></div>
+      <div id="div-partes-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;max-height:140px;overflow-y:auto"></div>
+      <div id="div-cobrar-area">
+        <div style="font-size:12px;color:#555;margin-bottom:6px;text-align:center">Forma de pago de esta persona:</div>
+        <div style="display:flex;gap:6px">
+          <button class="div-pay-btn" onclick="cobrarParteDiv('ef')">💵 Efectivo</button>
+          <button class="div-pay-btn" onclick="cobrarParteDiv('tj')">💳 Tarjeta</button>
+          <button class="div-pay-btn" onclick="cobrarParteDiv('biz')">📱 Bizum</button>
+        </div>
+      </div>
     </div>
     <div class="mbtns">
       <button id="m-ok" onclick="confirmar()">✅ Confirmar cobro</button>
@@ -1294,6 +1321,8 @@ let tarjetas   = JSON.parse(localStorage.getItem('tpv_tarjetas') || '[]');
 let vales      = JSON.parse(localStorage.getItem('tpv_vales')    || '[]');
 let config     = JSON.parse(localStorage.getItem('tpv_config')   || JSON.stringify({empresa:'Mi Tienda',nif:'B12345678',direccion:'Calle Mayor 1',tel:'600 000 000',pie:'¡Gracias por su compra!'}));
 let notaTicket = '';
+let splitN     = 2;
+let splitPartes = [];
 let nFactura   = parseInt(localStorage.getItem('tpv_nfact')      || '1');
 let pinTarget  = null;    // cajero pendiente de PIN
 let pinBuf     = '';      // dígitos PIN introducidos
@@ -1659,6 +1688,7 @@ function abrirCobro() {
   document.getElementById('billetes').innerHTML = set.map(b =>
     `<button class="bil" onclick="setBil(${b})">${b === exacto ? '✓ ' : ''}${fmtN(b, b % 1 === 0 ? 0 : 2)} €</button>`
   ).join('');
+  splitPartes = []; splitN = 2;
   setTab('ef');
   document.getElementById('ov').classList.add('open');
   setTimeout(() => document.getElementById('ef-in').focus(), 80);
@@ -1666,7 +1696,7 @@ function abrirCobro() {
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
 function setTab(t) {
   payMode = t;
-  ['ef','tj','biz','mix','val','fiad','tgt'].forEach(x => {
+  ['ef','tj','biz','mix','val','fiad','tgt','div'].forEach(x => {
     document.getElementById('t-' + x)?.classList.toggle('on', t === x);
   });
   document.getElementById('ef-panel').classList.toggle('open',    t === 'ef');
@@ -1675,8 +1705,12 @@ function setTab(t) {
   document.getElementById('vale-panel').classList.toggle('open',  t === 'val');
   document.getElementById('fiad-panel').classList.toggle('open',  t === 'fiad');
   document.getElementById('tgt-panel').classList.toggle('open',   t === 'tgt');
+  document.getElementById('div-panel').classList.toggle('open',   t === 'div');
   if (t === 'fiad') { actualizarFiadInfo(); if (!cliente) abrirCli(); }
   if (t === 'tgt')  { document.getElementById('tgt-cobro-info').textContent = ''; }
+  if (t === 'div')  { splitPartes = []; renderSplit(); }
+  // Ocultar botón confirmar en modo dividir (se auto-confirma al cobrar última parte)
+  document.getElementById('m-ok').style.display = t === 'div' ? 'none' : '';
 }
 function calcMixto() {
   const tot = calcTotal();
@@ -2339,6 +2373,59 @@ function actualizarFiadInfo() {
 /* ══════════════════════
    TARJETAS DE REGALO
 ══════════════════════ */
+// ── DIVIDIR PAGO ─────────────────────────────────────────
+function setSplitN(n) {
+  splitN = Math.max(2, Math.min(20, n));
+  splitPartes = [];
+  renderSplit();
+}
+function renderSplit() {
+  const tot  = calcTotal();
+  const xp   = parseFloat((tot / splitN).toFixed(2));
+  const pagadas = splitPartes.length;
+  document.getElementById('div-n').textContent = splitN;
+  document.getElementById('div-xpersona').textContent = fmtE(xp) + ' por persona';
+  document.getElementById('div-progreso').textContent = `${pagadas} de ${splitN} cobradas`;
+  const metNom = {ef:'Efectivo',tj:'Tarjeta',biz:'Bizum'};
+  document.getElementById('div-partes-list').innerHTML = splitPartes.map((p,i) =>
+    `<div class="div-parte-row"><span>Persona ${i+1}</span><span class="dp-met">${metNom[p.met]}</span><span class="dp-imp">${fmtE(p.imp)}</span></div>`
+  ).join('');
+  const done = pagadas >= splitN;
+  document.getElementById('div-cobrar-area').style.display = done ? 'none' : '';
+}
+function cobrarParteDiv(met) {
+  const tot = calcTotal();
+  const pagadas = splitPartes.length;
+  const resta   = splitN - pagadas;
+  // última parte = lo que quede para no perder céntimos
+  const imp = resta === 1
+    ? parseFloat((tot - splitPartes.reduce((s,p)=>s+p.imp,0)).toFixed(2))
+    : parseFloat((tot / splitN).toFixed(2));
+  splitPartes.push({ met, imp });
+  // actualizar pagosDia
+  if (met === 'ef')  pagosDia.ef  += imp;
+  if (met === 'tj')  pagosDia.tj  += imp;
+  if (met === 'biz') pagosDia.biz += imp;
+  renderSplit();
+  if (splitPartes.length >= splitN) {
+    // Finalizar venta
+    const entradas = splitPartes.filter(p=>p.met==='ef').map(p=>p.imp);
+    histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'),
+      cliente, cajero: cajero.nombre, pago: 'div', entregado: 0, cambio: 0, nota: notaTicket,
+      lineas: JSON.parse(JSON.stringify(ticket)), split: splitPartes.map(p=>({...p})) });
+    localStorage.setItem('tpv_histventas', JSON.stringify(histVentas));
+    const stockUpdates = [...ticket];
+    ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = '';
+    notaTicket = '';
+    nTicket++;
+    stockUpdates.forEach(l => { const p = CAT.find(x=>x.id===l.id); if (p&&p.stock!=null) p.stock = Math.max(0, p.stock - l.cantidad); });
+    saveCat(); renderTicket(); updStatus();
+    document.getElementById('ov').classList.remove('open');
+    warn(`✅ Pago dividido entre ${splitN} personas`, 2500);
+    splitPartes = []; splitN = 2;
+  }
+}
+
 function saveTarjetas() { localStorage.setItem('tpv_tarjetas', JSON.stringify(tarjetas)); }
 
 // ── CONFIGURACIÓN NEGOCIO ─────────────────────────────────
