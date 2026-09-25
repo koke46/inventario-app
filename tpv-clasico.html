@@ -1486,7 +1486,9 @@ function renderCat() {
     g.style.gridTemplateColumns = 'repeat(auto-fill, 78px)';
     const prods = CAT.filter(p => p.familia === famActual || famActual === '__srch__');
     const lista = famActual === '__srch__' ? g._srch || [] : prods;
-    g.innerHTML = lista.map(p => {
+    const famNom = FAMILIAS.find(f => f.id === famActual)?.nombre || '';
+    const backBtn = `<button style="width:78px;height:78px;background:#34506e;border:1px solid #2a3f58;border-radius:var(--r);color:#fff;font-size:22px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--font)" onclick="irInicio()">◀<span style="font-size:9px;font-weight:700">${famNom||'Atrás'}</span></button>`;
+    g.innerHTML = backBtn + lista.map(p => {
       const out = p.stock === 0;
       const minS = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
       const bajo = p.stock > 0 && p.stock <= minS;
