@@ -272,22 +272,6 @@ body {
 #btn-buscar { padding: 0 12px; font-size: 10px; flex-shrink: 0; width: 64px; }
 
 /* Rejilla productos */
-#fav-strip {
-  display: none;
-  flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 3px 4px 2px;
-  gap: 4px;
-  border-bottom: 2px solid #8aaccc;
-}
-#fav-strip.visible { display: flex; }
-#fav-strip .fav-lbl { font-size:10px;color:#556;font-weight:700;align-self:center;white-space:nowrap;padding-right:4px; }
-.fav-btn { flex-shrink:0;width:68px;height:68px;border-radius:var(--r);background:linear-gradient(to bottom,#4a7a5a,#2e5e3a);border:1px solid #1e4028;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:var(--font);position:relative; }
-.fav-btn .fav-ico { font-size:1.4em;line-height:1; }
-.fav-btn .fav-nom { font-size:8px;font-weight:700;text-align:center;line-height:1.2;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.fav-btn .fav-price { font-size:9px;color:#aef0b8; }
-.fav-btn:active { filter:brightness(.82); }
 #pgrid {
   flex: 1;
   overflow-y: auto;
@@ -828,9 +812,6 @@ body {
       <span class="ico">🔍</span><span class="lbl">Buscar</span>
     </button>
   </div>
-
-  <!-- Strip de favoritos -->
-  <div id="fav-strip"></div>
 
   <!-- Grid productos / familias -->
   <div id="pgrid"></div>
@@ -1564,7 +1545,14 @@ function renderCat() {
   if (!famActual) {
     // Pantalla familias
     g.style.gridTemplateColumns = 'repeat(auto-fill, 90px)';
-    g.innerHTML = FAMILIAS.map((f, fi) => {
+    const favs = CAT.filter(p => p.favorito);
+    const favBtn = favs.length
+      ? `<button class="fam-btn" style="background:linear-gradient(135deg,#7c5c00,#f59e0b)" onclick="abrirFam('__favs__')">
+          <span class="fam-ico">⭐</span>
+          <span class="fam-nom">Favoritos</span>
+        </button>`
+      : '';
+    g.innerHTML = favBtn + FAMILIAS.map((f, fi) => {
       const foto = f.foto ? `<img class="fam-foto" src="${f.foto}" alt="">` : '';
       const ico  = f.foto ? '' : `<span class="fam-ico">${f.emoji}</span>`;
       return `<button class="fam-btn" draggable="true" data-fi="${fi}" style="background:${f.color}"
@@ -1581,9 +1569,12 @@ function renderCat() {
     }).join('');
   } else {
     g.style.gridTemplateColumns = 'repeat(auto-fill, 78px)';
-    const prods = CAT.filter(p => p.familia === famActual || famActual === '__srch__');
+    const esFavs = famActual === '__favs__';
+    const prods = esFavs
+      ? CAT.filter(p => p.favorito)
+      : CAT.filter(p => p.familia === famActual || famActual === '__srch__');
     const lista = famActual === '__srch__' ? g._srch || [] : prods;
-    const famNom = FAMILIAS.find(f => f.id === famActual)?.nombre || '';
+    const famNom = esFavs ? 'Favoritos' : (FAMILIAS.find(f => f.id === famActual)?.nombre || '');
     const backBtn = `<button style="width:78px;height:78px;background:#34506e;border:1px solid #2a3f58;border-radius:var(--r);color:#fff;font-size:22px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--font)" onclick="irInicio()">◀<span style="font-size:9px;font-weight:700">${famNom||'Atrás'}</span></button>`;
     g.innerHTML = backBtn + lista.map(p => {
       const out = p.stock === 0;
@@ -1611,19 +1602,10 @@ function renderCat() {
   }
 }
 
-function abrirFam(id) { famActual = id; renderCat(); renderFavStrip(); }
-function irInicio()    { famActual = null; renderCat(); renderFavStrip(); }
+function abrirFam(id) { famActual = id; renderCat(); }
+function irInicio()    { famActual = null; renderCat(); }
 
-function renderFavStrip() {
-  const strip = document.getElementById('fav-strip');
-  const favs  = CAT.filter(p => p.favorito && p._i !== undefined);
-  if (!favs.length) { strip.classList.remove('visible'); return; }
-  strip.classList.add('visible');
-  strip.innerHTML = `<span class="fav-lbl">⭐</span>` + favs.map(p => {
-    const ico = p.foto ? `<img style="width:32px;height:32px;object-fit:cover;border-radius:3px" src="${p.foto}" alt="">` : `<span class="fav-ico">${p.emoji}</span>`;
-    return `<button class="fav-btn" onclick="clickPrd(${p._i})">${ico}<span class="fav-nom">${p.nombre}</span><span class="fav-price">${fmtE(p.precio)}</span></button>`;
-  }).join('');
-}
+
 
 /* ══════════════════════
    BÚSQUEDA
@@ -2419,7 +2401,6 @@ function ejecutarCierreZ() {
 ══════════════════════ */
 irInicio();
 renderCajeros();
-renderFavStrip();
 renderTicket();
 updStatus();
 document.getElementById('search-in').focus();
@@ -3068,7 +3049,6 @@ function guardarProd() {
   cerrarFormProd();
   renderProdsList();
   renderCat();
-  renderFavStrip();
   warn(prodEditIdx === null ? '✅ Producto creado' : '✅ Producto actualizado', 2000);
 }
 
