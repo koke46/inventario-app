@@ -406,6 +406,75 @@ body {
 #p-ok { background: linear-gradient(to bottom, #2ecc71, #1e8449); color: #fff; }
 #p-cancel { background: #ccc; color: #333; }
 
+/* ══ DESCUENTO EN TICKET ══ */
+.t-dto { font-size: 9px; color: #e74c3c; margin-left: 3px; }
+.t-row.sel .t-dto { color: #faa; }
+
+/* ══ MODAL CLIENTES ══ */
+#ov-cli { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-cli.open { display:flex; }
+.cli-search { width:100%;padding:8px 10px;font-size:14px;border:2px solid #6a8faf;border-radius:var(--r);margin-bottom:8px;font-family:var(--font); }
+.cli-list { max-height:180px;overflow-y:auto;border:1px solid #aab8c8;border-radius:var(--r);margin-bottom:8px; }
+.cli-row { display:grid;grid-template-columns:1fr auto auto;padding:7px 10px;border-bottom:1px solid #dde;cursor:pointer;align-items:center;gap:8px;font-size:13px; }
+.cli-row:last-child { border-bottom:none; }
+.cli-row:hover { background:#c8d8e8; }
+.cli-row.sel { background:var(--ticket-sel);color:#fff; }
+.cli-pts { font-size:11px;color:#888; }
+.cli-row.sel .cli-pts { color:#adf; }
+.cli-form { display:none;margin-top:10px;padding-top:10px;border-top:2px solid #b0b8c8; }
+.cli-form.open { display:block; }
+.cli-form input { width:100%;padding:7px 9px;margin-bottom:6px;border:2px solid #8a9aaa;border-radius:var(--r);font-size:13px;font-family:var(--font); }
+.cli-form label { font-size:11px;color:#555;display:block;margin-bottom:2px; }
+
+/* ══ MODAL ARTÍCULO LIBRE ══ */
+#ov-libre { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-libre.open { display:flex; }
+.libre-iva { display:flex;gap:6px;margin-bottom:10px; }
+.libre-iva button { flex:1;padding:8px;border:2px solid #888;border-radius:var(--r);background:#e8e8e8;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font); }
+.libre-iva button.on { border-color:var(--btn-from);background:var(--btn-from);color:#fff; }
+
+/* ══ MODAL CAJA ══ */
+#ov-caja { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-caja.open { display:flex; }
+.caj-tabs { display:flex;gap:4px;margin-bottom:12px; }
+.caj-tab { flex:1;padding:8px 4px;border:2px solid #888;border-radius:var(--r);background:#e8e8e8;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);text-align:center; }
+.caj-tab.on { border-color:#4a6788;background:#4a6788;color:#fff; }
+.caj-panel { display:none; }
+.caj-panel.open { display:block; }
+.caja-inp { width:100%;padding:8px;font-size:22px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:var(--r);text-align:right;margin-bottom:10px; }
+.tipo-btns { display:flex;gap:6px;margin-bottom:8px; }
+.tipo-btn { flex:1;padding:9px;border:2px solid #888;border-radius:6px;background:#e8e8e8;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font); }
+.tipo-btn.on.ent { border-color:#27ae60;background:#27ae60;color:#fff; }
+.tipo-btn.on.sal { border-color:var(--anular);background:var(--anular);color:#fff; }
+.mov-list { max-height:140px;overflow-y:auto;font-size:11px;margin-bottom:8px;border:1px solid #aab8c8;border-radius:var(--r); }
+.mov-row { display:grid;grid-template-columns:52px 1fr auto;padding:5px 8px;border-bottom:1px solid #dde;gap:6px;align-items:center; }
+.mov-row:last-child { border-bottom:none; }
+.mov-ent { color:#1a5c2a; }
+.mov-sal { color:#c00; }
+.inf-section { margin-bottom:12px; }
+.inf-title { font-weight:700;font-size:12px;color:#555;border-bottom:2px solid #b0b8c8;padding-bottom:3px;margin-bottom:5px; }
+.inf-row { display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid #eee; }
+.inf-row:last-child { border:none; }
+.inf-val { font-weight:700;font-family:'Courier New',monospace; }
+.inf-total { display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:700;border-top:2px solid #888;margin-top:4px; }
+.bil-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px; }
+.bil-cnt { display:flex;flex-direction:column;align-items:center;gap:2px; }
+.bil-cnt label { font-size:10px;color:#555; }
+.bil-cnt input { width:100%;padding:4px;text-align:center;border:1px solid #888;border-radius:3px;font-size:13px;font-family:'Courier New',monospace; }
+.descuadre-ok { color:#1a5c2a;font-weight:700; }
+.descuadre-ko { color:#c00;font-weight:700; }
+#z-descuadre { font-size:14px;font-weight:700;text-align:center;padding:8px;border-radius:var(--r);margin-bottom:10px; }
+
+/* ══ PAGO MIXTO ══ */
+#mix-panel { display:none; }
+#mix-panel.open { display:block; }
+.mix-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+.mix-lbl { font-size:13px;font-weight:700;min-width:72px; }
+.mix-in { flex:1;padding:8px;font-size:16px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:var(--r);text-align:right; }
+#mix-resto { font-size:14px;font-weight:700;text-align:center;padding:6px;background:#fff;border-radius:var(--r);margin-bottom:10px; }
+#biz-panel { display:none;padding:20px;text-align:center;color:#555;font-size:15px; }
+#biz-panel.open { display:block; }
+
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
   body { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto auto; height: auto; overflow: auto; }
@@ -438,6 +507,8 @@ body {
   <button class="btn" onclick="acRecuperar()"><span class="ico">▶️</span><span class="lbl">Recuperar</span></button>
   <div class="sep"></div>
   <button class="btn" onclick="acReimprimir()"><span class="ico">🖨️</span><span class="lbl">Reimprimir</span></button>
+  <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
+  <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
   <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
   <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
 </div>
@@ -524,13 +595,21 @@ body {
     <h2>💳 COBRO</h2>
     <div id="m-total">0,00 €</div>
     <div class="ptabs">
-      <button class="ptab on" id="t-ef" onclick="setTab('ef')">💵 Efectivo</button>
-      <button class="ptab" id="t-tj" onclick="setTab('tj')">💳 Tarjeta</button>
+      <button class="ptab on" id="t-ef"  onclick="setTab('ef')">💵 Efectivo</button>
+      <button class="ptab"    id="t-tj"  onclick="setTab('tj')">💳 Tarjeta</button>
+      <button class="ptab"    id="t-biz" onclick="setTab('biz')">📱 Bizum</button>
+      <button class="ptab"    id="t-mix" onclick="setTab('mix')">≡ Mixto</button>
     </div>
     <div id="ef-panel" class="open">
       <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
       <div class="billetes" id="billetes"></div>
       <div id="cambio" style="color:#1a5c2a">Cambio: 0,00 €</div>
+    </div>
+    <div id="biz-panel">📱 Bizum seleccionado — confirma cuando el cliente envíe el pago</div>
+    <div id="mix-panel">
+      <div class="mix-row"><span class="mix-lbl">💵 Efectivo</span><input class="mix-in" id="mix-ef" type="number" min="0" step="0.01" placeholder="0,00" oninput="calcMixto()"></div>
+      <div class="mix-row"><span class="mix-lbl">💳 Tarjeta</span><input class="mix-in" id="mix-tj" type="number" min="0" step="0.01" placeholder="0,00" oninput="calcMixto()"></div>
+      <div id="mix-resto">Resto: — €</div>
     </div>
     <div class="mbtns">
       <button id="m-ok" onclick="confirmar()">✅ Confirmar cobro</button>
@@ -549,6 +628,100 @@ body {
       <button id="p-ok" onclick="confirmarPeso()">✅ Añadir</button>
       <button id="p-cancel" onclick="cerrarPeso()">❌ Cancelar</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CLIENTES ══ -->
+<div id="ov-cli">
+  <div class="mbox-sm" id="mbox-cli" style="width:460px;background:#dde8f0;border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">👤 Clientes</h2>
+    <input class="cli-search" id="cli-q" type="text" placeholder="🔍 Buscar por nombre o NIF..." oninput="filtrarCli()">
+    <div class="cli-list" id="cli-list"></div>
+    <button style="width:100%;padding:8px;background:linear-gradient(to bottom,#5c7ca0,#4a6788);color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px" onclick="toggleCliForm()">➕ Nuevo cliente</button>
+    <div class="cli-form" id="cli-form">
+      <label>Nombre *</label><input id="cf-nom" type="text" placeholder="Nombre completo">
+      <label>NIF / DNI</label><input id="cf-nif" type="text" placeholder="12345678A">
+      <label>Teléfono</label><input id="cf-tel" type="text" placeholder="600 000 000">
+      <label>Email</label><input id="cf-email" type="email" placeholder="correo@ejemplo.com">
+      <div class="mbtns"><button class="m-ok" style="padding:9px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarCli()">💾 Guardar</button></div>
+    </div>
+    <div class="mbtns" style="margin-top:8px">
+      <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="asignarCli()">✅ Asignar al ticket</button>
+      <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="cerrarCli()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ARTÍCULO LIBRE ══ -->
+<div id="ov-libre">
+  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:12px;color:#333">🆓 Artículo libre</h2>
+    <label style="font-size:11px;color:#555;display:block;margin-bottom:2px">Descripción *</label>
+    <input id="lib-nom" type="text" placeholder="Descripción del artículo..." style="width:100%;padding:8px;font-size:14px;border:2px solid #888;border-radius:5px;margin-bottom:8px;font-family:var(--font)">
+    <label style="font-size:11px;color:#555;display:block;margin-bottom:2px">Precio (con IVA)</label>
+    <input id="lib-prec" type="number" min="0" step="0.01" placeholder="0,00" style="width:100%;padding:8px;font-size:20px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:5px;margin-bottom:8px;text-align:right">
+    <label style="font-size:11px;color:#555;display:block;margin-bottom:4px">Tipo IVA</label>
+    <div class="libre-iva" id="lib-iva">
+      <button class="on" onclick="setLibIva(this,21)">21%</button>
+      <button onclick="setLibIva(this,10)">10%</button>
+      <button onclick="setLibIva(this,4)">4%</button>
+      <button onclick="setLibIva(this,0)">0%</button>
+    </div>
+    <div class="mbtns">
+      <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="confirmarLibre()">✅ Añadir</button>
+      <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-libre').classList.remove('open')">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CAJA ══ -->
+<div id="ov-caja">
+  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">🏦 Gestión de Caja</h2>
+    <div class="caj-tabs">
+      <button class="caj-tab on" onclick="cajTab('fondo')">💰 Fondo</button>
+      <button class="caj-tab" onclick="cajTab('mov')">🔄 Movimiento</button>
+      <button class="caj-tab" onclick="cajTab('infx')">📊 Inf. X</button>
+      <button class="caj-tab" onclick="cajTab('cierrez')">🔒 Cierre Z</button>
+    </div>
+
+    <!-- Fondo inicial -->
+    <div class="caj-panel open" id="caj-fondo">
+      <p style="font-size:12px;color:#555;margin-bottom:8px">Introduce el efectivo con el que abres la caja:</p>
+      <input class="caja-inp" id="fondo-in" type="number" min="0" step="0.01" placeholder="0,00" value="0">
+      <div class="mbtns"><button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarFondo()">✅ Confirmar apertura</button></div>
+      <p id="fondo-actual" style="font-size:12px;color:#555;margin-top:8px;text-align:center"></p>
+    </div>
+
+    <!-- Movimiento -->
+    <div class="caj-panel" id="caj-mov">
+      <div class="tipo-btns">
+        <button class="tipo-btn ent on" id="mt-ent" onclick="setMovTipo('ent')">⬆️ Entrada</button>
+        <button class="tipo-btn sal" id="mt-sal" onclick="setMovTipo('sal')">⬇️ Salida</button>
+      </div>
+      <input class="caja-inp" id="mov-imp" type="number" min="0" step="0.01" placeholder="Importe...">
+      <input type="text" id="mov-mot" placeholder="Motivo (pago proveedor, retirada...)" style="width:100%;padding:8px 10px;font-size:13px;border:2px solid #888;border-radius:var(--r);margin-bottom:10px;font-family:var(--font)">
+      <div class="mbtns"><button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="confirmarMov()">✅ Registrar</button></div>
+      <div class="mov-list" id="mov-list" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Informe X -->
+    <div class="caj-panel" id="caj-infx">
+      <div id="infx-body"></div>
+    </div>
+
+    <!-- Cierre Z -->
+    <div class="caj-panel" id="caj-cierrez">
+      <p style="font-size:12px;color:#555;margin-bottom:8px">Cuenta el efectivo en caja:</p>
+      <div class="bil-grid" id="bil-grid"></div>
+      <div id="z-descuadre"></div>
+      <div id="cierrez-body"></div>
+      <div class="mbtns">
+        <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="ejecutarCierreZ()">🔒 Cerrar caja</button>
+      </div>
+    </div>
+
+    <div class="mbtns" style="margin-top:10px"><button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-caja').classList.remove('open')">Cerrar</button></div>
   </div>
 </div>
 
@@ -631,6 +804,16 @@ let cajaHoy   = 0;
 let famActual = null;      // null = mostrar familias
 let payMode   = 'ef';
 let pendPeso  = null;      // producto esperando kg
+// ── Nuevos ──
+let pagosDia   = { ef:0, tj:0, biz:0 };
+let movCaja    = [];
+let fondoCaja  = 0;
+let histVentas = [];
+let ivaLibre   = 21;
+let movTipo    = 'ent';
+let cajSelId   = null;     // id del cliente seleccionado en el modal
+let clientes   = JSON.parse(localStorage.getItem('tpv_clientes') || '[]');
+const DENOMS   = [200,100,50,20,10,5,2,1,0.50,0.20,0.10,0.05];
 
 /* ══════════════════════
    FORMATO
@@ -673,9 +856,10 @@ function renderTicket() {
       const dev = l.dev ? ' dev' : '';
       const qty = l.peso ? fmtN(l.cantidad, 3) + ' kg' : fmtN(l.cantidad, 0);
       const nom = (l.dev ? '↩ ' : '') + l.nombre;
+      const dto = l.dto ? `<span class="t-dto">-${l.dto}%</span>` : '';
       return `<div class="t-row${sel}${dev}" onclick="selLinea(${i})">
         <span class="t-qty">${qty}</span>
-        <span class="t-nom" title="${l.nombre}">${nom}</span>
+        <span class="t-nom" title="${l.nombre}">${nom}${dto}</span>
         <span class="t-imp">${fmtE(l.importe)}</span>
       </div>`;
     }).join('');
@@ -919,10 +1103,7 @@ function acDtoTotal() {
   });
   renderTicket();
 }
-function acCliente() {
-  const c = prompt('Nombre o NIF del cliente:', cliente);
-  if (c !== null) { cliente = c.trim(); updVisor(); }
-}
+function acCliente() { abrirCli(); }
 
 /* ══════════════════════
    ACCIONES SUPERIORES
@@ -976,9 +1157,21 @@ function abrirCobro() {
 function cerrarModal() { document.getElementById('ov').classList.remove('open'); }
 function setTab(t) {
   payMode = t;
-  document.getElementById('t-ef').classList.toggle('on', t === 'ef');
-  document.getElementById('t-tj').classList.toggle('on', t === 'tj');
-  document.getElementById('ef-panel').classList.toggle('open', t === 'ef');
+  ['ef','tj','biz','mix'].forEach(x => {
+    document.getElementById('t-' + x).classList.toggle('on', t === x);
+  });
+  document.getElementById('ef-panel').classList.toggle('open',  t === 'ef');
+  document.getElementById('biz-panel').classList.toggle('open', t === 'biz');
+  document.getElementById('mix-panel').classList.toggle('open', t === 'mix');
+}
+function calcMixto() {
+  const tot = calcTotal();
+  const ef  = parseFloat(document.getElementById('mix-ef').value) || 0;
+  const tj  = parseFloat(document.getElementById('mix-tj').value) || 0;
+  const r   = tot - ef - tj;
+  const el  = document.getElementById('mix-resto');
+  el.textContent = r > 0.005 ? `Falta: ${fmtE(r)}` : r < -0.005 ? `Exceso: ${fmtE(Math.abs(r))}` : '✅ Cuadra';
+  el.style.color = Math.abs(r) < 0.005 ? '#1a5c2a' : '#c00';
 }
 function setBil(v) { document.getElementById('ef-in').value = v; calcCambio(); }
 function calcCambio() {
@@ -996,19 +1189,41 @@ function calcCambio() {
 }
 function confirmar() {
   const tot = calcTotal();
+  // Validar pago
   if (payMode === 'ef') {
     const ent = parseFloat(document.getElementById('ef-in').value) || 0;
     if (ent < tot) { alert('Importe insuficiente'); return; }
+    pagosDia.ef += tot;
+  } else if (payMode === 'tj') {
+    pagosDia.tj += tot;
+  } else if (payMode === 'biz') {
+    pagosDia.biz += tot;
+  } else if (payMode === 'mix') {
+    const ef = parseFloat(document.getElementById('mix-ef').value) || 0;
+    const tj = parseFloat(document.getElementById('mix-tj').value) || 0;
+    if (Math.abs(ef + tj - tot) > 0.02) { alert('Los importes no suman el total'); return; }
+    pagosDia.ef += ef; pagosDia.tj += tj;
   }
   // Actualizar stock
   ticket.forEach(l => {
     const p = CAT.find(x => x.codigo === l.codigo);
-    if (p) p.stock = Math.max(0, p.stock + (l.dev ? Math.abs(l.cantidad) : -l.cantidad));
+    if (p && p.stock >= 0) p.stock = Math.max(0, p.stock + (l.dev ? Math.abs(l.cantidad) : -l.cantidad));
   });
+  // Puntos de cliente
+  const cliObj = clientes.find(c => c.nombre === cliente);
+  if (cliObj) {
+    const pts = Math.floor(tot);
+    cliObj.puntos = (cliObj.puntos || 0) + pts;
+    cliObj.historial = cliObj.historial || [];
+    cliObj.historial.unshift({ fecha: new Date().toLocaleString('es'), nTicket, total: tot, articulos: ticket.length });
+    saveClientes();
+  }
+  // Historial del día
+  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), cliente, cajero: cajero.nombre, pago: payMode });
   ventasHoy++;
   cajaHoy += tot;
   nTicket++;
-  ticket = []; cliente = ''; selIdx = -1; nbuf = '';
+  ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = '';
   cerrarModal();
   renderTicket();
   renderCat();
@@ -1038,6 +1253,175 @@ function updStatus() {
   document.getElementById('s-ap').textContent   = aparcadas.length;
   document.getElementById('s-vtas').textContent = ventasHoy;
   document.getElementById('s-caja').textContent = fmtE(cajaHoy);
+}
+
+/* ══════════════════════
+   CLIENTES
+══════════════════════ */
+function saveClientes() { localStorage.setItem('tpv_clientes', JSON.stringify(clientes)); }
+function abrirCli() { filtrarCli(); document.getElementById('ov-cli').classList.add('open'); }
+function cerrarCli() { document.getElementById('ov-cli').classList.remove('open'); }
+function filtrarCli() {
+  const q = (document.getElementById('cli-q').value || '').toLowerCase();
+  const res = clientes.filter(c => c.nombre.toLowerCase().includes(q) || (c.nif || '').toLowerCase().includes(q));
+  document.getElementById('cli-list').innerHTML = res.length
+    ? res.map(c => `<div class="cli-row${cajSelId===c.id?' sel':''}" onclick="selCli(${c.id})">
+        <span><b>${c.nombre}</b>${c.nif ? ' · ' + c.nif : ''}</span>
+        <span class="cli-pts">⭐ ${c.puntos||0} pts</span>
+      </div>`).join('')
+    : '<div class="cli-row" style="cursor:default;color:#aaa">Sin resultados</div>';
+}
+function selCli(id) { cajSelId = id; filtrarCli(); }
+function toggleCliForm() {
+  const f = document.getElementById('cli-form');
+  f.classList.toggle('open');
+  if (f.classList.contains('open')) document.getElementById('cf-nom').focus();
+}
+function guardarCli() {
+  const nom = document.getElementById('cf-nom').value.trim();
+  if (!nom) { alert('El nombre es obligatorio'); return; }
+  const nuevo = { id: Date.now(), nombre: nom, nif: document.getElementById('cf-nif').value.trim(), tel: document.getElementById('cf-tel').value.trim(), email: document.getElementById('cf-email').value.trim(), puntos: 0, historial: [] };
+  clientes.unshift(nuevo);
+  saveClientes();
+  ['cf-nom','cf-nif','cf-tel','cf-email'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cli-form').classList.remove('open');
+  cajSelId = nuevo.id;
+  filtrarCli();
+}
+function asignarCli() {
+  if (!cajSelId) { alert('Selecciona un cliente'); return; }
+  const c = clientes.find(x => x.id === cajSelId);
+  if (c) { cliente = c.nombre; updVisor(); }
+  cerrarCli();
+}
+
+/* ══════════════════════
+   ARTÍCULO LIBRE
+══════════════════════ */
+function abrirLibre() {
+  document.getElementById('lib-nom').value = '';
+  document.getElementById('lib-prec').value = '';
+  document.getElementById('ov-libre').classList.add('open');
+  setTimeout(() => document.getElementById('lib-nom').focus(), 80);
+}
+function setLibIva(btn, v) {
+  ivaLibre = v;
+  document.querySelectorAll('#lib-iva button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function confirmarLibre() {
+  const nom  = document.getElementById('lib-nom').value.trim();
+  const prec = parseFloat(document.getElementById('lib-prec').value.replace(',', '.'));
+  if (!nom || isNaN(prec) || prec <= 0) { alert('Introduce descripción y precio válidos'); return; }
+  ticket.push({ codigo: 'LIBRE_' + Date.now(), nombre: nom, iva: ivaLibre, pUnit: prec, cantidad: getN() || 1, importe: prec * (getN() || 1), peso: false, dev: false, dto: 0 });
+  selIdx = ticket.length - 1;
+  nbuf = '';
+  document.getElementById('ov-libre').classList.remove('open');
+  renderTicket();
+}
+
+/* ══════════════════════
+   GESTIÓN DE CAJA
+══════════════════════ */
+function abrirCaja() {
+  document.getElementById('fondo-actual').textContent = fondoCaja ? 'Fondo actual: ' + fmtE(fondoCaja) : 'Caja no abierta';
+  renderMovList();
+  cajTab('fondo');
+  document.getElementById('ov-caja').classList.add('open');
+}
+function cajTab(t) {
+  ['fondo','mov','infx','cierrez'].forEach(x => {
+    document.querySelector(`.caj-tab:nth-child(${['fondo','mov','infx','cierrez'].indexOf(x)+1})`).classList.toggle('on', x===t);
+    document.getElementById('caj-' + x).classList.toggle('open', x===t);
+  });
+  if (t === 'infx')    renderInfX();
+  if (t === 'cierrez') renderCierreZ();
+}
+function guardarFondo() {
+  const v = parseFloat(document.getElementById('fondo-in').value) || 0;
+  fondoCaja = v;
+  movCaja.unshift({ tipo:'fondo', importe:v, motivo:'Fondo inicial', hora: new Date().toLocaleTimeString('es') });
+  document.getElementById('fondo-actual').textContent = 'Fondo: ' + fmtE(v);
+  warn('💰 Fondo de caja registrado', 2000);
+}
+function setMovTipo(t) {
+  movTipo = t;
+  document.getElementById('mt-ent').classList.toggle('on', t==='ent');
+  document.getElementById('mt-sal').classList.toggle('on', t==='sal');
+}
+function confirmarMov() {
+  const imp = parseFloat(document.getElementById('mov-imp').value) || 0;
+  const mot = document.getElementById('mov-mot').value.trim();
+  if (!imp || !mot) { alert('Introduce importe y motivo'); return; }
+  movCaja.unshift({ tipo:movTipo, importe:imp, motivo:mot, hora: new Date().toLocaleTimeString('es') });
+  if (movTipo === 'ent') fondoCaja += imp; else fondoCaja -= imp;
+  document.getElementById('mov-imp').value = '';
+  document.getElementById('mov-mot').value = '';
+  renderMovList();
+  updStatus();
+  warn((movTipo==='ent'?'⬆️ Entrada':'⬇️ Salida') + ' registrada: ' + fmtE(imp), 2000);
+}
+function renderMovList() {
+  const el = document.getElementById('mov-list');
+  const list = movCaja.filter(m => m.tipo !== 'fondo');
+  el.innerHTML = list.length
+    ? list.map(m => `<div class="mov-row ${m.tipo==='ent'?'mov-ent':'mov-sal'}"><span>${m.hora}</span><span>${m.motivo}</span><span>${m.tipo==='ent'?'+':'-'}${fmtE(m.importe)}</span></div>`).join('')
+    : '<div style="padding:8px;text-align:center;color:#aaa;font-size:11px">Sin movimientos</div>';
+}
+function renderInfX() {
+  const tot = histVentas.reduce((s,v) => s+v.total, 0);
+  const devs = ticket.filter(l=>l.dev).reduce((s,l)=>s+Math.abs(l.importe),0);
+  const entradas = movCaja.filter(m=>m.tipo==='ent').reduce((s,m)=>s+m.importe,0);
+  const salidas  = movCaja.filter(m=>m.tipo==='sal').reduce((s,m)=>s+m.importe,0);
+  document.getElementById('infx-body').innerHTML = `
+    <div class="inf-section">
+      <div class="inf-title">💳 Ventas por forma de pago</div>
+      <div class="inf-row"><span>Efectivo</span><span class="inf-val">${fmtE(pagosDia.ef)}</span></div>
+      <div class="inf-row"><span>Tarjeta</span><span class="inf-val">${fmtE(pagosDia.tj)}</span></div>
+      <div class="inf-row"><span>Bizum</span><span class="inf-val">${fmtE(pagosDia.biz)}</span></div>
+      <div class="inf-total"><span>TOTAL VENTAS</span><span class="inf-val">${fmtE(tot)}</span></div>
+    </div>
+    <div class="inf-section">
+      <div class="inf-title">🏦 Caja efectivo</div>
+      <div class="inf-row"><span>Fondo inicial</span><span class="inf-val">${fmtE(fondoCaja - (pagosDia.ef - salidas + entradas))}</span></div>
+      <div class="inf-row"><span>Ventas efectivo</span><span class="inf-val">+ ${fmtE(pagosDia.ef)}</span></div>
+      <div class="inf-row"><span>Entradas manuales</span><span class="inf-val">+ ${fmtE(entradas)}</span></div>
+      <div class="inf-row"><span>Salidas manuales</span><span class="inf-val">- ${fmtE(salidas)}</span></div>
+      <div class="inf-total"><span>ESPERADO EN CAJA</span><span class="inf-val">${fmtE(fondoCaja)}</span></div>
+    </div>
+    <div class="inf-section">
+      <div class="inf-title">🧾 Tickets</div>
+      <div class="inf-row"><span>Nº tickets</span><span class="inf-val">${histVentas.length}</span></div>
+      <div class="inf-row"><span>Ticket medio</span><span class="inf-val">${histVentas.length ? fmtE(tot/histVentas.length) : '—'}</span></div>
+    </div>`;
+}
+function renderCierreZ() {
+  renderInfX();
+  document.getElementById('cierrez-body').innerHTML = document.getElementById('infx-body').innerHTML;
+  // Billetes
+  const LABELS = ['200€','100€','50€','20€','10€','5€','2€','1€','0,50','0,20','0,10','0,05'];
+  document.getElementById('bil-grid').innerHTML = DENOMS.map((d,i) =>
+    `<div class="bil-cnt"><label>${LABELS[i]}</label><input id="bd-${i}" type="number" min="0" value="0" oninput="calcDescuadre()"></div>`
+  ).join('');
+  calcDescuadre();
+}
+function calcDescuadre() {
+  let contado = 0;
+  DENOMS.forEach((d,i) => contado += (parseInt(document.getElementById('bd-'+i)?.value)||0) * d);
+  contado = parseFloat(contado.toFixed(2));
+  const esperado = fondoCaja;
+  const diff = parseFloat((contado - esperado).toFixed(2));
+  const el = document.getElementById('z-descuadre');
+  el.style.background = Math.abs(diff)<0.01?'#d5f5e3':'#fde8e8';
+  el.innerHTML = `Contado: <b>${fmtE(contado)}</b> · Esperado: <b>${fmtE(esperado)}</b> · <span class="${Math.abs(diff)<0.01?'descuadre-ok':'descuadre-ko'}">${diff>=0?'+':''}${fmtE(diff)}</span>`;
+}
+function ejecutarCierreZ() {
+  if (!confirm('¿Confirmar cierre Z? Se resetearán los contadores del día.')) return;
+  pagosDia = {ef:0,tj:0,biz:0};
+  ventasHoy = 0; cajaHoy = 0; movCaja = []; histVentas = [];
+  document.getElementById('ov-caja').classList.remove('open');
+  warn('🔒 Cierre Z ejecutado', 2500);
+  updStatus();
 }
 
 /* ══════════════════════
