@@ -257,15 +257,15 @@ body {
   flex: 1;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, 78px);
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, 100px);
+  gap: 5px;
   align-content: start;
-  padding: 2px;
+  padding: 4px;
 }
 
 /* Carpeta familia */
 .fam-btn {
-  width: 90px; height: 88px;
+  width: 100px; height: 100px;
   border-radius: var(--r);
   cursor: pointer;
   position: relative;
@@ -287,12 +287,12 @@ body {
   filter: brightness(1.25);
 }
 .fam-btn:active { filter: brightness(.85); }
-.fam-ico { font-size: 28px; }
+.fam-ico { font-size: 36px; }
 .fam-nom { font-size: 10px; font-weight: 700; text-align: center; margin-top: 4px; line-height: 1.2; }
 
 /* Botón producto */
 .prd {
-  width: 78px; height: 78px;
+  width: 100px; height: 100px;
   background: linear-gradient(to bottom, var(--btn-from), var(--btn-to));
   border: 1px solid #3a5878;
   border-radius: var(--r);
@@ -305,24 +305,24 @@ body {
 }
 .prd:active:not(.out) { filter: brightness(.82); }
 .prd.out { opacity: .48; cursor: not-allowed; }
-.prd-ico { font-size: 26px; }
+.prd-ico { font-size: 34px; }
 .prd-nom {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: rgba(20,40,70,.88);
-  color: #fff; font-size: 9px;
-  text-align: center; padding: 2px;
+  color: #fff; font-size: 11px;
+  text-align: center; padding: 3px 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .prd-price {
-  position: absolute; top: 2px; right: 2px;
+  position: absolute; top: 3px; right: 3px;
   background: #111; color: #fff;
-  font-size: 9px; font-weight: 700;
-  padding: 1px 3px; border-radius: 3px;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 4px; border-radius: 3px;
 }
 .prd-stock {
-  position: absolute; top: 2px; left: 2px;
-  font-size: 9px; font-weight: 700;
-  padding: 1px 3px; border-radius: 3px;
+  position: absolute; top: 3px; left: 3px;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 4px; border-radius: 3px;
   background: rgba(0,0,0,.4); color: #bdf;
 }
 .prd-stock.bajo { color: #ffa500; }
@@ -407,7 +407,7 @@ body {
   #center-col { grid-column: 1; grid-row: 3; height: 55vh; }
   #right-col  { grid-column: 1; grid-row: 4; height: 50vh; padding: 0 4px 3px; }
   #statusbar  { grid-column: 1; grid-row: 6; }
-  #pgrid { grid-template-columns: repeat(auto-fill, 78px); }
+  #pgrid { grid-template-columns: repeat(auto-fill, 100px); }
 }
 </style>
 </head>
