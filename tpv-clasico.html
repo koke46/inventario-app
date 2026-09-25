@@ -946,7 +946,6 @@ let ticket    = [];
 let selIdx    = -1;
 let nbuf      = '';        // buffer numpad
 let cliente   = '';
-let nTicket   = 1;
 let cajero    = CAJEROS[0];
 let aparcadas = [];
 let ventasHoy = 0;
@@ -958,7 +957,8 @@ let pendPeso  = null;      // producto esperando kg
 let pagosDia   = { ef:0, tj:0, biz:0 };
 let movCaja    = [];
 let fondoCaja  = 0;
-let histVentas = [];
+let histVentas = JSON.parse(localStorage.getItem('tpv_histventas') || '[]');
+let nTicket    = histVentas.length ? Math.max(...histVentas.map(v=>v.nTicket)) + 1 : 1;
 let ivaLibre   = 21;
 let movTipo    = 'ent';
 let cajSelId   = null;     // id del cliente seleccionado en el modal
@@ -1385,6 +1385,7 @@ function confirmar() {
   }
   // Historial del día
   histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, lineas: JSON.parse(JSON.stringify(ticket)) });
+  localStorage.setItem('tpv_histventas', JSON.stringify(histVentas));
   ventasHoy++;
   cajaHoy += tot;
   nTicket++;
@@ -1797,7 +1798,8 @@ function calcDescuadre() {
 function ejecutarCierreZ() {
   if (!confirm('¿Confirmar cierre Z? Se resetearán los contadores del día.')) return;
   pagosDia = {ef:0,tj:0,biz:0};
-  ventasHoy = 0; cajaHoy = 0; movCaja = []; histVentas = [];
+  ventasHoy = 0; cajaHoy = 0; movCaja = []; histVentas = []; nTicket = 1;
+  localStorage.removeItem('tpv_histventas');
   document.getElementById('ov-caja').classList.remove('open');
   warn('🔒 Cierre Z ejecutado', 2500);
   updStatus();
