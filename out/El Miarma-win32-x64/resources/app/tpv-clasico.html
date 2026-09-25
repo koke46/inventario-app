@@ -427,9 +427,9 @@ body {
 .prods-toolbar { display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center; }
 .prods-toolbar select { padding:6px 8px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;font-family:var(--font);background:#fff; }
 #prods-panel { flex:1;overflow-y:auto;min-height:0; }
-#cats-panel  { flex:1;overflow-y:auto;min-height:0; }
+#cats-panel  { flex:1;display:flex;flex-direction:column;min-height:0; }
 #prods-list  { }
-#cats-list   { }
+#cats-list   { flex:1;overflow-y:auto;min-height:0; }
 .prod-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
 .prod-row-emo { font-size:20px;min-width:26px;text-align:center; }
 .prod-row-nom { flex:1;font-weight:600; }
