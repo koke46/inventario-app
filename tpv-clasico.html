@@ -1450,8 +1450,9 @@ function npEnter() {
     document.getElementById('v-warn').textContent = '';
     renderTicket();
   } else if (n === null) {
-    // Sin buffer: ir a buscar
-    document.getElementById('search-in').focus();
+    // Sin buffer: si hay ticket abrir cobro, si no ir a buscar
+    if (ticket.length) abrirCobro();
+    else document.getElementById('search-in').focus();
   }
   // Con buffer pero sin línea seleccionada: esperar al siguiente producto (no hacer nada)
 }
