@@ -521,6 +521,28 @@ body {
 /* ══ DESCUENTO EN TICKET ══ */
 .t-dto { font-size: 9px; color: #e74c3c; margin-left: 3px; }
 .t-row.sel .t-dto { color: #faa; }
+.t-mods { grid-column:1/-1;font-size:9px;color:#778;padding:0 2px 2px 36px;line-height:1.3; }
+.t-row.sel .t-mods { color:#cdf; }
+
+/* ══ INGREDIENTES ══ */
+#ov-ings { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-ings.open { display:flex; }
+#ings-box { background:#dde8f0;border-radius:10px;padding:20px;width:460px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.ing-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
+.ing-cat-badge { font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap; }
+.ing-cat-badge.ing { background:#dcfce7;color:#166534; }
+.ing-cat-badge.sal { background:#fce7f3;color:#be185d; }
+#ov-ingsel { position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:250; }
+#ov-ingsel.open { display:flex; }
+#ingsel-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.ing-sel-sec { margin-bottom:14px; }
+.ing-sel-sec h4 { font-size:11px;font-weight:700;color:#446;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
+.ing-toggle-grid { display:flex;flex-wrap:wrap;gap:5px; }
+.ing-tog { padding:6px 12px;border-radius:20px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .12s; }
+.ing-tog.on        { background:#166534;border-color:#166534;color:#fff; }
+.ing-tog.off       { background:#fee2e2;border-color:#ef4444;color:#991b1b;text-decoration:line-through; }
+.ing-tog.extra-off { background:#f1f5f9;border-color:#94a3b8;color:#475569; }
+.ing-tog.extra-on  { background:#1d4ed8;border-color:#1d4ed8;color:#fff; }
 
 /* ══ MODAL CLIENTES ══ */
 #ov-cli { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
@@ -1100,6 +1122,7 @@ body {
         <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
           <input id="pf-fav" type="checkbox"> ⭐ Producto favorito (acceso rápido)
         </label>
+        <div id="pf-ings-wrap" class="pf-full"></div>
         <label class="pf-full">Foto del producto
           <div class="pf-foto-wrap">
             <input type="file" accept="image/*" onchange="handleFotoProd(this)" style="font-size:12px;flex:1">
@@ -1398,11 +1421,14 @@ function renderTicket() {
       const qty = l.peso ? fmtN(l.cantidad, 3) + ' kg' : fmtN(l.cantidad, 0);
       const nom = (l.dev ? '↩ ' : '') + l.nombre;
       const dto = l.dto ? `<span class="t-dto">-${l.dto}%</span>` : '';
+      const modsHtml = l.mods
+        ? `<div class="t-mods">${[...(l.mods.sin||[]).map(s=>'sin '+s), ...(l.mods.extra||[]).map(e=>'+'+e)].join(' · ')}</div>`
+        : '';
       return `<div class="t-row${sel}${dev}" onclick="selLinea(${i})">
         <span class="t-qty">${qty}</span>
         <span class="t-nom" title="${l.nombre}">${nom}${dto}</span>
         <span class="t-imp">${fmtE(l.importe)}</span>
-      </div>`;
+      </div>${modsHtml}`;
     }).join('');
   }
   updIVA();
@@ -1553,6 +1579,7 @@ function clickPrd(idx) {
     añadir(idx, kg);
     return;
   }
+  if (prod.ings?.length || prod.sals?.length) { abrirIngSel(idx); return; }
   añadir(idx, 1);
 }
 
@@ -2127,10 +2154,13 @@ function buildTicketHtml(v) {
   document.getElementById('tick-lines').innerHTML = lineas.filter(l=>!l.dev).map(l => {
     const multi = l.peso || l.cantidad !== 1;
     const subline = multi ? `<div style="padding-left:8px;font-size:10px;color:#666">${fmtN(l.cantidad,l.peso?3:0)} × ${fmtE(l.pUnit)}</div>` : '';
+    const modsLine = l.mods
+      ? `<div style="padding-left:8px;font-size:10px;color:#666">${[...(l.mods.sin||[]).map(s=>'sin '+s), ...(l.mods.extra||[]).map(e=>'+'+e)].join(', ')}</div>`
+      : '';
     return `<div class="tick-line">
        <span class="tl-nom">${l.nombre}${l.dto?` -${l.dto}%`:''}</span>
        <span style="white-space:nowrap">${fmtE(l.importe)}</span>
-     </div>${subline}`;
+     </div>${subline}${modsLine}`;
   }).join('');
 
   const entregado = v ? v.entregado : 0;
@@ -2510,6 +2540,127 @@ function cobrarParteDiv(met) {
 }
 
 function saveTarjetas() { localStorage.setItem('tpvt_tarjetas', JSON.stringify(tarjetas)); }
+
+// ── INGREDIENTES ──────────────────────────────────────────
+let INGREDIENTES = JSON.parse(localStorage.getItem('tpvt_ingredientes') || '[]');
+function saveIngredientes() { localStorage.setItem('tpvt_ingredientes', JSON.stringify(INGREDIENTES)); }
+
+let _ingCatForm = 'ing';
+function abrirIng() { renderIngList(); document.getElementById('ov-ings').classList.add('open'); }
+function setIngCat(c) {
+  _ingCatForm = c;
+  document.getElementById('ings-btn-ing').classList.toggle('on', c === 'ing');
+  document.getElementById('ings-btn-sal').classList.toggle('on', c === 'sal');
+}
+function renderIngList() {
+  const el = document.getElementById('ings-list');
+  if (!INGREDIENTES.length) { el.innerHTML = '<p style="color:#888;font-size:13px">Sin ingredientes. Añade uno abajo.</p>'; return; }
+  el.innerHTML = INGREDIENTES.map((it, i) =>
+    `<div class="ing-row">
+      <span class="ing-cat-badge ${it.cat}">${it.cat === 'ing' ? 'Ingrediente' : 'Salsa'}</span>
+      <span style="flex:1;font-weight:600">${it.nombre}</span>
+      ${it.precioExtra ? `<span style="font-size:11px;color:#1a5c2a;font-weight:700">+${fmtE(it.precioExtra)}</span>` : ''}
+      <button style="background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:var(--font)" onclick="borrarIng(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+function guardarIng() {
+  const nom = document.getElementById('ings-nom').value.trim();
+  if (!nom) return;
+  const prec = parseFloat(document.getElementById('ings-precio').value.replace(',','.')) || 0;
+  INGREDIENTES.push({ id: 'i' + Date.now(), nombre: nom, cat: _ingCatForm, precioExtra: prec });
+  saveIngredientes();
+  document.getElementById('ings-nom').value = '';
+  document.getElementById('ings-precio').value = '';
+  renderIngList();
+}
+function borrarIng(i) {
+  if (!confirm(`¿Borrar "${INGREDIENTES[i].nombre}"?`)) return;
+  INGREDIENTES.splice(i, 1);
+  saveIngredientes();
+  renderIngList();
+}
+
+// Formulario producto — campos dinámicos de ingredientes
+let _pfIngs = new Set();
+let _pfSals = new Set();
+function renderIngFormFields(prod) {
+  const ings = INGREDIENTES.filter(it => it.cat === 'ing');
+  const sals = INGREDIENTES.filter(it => it.cat === 'sal');
+  if (!ings.length && !sals.length) { document.getElementById('pf-ings-wrap').innerHTML = ''; return; }
+  const mkGrid = (items, set) => items.map(it =>
+    `<button type="button" class="ing-tog ${set.has(it.id) ? 'on' : 'extra-off'}"
+     onclick="toggleIngForm('${it.cat}','${it.id}',this)">${it.nombre}</button>`
+  ).join('');
+  document.getElementById('pf-ings-wrap').innerHTML =
+    (ings.length ? `<div style="margin-top:10px"><div style="font-size:11px;color:#555;font-weight:700;margin-bottom:5px">🥬 Ingredientes por defecto</div><div class="ing-toggle-grid">${mkGrid(ings,_pfIngs)}</div></div>` : '') +
+    (sals.length ? `<div style="margin-top:8px"><div style="font-size:11px;color:#555;font-weight:700;margin-bottom:5px">🧴 Salsas por defecto</div><div class="ing-toggle-grid">${mkGrid(sals,_pfSals)}</div></div>` : '');
+}
+function toggleIngForm(cat, id, btn) {
+  const set = cat === 'ing' ? _pfIngs : _pfSals;
+  if (set.has(id)) { set.delete(id); btn.className = 'ing-tog extra-off'; }
+  else             { set.add(id);    btn.className = 'ing-tog on'; }
+}
+
+// Selector de ingredientes en venta
+let _ingSelIdx = null;
+let _ingSelState = {};
+function abrirIngSel(idx) {
+  _ingSelIdx = idx;
+  const prod = CAT[idx];
+  const defs = new Set([...(prod.ings || []), ...(prod.sals || [])]);
+  _ingSelState = {};
+  INGREDIENTES.forEach(it => { _ingSelState[it.id] = defs.has(it.id); });
+  document.getElementById('ingsel-title').textContent = (prod.emoji || '🛒') + ' ' + prod.nombre;
+  renderIngSel(prod);
+  document.getElementById('ov-ingsel').classList.add('open');
+}
+function toggleIngSel(id) {
+  _ingSelState[id] = !_ingSelState[id];
+  renderIngSel(CAT[_ingSelIdx]);
+}
+function renderIngSel(prod) {
+  const defs = new Set([...(prod.ings || []), ...(prod.sals || [])]);
+  ['ing','sal'].forEach(cat => {
+    const items = INGREDIENTES.filter(it => it.cat === cat);
+    const sec  = document.getElementById('ingsel-sec-' + cat);
+    const grid = document.getElementById('ingsel-grid-' + cat);
+    if (!items.length) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    grid.innerHTML = items.map(it => {
+      const isDef = defs.has(it.id);
+      const isOn  = _ingSelState[it.id];
+      const cls = isDef ? (isOn ? 'on' : 'off') : (isOn ? 'extra-on' : 'extra-off');
+      const lbl = it.nombre + (!isDef && it.precioExtra ? ` +${fmtE(it.precioExtra)}` : '');
+      return `<button class="ing-tog ${cls}" onclick="toggleIngSel('${it.id}')">${lbl}</button>`;
+    }).join('');
+  });
+  const defs2 = new Set([...(prod.ings || []), ...(prod.sals || [])]);
+  let extra = 0;
+  INGREDIENTES.forEach(it => { if (!defs2.has(it.id) && _ingSelState[it.id]) extra += it.precioExtra || 0; });
+  const tot = parseFloat((prod.precio + extra).toFixed(2));
+  document.getElementById('ingsel-total').textContent = fmtE(tot);
+  document.getElementById('ingsel-btn-add').textContent = `✅ Añadir ${fmtE(tot)}`;
+}
+function confirmarIngSel() {
+  const prod = CAT[_ingSelIdx];
+  const defs = new Set([...(prod.ings || []), ...(prod.sals || [])]);
+  const sin = [], extra = [];
+  let extraPrecio = 0;
+  INGREDIENTES.forEach(it => {
+    const isDef = defs.has(it.id);
+    const isOn  = _ingSelState[it.id];
+    if (isDef && !isOn) sin.push(it.nombre);
+    if (!isDef && isOn) { extra.push(it.nombre + (it.precioExtra ? ` +${fmtE(it.precioExtra)}` : '')); extraPrecio += it.precioExtra || 0; }
+  });
+  const precio = parseFloat((prod.precio + extraPrecio).toFixed(2));
+  const mods = (sin.length || extra.length) ? { sin, extra } : null;
+  ticket.push({ codigo: prod.codigo, nombre: prod.nombre, iva: prod.iva, familia: prod.familia||'libre',
+    pUnit: precio, cantidad: 1, importe: precio, peso: false, dev: false, dto: 0, mods });
+  selIdx = ticket.length - 1;
+  cerrarModal('ov-ingsel');
+  renderTicket();
+}
 
 // ── MENÚ CONFIG ───────────────────────────────────────────
 function abrirMenuConfig() { document.getElementById('ov-menu-cfg').classList.add('open'); }
@@ -3017,6 +3168,8 @@ function abrirFormProd(idx) {
     document.getElementById('pf-fav').checked  = false;
     document.getElementById('pf-fam').selectedIndex = 0;
     prev.src = ''; prev.style.display = 'none';
+    _pfIngs = new Set(); _pfSals = new Set();
+    renderIngFormFields(null);
   } else {
     const p = CAT[idx];
     document.getElementById('pf-codigo').value = p.codigo || '';
@@ -3030,6 +3183,8 @@ function abrirFormProd(idx) {
     document.getElementById('pf-fav').checked  = !!p.favorito;
     document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
     if (p.foto) { prev.src = p.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
+    _pfIngs = new Set(p.ings || []); _pfSals = new Set(p.sals || []);
+    renderIngFormFields(p);
   }
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -3056,6 +3211,8 @@ function guardarProd() {
     minStock: parseInt(document.getElementById('pf-minstock').value) || STOCK_BAJO,
     peso:     document.getElementById('pf-peso').checked || false,
     favorito: document.getElementById('pf-fav').checked  || false,
+    ings:     [..._pfIngs],
+    sals:     [..._pfSals],
     ...(fotoVal ? { foto: fotoVal } : {}),
   };
   if (prodEditIdx === null) {
@@ -3268,6 +3425,55 @@ function guardarFam() { guardarFamEdit(); }
       <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirHistorico()">
         <span class="ct-ico">📋</span>Históricos
       </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirIng()">
+        <span class="ct-ico">🥗</span>Ingredientes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL GESTIÓN INGREDIENTES ══ -->
+<div id="ov-ings">
+  <div id="ings-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-shrink:0">
+      <b style="font-size:15px">🥗 Ingredientes y Salsas</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-ings')">✕</button>
+    </div>
+    <div id="ings-list" style="flex:1;overflow-y:auto;min-height:0;margin-bottom:12px"></div>
+    <div style="background:#f4f8fb;border-radius:8px;padding:12px;flex-shrink:0">
+      <div style="font-size:12px;font-weight:700;color:#334;margin-bottom:8px">Añadir nuevo</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button id="ings-btn-ing" class="ptab on" style="flex:1" onclick="setIngCat('ing')">🥬 Ingrediente</button>
+        <button id="ings-btn-sal" class="ptab"    style="flex:1" onclick="setIngCat('sal')">🧴 Salsa</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <input id="ings-nom" type="text" placeholder="Nombre (ej: Tomate, Ketchup…)" style="flex:1;padding:8px;font-size:13px;border:2px solid #8aaccc;border-radius:6px;font-family:var(--font)">
+        <input id="ings-precio" type="number" min="0" step="0.01" placeholder="Extra €" style="width:80px;padding:8px;font-size:13px;border:2px solid #8aaccc;border-radius:6px;font-family:var(--font)">
+        <button style="padding:8px 14px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarIng()">➕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SELECTOR INGREDIENTES (VENTA) ══ -->
+<div id="ov-ingsel">
+  <div id="ingsel-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <b id="ingsel-title" style="font-size:15px"></b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-ingsel')">✕</button>
+    </div>
+    <div class="ing-sel-sec" id="ingsel-sec-ing">
+      <h4>🥬 Ingredientes</h4>
+      <div class="ing-toggle-grid" id="ingsel-grid-ing"></div>
+    </div>
+    <div class="ing-sel-sec" id="ingsel-sec-sal">
+      <h4>🧴 Salsas</h4>
+      <div class="ing-toggle-grid" id="ingsel-grid-sal"></div>
+    </div>
+    <div style="text-align:center;font-size:13px;color:#557;margin-bottom:12px">Total: <b id="ingsel-total">0,00 €</b></div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;padding:11px;background:#aaa;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="cerrarModal('ov-ingsel')">❌ Cancelar</button>
+      <button id="ingsel-btn-add" style="flex:2;padding:11px;background:linear-gradient(to bottom,var(--btn-from),var(--btn-to));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--font)" onclick="confirmarIngSel()">✅ Añadir</button>
     </div>
   </div>
 </div>
