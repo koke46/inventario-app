@@ -1150,6 +1150,9 @@ body {
 
     <!-- ═══ PANEL CATEGORÍAS ═══ -->
     <div id="cats-panel" style="display:none">
+      <div style="margin-bottom:8px">
+        <button style="padding:6px 14px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="abrirFormFam(null)">+ Nueva categoría</button>
+      </div>
       <!-- Formulario editar categoría -->
       <div class="fam-form" id="fam-form">
         <b style="font-size:13px" id="ff-title">Editar categoría</b>
@@ -3331,17 +3334,16 @@ function renderCatsList() {
 
 function abrirFormFam(id) {
   famEditId = id;
-  const f = FAMILIAS.find(x => x.id === id);
-  if (!f) return;
   _ffotoTmp = null;
-  document.getElementById('famedit-titulo').textContent = '✏️ ' + f.nombre;
-  document.getElementById('famedit-nombre').value = f.nombre;
-  document.getElementById('famedit-emoji').value  = f.emoji || '';
-  document.getElementById('famedit-color').value  = f.color || '#555555';
+  const f = id ? FAMILIAS.find(x => x.id === id) : null;
+  document.getElementById('famedit-titulo').textContent = f ? '✏️ ' + f.nombre : '➕ Nueva categoría';
+  document.getElementById('famedit-nombre').value = f ? f.nombre : '';
+  document.getElementById('famedit-emoji').value  = f ? (f.emoji || '') : '🗂';
+  document.getElementById('famedit-color').value  = f ? (f.color || '#555555') : '#555555';
   document.getElementById('famedit-file').value   = '';
   const prev = document.getElementById('famedit-preview');
-  if (f.foto) { prev.src = f.foto; prev.classList.add('show'); }
-  else         { prev.src = ''; prev.classList.remove('show'); }
+  if (f?.foto) { prev.src = f.foto; prev.classList.add('show'); }
+  else          { prev.src = ''; prev.classList.remove('show'); }
   document.getElementById('ov-famedit').classList.add('open');
 }
 
@@ -3365,17 +3367,30 @@ function quitarFotoFamEdit() {
 }
 
 function guardarFamEdit() {
-  const f = FAMILIAS.find(x => x.id === famEditId);
-  if (!f) return;
-  f.nombre = document.getElementById('famedit-nombre').value.trim() || f.nombre;
-  f.emoji  = document.getElementById('famedit-emoji').value.trim()  || f.emoji;
-  f.color  = document.getElementById('famedit-color').value;
-  if (_ffotoTmp !== null) { if (_ffotoTmp) f.foto = _ffotoTmp; else delete f.foto; }
+  const nombre = document.getElementById('famedit-nombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  if (famEditId) {
+    const f = FAMILIAS.find(x => x.id === famEditId);
+    if (!f) return;
+    f.nombre = nombre;
+    f.emoji  = document.getElementById('famedit-emoji').value.trim() || f.emoji;
+    f.color  = document.getElementById('famedit-color').value;
+    if (_ffotoTmp !== null) { if (_ffotoTmp) f.foto = _ffotoTmp; else delete f.foto; }
+  } else {
+    const nueva = {
+      id:     'fam_' + Date.now(),
+      nombre,
+      emoji:  document.getElementById('famedit-emoji').value.trim() || '🗂',
+      color:  document.getElementById('famedit-color').value,
+    };
+    if (_ffotoTmp) nueva.foto = _ffotoTmp;
+    FAMILIAS.push(nueva);
+  }
   saveFamilias();
   document.getElementById('ov-famedit').classList.remove('open');
   renderCatsList();
   renderCat();
-  warn('✅ Categoría actualizada', 2000);
+  warn(famEditId ? '✅ Categoría actualizada' : '✅ Categoría creada', 2000);
 }
 
 function guardarFam() { guardarFamEdit(); }
