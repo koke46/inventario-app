@@ -1444,9 +1444,17 @@ function np(k) {
   if (k === ',' && nbuf.includes(',')) return;
   nbuf += k;
   const v = getN();
-  warn(v !== null ? '💶 ' + fmtE(v) : '', 0);
+  if (v !== null) {
+    const el = document.getElementById('v-total');
+    el.textContent = fmtE(v);
+    el.style.color = '#16a34a';
+  }
 }
-function nc() { nbuf = ''; document.getElementById('v-warn').textContent = ''; }
+function nc() {
+  nbuf = '';
+  document.getElementById('v-total').style.color = '';
+  updVisor();
+}
 function npEnter() {
   const n = getN();
   if (n !== null) {
@@ -1465,7 +1473,7 @@ function añadirLibreRapido(prec) {
     pUnit: prec, cantidad: 1, importe: prec, peso: false, dev: false, dto: 0 });
   selIdx = ticket.length - 1;
   nbuf = '';
-  document.getElementById('v-warn').textContent = '';
+  document.getElementById('v-total').style.color = '';
   renderTicket();
 }
 
