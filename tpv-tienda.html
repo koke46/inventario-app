@@ -2586,13 +2586,12 @@ function abrirQR() {
     }))
   };
   window._qrMenuData = menuData;
-  const hash = btoa(unescape(encodeURIComponent(JSON.stringify(menuData))));
-  const url = urlBase.replace(/\/$/, '') + '#' + hash;
+  const url = urlBase.replace(/\/$/, '');
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
   try {
-    new QRCode(canvas, { text: url, width: 500, height: 500, correctLevel: QRCode.CorrectLevel.L });
+    new QRCode(canvas, { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
   } catch(e) {
     warn.style.display = '';
     warn.textContent = '⚠️ Error al generar QR: ' + e.message;
@@ -2605,7 +2604,7 @@ function descargarMenuJson() {
   a.href = URL.createObjectURL(blob);
   a.download = 'menu.json';
   a.click();
-  warn('✅ menu.json descargado', 2000);
+  warn('✅ menu.json descargado — añádelo a netlify-deploy y sube la carpeta a Netlify', 4000);
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;
@@ -3595,7 +3594,8 @@ function guardarFam() { guardarFamEdit(); }
       </div>
     </div>
     <div id="qr-warn" style="display:none;background:#422a00;color:#fbbf24;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;margin-bottom:10px"></div>
-    <div style="font-size:11px;color:#4ade80;text-align:center;line-height:1.5;padding:6px 0">✅ El QR lleva el menú embebido — escanéalo directamente.</div>
+    <button onclick="descargarMenuJson()" style="width:100%;padding:10px;background:#1a4a1a;color:#86efac;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px">⬇️ Descargar menu.json</button>
+    <div style="font-size:11px;color:#6a8fa8;text-align:center;line-height:1.5">Descarga menu.json → ponlo en la carpeta <b style="color:#a5b4fc">netlify-deploy</b> del Escritorio → súbela a Netlify.</div>
   </div>
 </div>
 
