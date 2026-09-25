@@ -775,6 +775,11 @@ body {
   <button class="btn" onclick="abrirNota()"><span class="ico">📋</span><span class="lbl">Nota</span></button>
   <div class="sep"></div>
   <button class="btn" style="background:linear-gradient(to bottom,#4a3070,#2d1a55);color:#fff" onclick="abrirMenuConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
+  <div class="sep"></div>
+  <button class="btn" id="btn-pedidos" style="background:linear-gradient(to bottom,#15803d,#14532d);color:#fff;position:relative" onclick="abrirPedidos()">
+    <span class="ico">🛎️</span><span class="lbl">Pedidos</span>
+    <span id="badge-pedidos" style="display:none;position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:800;align-items:center;justify-content:center;line-height:1">0</span>
+  </button>
 </div>
 
 
@@ -3730,6 +3735,7 @@ function guardarFam() { guardarFamEdit(); }
       <span style="color:#4ade80;font-size:18px;font-weight:800">🛎️ Pedidos</span>
       <button onclick="cerrarPedidos()" style="background:none;border:none;color:#888;font-size:22px;cursor:pointer;font-family:inherit">✕</button>
     </div>
+    <div id="poll-status" style="font-size:11px;color:#555;padding:6px 20px;border-bottom:1px solid #1a2a1a">Conectando…</div>
     <div id="pedidos-list" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px">
       <div id="pedidos-empty" style="text-align:center;color:#555;padding:40px 0;font-size:14px">Sin pedidos pendientes</div>
     </div>
@@ -3807,12 +3813,20 @@ function sonidoNotif() {
   } catch(e) {}
 }
 
+function setStatus(txt, ok) {
+  const el = document.getElementById('poll-status');
+  if (el) { el.textContent = txt; el.style.color = ok ? '#4ade80' : '#ef4444'; }
+}
+
 async function cargarPedidos() {
   try {
     pedidos = await fetchActivos();
     pedidos.forEach(p => conocidos.add(p.id));
     renderPedidos(); actualizarBadge();
-  } catch(e) {}
+    setStatus('✓ Conectado · ' + pedidos.length + ' activos', true);
+  } catch(e) {
+    setStatus('✗ Error: ' + e.message, false);
+  }
 }
 
 async function pollPedidos() {
@@ -3823,7 +3837,10 @@ async function pollPedidos() {
     pedidos = lista;
     renderPedidos(); actualizarBadge();
     if (nuevos.length) sonidoNotif();
-  } catch(e) {}
+    setStatus('✓ ' + new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) + ' · ' + lista.length + ' activos', true);
+  } catch(e) {
+    setStatus('✗ Error: ' + e.message, false);
+  }
 }
 
 window.cambiarEstado = async function(id, estado) {
