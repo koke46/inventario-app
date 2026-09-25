@@ -3843,14 +3843,32 @@ window.cambiarEstado = cambiarEstado;
 
 sb.channel('pedidos-realtime')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
-    pedidos.push(payload.new);
-    renderPedidos();
-    actualizarBadge();
-    sonidoNotif();
-    const badge = document.getElementById('btn-pedidos');
-    if (badge) { badge.style.animation = 'none'; setTimeout(() => badge.style.animation = '', 10); }
+    if (!pedidos.find(p => p.id === payload.new.id)) {
+      pedidos.push(payload.new);
+      renderPedidos();
+      actualizarBadge();
+      sonidoNotif();
+    }
   })
   .subscribe();
+
+async function pollPedidos() {
+  try {
+    const { data } = await sb.from('pedidos')
+      .select('*').in('estado', ['pendiente','preparando'])
+      .order('created_at', { ascending: true });
+    const lista = data || [];
+    const nuevos = lista.filter(p => !pedidos.find(x => x.id === p.id));
+    if (nuevos.length) {
+      nuevos.forEach(p => pedidos.push(p));
+      renderPedidos();
+      actualizarBadge();
+      sonidoNotif();
+    }
+    pedidos = pedidos.filter(p => lista.find(x => x.id === p.id));
+  } catch(e) {}
+}
+setInterval(pollPedidos, 5000);
 
 cargarPedidos();
 })();
