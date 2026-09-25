@@ -1664,7 +1664,7 @@ function setTab(t) {
   document.getElementById('vale-panel').classList.toggle('open',  t === 'val');
   document.getElementById('fiad-panel').classList.toggle('open',  t === 'fiad');
   document.getElementById('tgt-panel').classList.toggle('open',   t === 'tgt');
-  if (t === 'fiad') actualizarFiadInfo();
+  if (t === 'fiad') { actualizarFiadInfo(); if (!cliente) abrirCli(); }
   if (t === 'tgt')  { document.getElementById('tgt-cobro-info').textContent = ''; }
 }
 function calcMixto() {
