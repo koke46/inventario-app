@@ -378,6 +378,16 @@ body {
 /* form familia */
 .fam-form { background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:10px;display:none; }
 .fam-form.open { display:block; }
+/* modal config menu */
+#ov-menu-cfg { position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-menu-cfg.open { display:flex; }
+#menu-cfg-box { background:#1a2a4a;border-radius:14px;padding:20px;width:420px;max-width:96vw;box-shadow:0 10px 40px rgba(0,0,0,.7); }
+#menu-cfg-box h3 { margin:0 0 16px;color:#b8d4ff;font-size:15px;display:flex;align-items:center;justify-content:space-between; }
+.cfg-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px; }
+.cfg-tile { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 6px;border-radius:10px;border:none;background:#1e3a6e;color:#d4e8ff;cursor:pointer;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:.3px;transition:background .15s; }
+.cfg-tile:hover { background:#2a4d8a; }
+.cfg-tile:active { filter:brightness(.85); }
+.cfg-tile .ct-ico { font-size:26px;line-height:1; }
 /* modal cajeros */
 #ov-cajeros { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-cfg  { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
@@ -735,18 +745,11 @@ body {
   <button class="btn" onclick="acRecuperar()"><span class="ico">▶️</span><span class="lbl">Recuperar</span></button>
   <div class="sep"></div>
   <button class="btn" onclick="abrirDev()"><span class="ico">🔄</span><span class="lbl">Devolución</span></button>
-  <button class="btn" onclick="abrirHistorico()"><span class="ico">📋</span><span class="lbl">Histórico</span></button>
-  <button class="btn" onclick="imprimirTicket()"><span class="ico">🖨️</span><span class="lbl">Imprimir</span></button>
-  <button class="btn" onclick="abrirInformes()"><span class="ico">📊</span><span class="lbl">Informes</span></button>
-  <button class="btn" onclick="abrirFactura()"><span class="ico">🧾</span><span class="lbl">Factura</span></button>
-  <button class="btn" onclick="abrirProds()"><span class="ico">✏️</span><span class="lbl">Productos</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
-  <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
-  <button class="btn" onclick="abrirTgt()"><span class="ico">🎁</span><span class="lbl">Tarjetas</span></button>
-  <button class="btn" onclick="abrirCajeros()"><span class="ico">👥</span><span class="lbl">Cajeros</span></button>
-  <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
   <button class="btn" onclick="abrirNota()"><span class="ico">📋</span><span class="lbl">Nota</span></button>
-  <button class="btn" onclick="abrirConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
+  <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Pantalla</span></button>
+  <div class="sep"></div>
+  <button class="btn" style="background:linear-gradient(to bottom,#4a3070,#2d1a55);color:#fff" onclick="abrirMenuConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
 </div>
 
 
@@ -2492,6 +2495,9 @@ function cobrarParteDiv(met) {
 
 function saveTarjetas() { localStorage.setItem('tpvt_tarjetas', JSON.stringify(tarjetas)); }
 
+// ── MENÚ CONFIG ───────────────────────────────────────────
+function abrirMenuConfig() { document.getElementById('ov-menu-cfg').classList.add('open'); }
+
 // ── CONFIGURACIÓN NEGOCIO ─────────────────────────────────
 function abrirConfig() {
   document.getElementById('cfg-empresa').value = config.empresa || '';
@@ -3208,6 +3214,47 @@ function guardarFam() { guardarFamEdit(); }
   <div id="cs-body"><div class="cs-idle">Bienvenido/a</div></div>
 </div>
 <script>document.getElementById('cs-nombre-tienda').textContent = config.empresa;</script>
+
+<!-- ══ MENÚ CONFIGURACIÓN ══ -->
+<div id="ov-menu-cfg">
+  <div id="menu-cfg-box">
+    <h3>⚙️ Configuración
+      <button style="background:none;border:none;color:#b8d4ff;font-size:20px;cursor:pointer;line-height:1" onclick="cerrarModal('ov-menu-cfg')">✕</button>
+    </h3>
+    <div class="cfg-grid">
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirConfig()">
+        <span class="ct-ico">🏪</span>Datos comercio
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirCajeros()">
+        <span class="ct-ico">👥</span>Cajeros
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirCli()">
+        <span class="ct-ico">👤</span>Clientes
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirTgt()">
+        <span class="ct-ico">🎁</span>Tarjetas
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirCaja()">
+        <span class="ct-ico">🏦</span>Caja
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirProds()">
+        <span class="ct-ico">✏️</span>Productos
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirFactura()">
+        <span class="ct-ico">🧾</span>Facturas
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirInformes()">
+        <span class="ct-ico">📊</span>Informes
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');imprimirTicket()">
+        <span class="ct-ico">🖨️</span>Imprimir
+      </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirHistorico()">
+        <span class="ct-ico">📋</span>Históricos
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL CONFIGURACIÓN NEGOCIO ══ -->
 <div id="ov-cfg">
