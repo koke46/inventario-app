@@ -2565,7 +2565,7 @@ function abrirQR() {
   const urlBase = config.urlMenu || '';
   if (!urlBase) {
     warn.style.display = '';
-    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección donde está alojado pedido.html.';
+    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección de tu Netlify (ej: https://wondrous-tiramisu-98a78a.netlify.app).';
     document.getElementById('qr-canvas').innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:30px">Configura primero la URL del menú</div>';
     document.getElementById('qr-url-txt').value = '';
     return;
@@ -2585,7 +2585,8 @@ function abrirQR() {
     }))
   };
   window._qrMenuData = menuData;
-  const url = urlBase.replace(/\/$/, '') + '/pedido.html';
+  const hash = btoa(unescape(encodeURIComponent(JSON.stringify(menuData))));
+  const url = urlBase.replace(/\/$/, '') + '#' + hash;
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
@@ -2603,7 +2604,7 @@ function descargarMenuJson() {
   a.href = URL.createObjectURL(blob);
   a.download = 'menu.json';
   a.click();
-  warn('✅ menu.json descargado — súbelo a Netlify junto con pedido.html', 3000);
+  warn('✅ menu.json descargado', 2000);
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;
