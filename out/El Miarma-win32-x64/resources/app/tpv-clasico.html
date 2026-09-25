@@ -3331,9 +3331,25 @@ function renderCatsList() {
       <div style="width:20px;height:20px;border-radius:3px;background:${f.color}"></div>
       <div class="prod-row-btns">
         <button style="background:#4a80b0;color:#fff" onclick="abrirFormFam('${f.id}')">✏️</button>
+        <button style="background:#c0392b;color:#fff" onclick="borrarFam('${f.id}')">🗑️</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function borrarFam(id) {
+  const f = FAMILIAS.find(x => x.id === id);
+  if (!f) return;
+  const nProds = CAT.filter(p => p.familia === id).length;
+  const msg = nProds
+    ? `¿Borrar la categoría "${f.nombre}"? Tiene ${nProds} producto(s) asignado(s) que quedarán sin categoría.`
+    : `¿Borrar la categoría "${f.nombre}"?`;
+  if (!confirm(msg)) return;
+  FAMILIAS = FAMILIAS.filter(x => x.id !== id);
+  saveFamilias();
+  renderCatsList();
+  renderCat();
+  warn('🗑️ Categoría eliminada', 2000);
 }
 
 function abrirFormFam(id) {
