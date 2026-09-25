@@ -1732,7 +1732,8 @@ function confirmar() {
     saveClientes();
   }
   // Historial del día
-  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, lineas: JSON.parse(JSON.stringify(ticket)) });
+  const entregadoEf = payMode === 'ef' ? (parseFloat(document.getElementById('ef-in').value) || 0) : 0;
+  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, lineas: JSON.parse(JSON.stringify(ticket)) });
   localStorage.setItem('tpv_histventas', JSON.stringify(histVentas));
   ventasHoy++;
   cajaHoy += tot;
@@ -1986,10 +1987,17 @@ function buildTicketHtml(v) {
      </div>${subline}`;
   }).join('');
 
+  const entregado = v ? v.entregado : 0;
+  const cambio    = v ? v.cambio    : 0;
+  const cambioRow = (cambio > 0.005)
+    ? `<div class="tick-line" style="font-size:11px"><span class="tl-nom">Entregado</span><span>${fmtE(entregado)}</span></div>
+       <div class="tick-line" style="font-size:13px;font-weight:700;color:#1a5c2a"><span class="tl-nom">💰 Cambio</span><span>${fmtE(cambio)}</span></div>`
+    : '';
   document.getElementById('tick-totales').innerHTML =
     ivaRows +
     `<div class="tick-total-row"><span>TOTAL</span><span>${fmtE(tot)}</span></div>
-     <div class="tick-line" style="font-size:11px"><span class="tl-nom">Forma de pago</span><span>${pagoLabel}</span></div>`;
+     <div class="tick-line" style="font-size:11px"><span class="tl-nom">Forma de pago</span><span>${pagoLabel}</span></div>
+     ${cambioRow}`;
 
   document.getElementById('tick-footer').innerHTML =
     `¡Gracias por su compra!<br>${new Date().toLocaleString('es')}`;
