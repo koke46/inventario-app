@@ -2572,16 +2572,17 @@ function abrirQR() {
     return;
   }
   warn.style.display = 'none';
+  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂' }));
+  const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
   const data = {
     n: config.empresa || '',
-    t: config.tel || '',
-    f: FAMILIAS.map(f => ({ i: f.id, n: f.nombre, e: f.emoji || '🗂' })),
-    p: CAT.filter(p => p.activo !== false).map(p => ({
-      i: p.codigo || p.nombre,
+    t: (config.tel || '').replace(/\D/g,''),
+    f: fams,
+    p: CAT.filter(p => p.activo !== false).map((p,i) => ({
+      i,
       n: p.nombre,
-      e: p.emoji || '',
       pr: parseFloat(p.precio) || 0,
-      f: p.familia || ''
+      f: famIdx[p.familia] ?? -1
     }))
   };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -2589,7 +2590,12 @@ function abrirQR() {
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
-  new QRCode(canvas, { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  try {
+    new QRCode(canvas, { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+  } catch(e) {
+    warn.style.display = '';
+    warn.textContent = '⚠️ Error al generar QR: ' + e.message + ' (URL: ' + url.length + ' chars)';
+  }
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;

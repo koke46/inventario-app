@@ -106,7 +106,7 @@ function init() {
   document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
   document.title = M.n ? M.n + ' — Pedido' : 'Hacer pedido';
   renderFams();
-  if (M.f && M.f.length) selFam(M.f[0].i);
+  if (M.f && M.f.length) selFam(0);
 }
 
 function showError() {
@@ -117,15 +117,15 @@ function showError() {
 }
 
 function renderFams() {
-  document.getElementById('fam-bar').innerHTML = (M.f || []).map(f =>
-    `<button class="f-tab${famSel===f.i?' on':''}" onclick="selFam('${f.i}')">${f.e} ${f.n}</button>`
+  document.getElementById('fam-bar').innerHTML = (M.f || []).map((f,i) =>
+    `<button class="f-tab${famSel===i?' on':''}" onclick="selFam(${i})">${f.e||''} ${f.n}</button>`
   ).join('');
 }
 
-function selFam(id) {
-  famSel = id;
+function selFam(idx) {
+  famSel = idx;
   renderFams();
-  const prods = (M.p || []).filter(p => p.f === id);
+  const prods = (M.p || []).filter(p => p.f === idx);
   const el = document.getElementById('prod-list');
   if (!prods.length) {
     el.innerHTML = '<div style="text-align:center;color:#888;padding:50px 20px;font-size:15px">Sin productos en esta categoría</div>';
@@ -134,7 +134,7 @@ function selFam(id) {
   el.innerHTML = prods.map(p => {
     const q = cart[p.i] || 0;
     return `<div class="p-card">
-      <div class="p-ico">${p.e || '📦'}</div>
+      <div class="p-ico">📦</div>
       <div class="p-info">
         <div class="p-nom">${p.n}</div>
         <div class="p-prec">${fmt(p.pr)}</div>
