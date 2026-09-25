@@ -210,7 +210,7 @@ async function enviarPedido() {
   const nota  = document.getElementById('nota').value.trim();
 
   const { error } = await sb.from('pedidos').insert({
-    comercio: M.n || '',
+    mesa: M.n || '',
     items,
     total,
     nota: nota || null,
@@ -220,7 +220,7 @@ async function enviarPedido() {
   if (error) {
     btn.disabled = false;
     btn.textContent = '🛒 Enviar pedido a la tienda';
-    alert('Error al enviar. Comprueba tu conexión e inténtalo de nuevo.');
+    alert('Error: ' + (error.message || error.code || JSON.stringify(error)));
     return;
   }
 
