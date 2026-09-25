@@ -2592,7 +2592,7 @@ function abrirQR() {
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
   try {
-    new QRCode(canvas, { text: url, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(canvas, { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.L });
   } catch(e) {
     warn.style.display = '';
     warn.textContent = '⚠️ Error al generar QR: ' + e.message;
