@@ -3186,7 +3186,7 @@ function abrirFormProd(idx) {
     _pfIngs = new Set(p.ings || []); _pfSals = new Set(p.sals || []);
     renderIngFormFields(p);
   }
-  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('prods-list').scrollTop = 0;
 }
 
 function cerrarFormProd() {
