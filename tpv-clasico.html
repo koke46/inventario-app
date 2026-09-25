@@ -334,6 +334,44 @@ body {
 }
 .prd-stock.bajo { color: #ffa500; }
 .prd-stock.cero { color: #f33; }
+.prd-min-badge {
+  position:absolute;top:2px;right:2px;
+  background:#e74c3c;color:#fff;
+  font-size:9px;font-weight:700;border-radius:50%;
+  width:15px;height:15px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);
+  z-index:2;
+}
+.prd-edit-btn {
+  position:absolute;bottom:18px;right:2px;
+  background:rgba(0,0,0,.5);color:#fff;border:none;
+  font-size:9px;border-radius:3px;padding:1px 4px;cursor:pointer;
+  display:none;
+}
+.prd:hover .prd-edit-btn { display:block; }
+
+/* ══ GESTIÓN PRODUCTOS ══ */
+#ov-prods { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-prods.open { display:flex; }
+#prods-box { background:#dde8f0;border-radius:10px;padding:18px;width:600px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.prods-toolbar { display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center; }
+.prods-toolbar select { padding:6px 8px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;font-family:var(--font);background:#fff; }
+#prods-list { flex:1;overflow-y:auto;min-height:0; }
+.prod-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
+.prod-row-emo { font-size:20px;min-width:26px;text-align:center; }
+.prod-row-nom { flex:1;font-weight:600; }
+.prod-row-sub { font-size:11px;color:#666;flex:1; }
+.prod-row-stk { font-size:12px;font-weight:700;min-width:60px;text-align:right; }
+.prod-row-stk.bajo { color:#e67e22; }
+.prod-row-stk.cero { color:#e74c3c; }
+.prod-row-btns { display:flex;gap:4px; }
+.prod-row-btns button { padding:4px 8px;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:var(--font); }
+.prod-form { background:#f4f8fb;border-radius:8px;padding:14px;margin-bottom:10px;display:none; }
+.prod-form.open { display:block; }
+.pf-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px; }
+.pf-grid label { font-size:11px;font-weight:700;color:#445;display:flex;flex-direction:column;gap:3px; }
+.pf-grid input, .pf-grid select { padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font); }
+.pf-full { grid-column:1/-1; }
 
 /* Cajeros */
 #cashiers {
@@ -613,6 +651,7 @@ body {
   <button class="btn" onclick="imprimirTicket()"><span class="ico">🖨️</span><span class="lbl">Imprimir</span></button>
   <button class="btn" onclick="abrirInformes()"><span class="ico">📊</span><span class="lbl">Informes</span></button>
   <button class="btn" onclick="abrirFactura()"><span class="ico">🧾</span><span class="lbl">Factura</span></button>
+  <button class="btn" onclick="abrirProds()"><span class="ico">✏️</span><span class="lbl">Productos</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
   <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
   <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
@@ -862,6 +901,55 @@ body {
   </div>
 </div>
 
+<!-- ══ MODAL GESTIÓN PRODUCTOS ══ -->
+<div id="ov-prods">
+  <div id="prods-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b style="font-size:15px">✏️ Gestión de Productos</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-prods').classList.remove('open')">✕</button>
+    </div>
+    <!-- Formulario nuevo/editar -->
+    <div class="prod-form" id="prod-form">
+      <b style="font-size:13px" id="pf-title">Nuevo producto</b>
+      <div class="pf-grid" style="margin-top:8px">
+        <label>Código de barras<input id="pf-codigo" placeholder="8410000000000"></label>
+        <label>Nombre<input id="pf-nombre" placeholder="Nombre del producto"></label>
+        <label>Emoji<input id="pf-emoji" placeholder="🛒" maxlength="4"></label>
+        <label>Familia
+          <select id="pf-fam"></select>
+        </label>
+        <label>Precio (€)<input id="pf-precio" type="number" step="0.01" min="0" placeholder="0.00"></label>
+        <label>IVA
+          <select id="pf-iva">
+            <option value="4">4% (básico)</option>
+            <option value="10" selected>10% (alimentación)</option>
+            <option value="21">21% (general)</option>
+          </select>
+        </label>
+        <label>Stock actual<input id="pf-stock" type="number" min="-1" placeholder="—1 = sin control"></label>
+        <label>Stock mínimo (alerta)<input id="pf-minstock" type="number" min="0" placeholder="5"></label>
+        <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
+          <input id="pf-peso" type="checkbox"> Venta por peso (kg)
+        </label>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button style="flex:1;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarProd()">💾 Guardar</button>
+        <button style="flex:1;padding:9px;background:#aaa;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="cerrarFormProd()">Cancelar</button>
+      </div>
+    </div>
+    <!-- Barra filtro + nuevo -->
+    <div class="prods-toolbar">
+      <select id="prods-fam-fil" onchange="renderProdsList()">
+        <option value="">Todas las familias</option>
+      </select>
+      <input id="prods-q" placeholder="Buscar..." style="padding:6px 8px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;font-family:var(--font);flex:1" oninput="renderProdsList()">
+      <button style="padding:6px 12px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="abrirFormProd(null)">+ Nuevo</button>
+    </div>
+    <!-- Lista -->
+    <div id="prods-list"></div>
+  </div>
+</div>
+
 <!-- ══ MODAL CLIENTES ══ -->
 <div id="ov-cli">
   <div class="mbox-sm" id="mbox-cli" style="width:460px;background:#dde8f0;border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
@@ -1017,8 +1105,12 @@ const CAT = [
   { codigo:'8410235001004', nombre:'Chocolate',     precio:1.80, iva:21, emoji:'🍫', familia:'snacks', stock:15 },
   { codigo:'8410235001005', nombre:'Pipas',         precio:0.90, iva:21, emoji:'🌻', familia:'snacks', stock:0 },
 ];
-// Añadir índice global a cada producto
-CAT.forEach((p, i) => { p._i = i; });
+// Cargar catálogo guardado desde localStorage (si existe)
+(function() {
+  const saved = JSON.parse(localStorage.getItem('tpv_cat') || 'null');
+  if (saved && saved.length) { CAT.length = 0; saved.forEach(p => CAT.push(p)); }
+  CAT.forEach((p, i) => { p._i = i; });
+})();
 
 /* ══════════════════════
    ESTADO
@@ -1257,14 +1349,18 @@ function renderCat() {
     const lista = famActual === '__srch__' ? g._srch || [] : prods;
     g.innerHTML = lista.map(p => {
       const out = p.stock === 0;
-      const bajo = p.stock > 0 && p.stock <= STOCK_BAJO;
+      const minS = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
+      const bajo = p.stock > 0 && p.stock <= minS;
       const sc = out ? 'cero' : bajo ? 'bajo' : '';
       const lbl = p.peso ? fmtN(p.precio) + '/kg €' : fmtE(p.precio);
+      const badge = bajo ? '<span class="prd-min-badge">!</span>' : '';
       return `<button class="prd${out ? ' out' : ''}" onclick="${out ? '' : 'clickPrd(' + p._i + ')'}">
+        ${badge}
         <span class="prd-ico">${p.emoji}</span>
         <span class="prd-price">${lbl}</span>
-        <span class="prd-stock ${sc}">${p.stock}</span>
+        <span class="prd-stock ${sc}">${p.stock >= 0 ? p.stock : '∞'}</span>
         <span class="prd-nom">${p.nombre}</span>
+        <button class="prd-edit-btn" onclick="event.stopPropagation();abrirFormProd(${p._i})">✏️</button>
       </button>`;
     }).join('');
   }
@@ -2148,6 +2244,128 @@ function renderCliScreen() {
 // Parchar renderTicket para actualizar pantalla cliente
 const _renderTicket = renderTicket;
 renderTicket = function() { _renderTicket(); renderCliScreen(); };
+
+/* ══════════════════════
+   GESTIÓN DE PRODUCTOS
+══════════════════════ */
+let prodEditIdx = null;
+
+function saveCat() {
+  localStorage.setItem('tpv_cat', JSON.stringify(CAT.map(({_i,...r}) => r)));
+  CAT.forEach((p, i) => { p._i = i; });
+}
+
+function abrirProds() {
+  // Poblar select de familias en filtro y en formulario
+  const famOpts = FAMILIAS.map(f => `<option value="${f.id}">${f.emoji} ${f.nombre}</option>`).join('');
+  document.getElementById('prods-fam-fil').innerHTML = '<option value="">Todas las familias</option>' + famOpts;
+  document.getElementById('pf-fam').innerHTML = famOpts;
+  cerrarFormProd();
+  document.getElementById('prods-q').value = '';
+  renderProdsList();
+  document.getElementById('ov-prods').classList.add('open');
+}
+
+function renderProdsList() {
+  const famFil = document.getElementById('prods-fam-fil').value;
+  const q = (document.getElementById('prods-q').value || '').toLowerCase();
+  const lista = CAT.filter(p =>
+    (!famFil || p.familia === famFil) &&
+    (!q || p.nombre.toLowerCase().includes(q) || p.codigo.includes(q))
+  );
+  const html = lista.map(p => {
+    const minS = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
+    const sc = p.stock === 0 ? 'cero' : p.stock <= minS ? 'bajo' : '';
+    const stkTxt = p.stock < 0 ? '∞' : String(p.stock);
+    const famNom = FAMILIAS.find(f => f.id === p.familia)?.nombre || p.familia;
+    return `<div class="prod-row">
+      <span class="prod-row-emo">${p.emoji||'📦'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="prod-row-nom">${p.nombre}</div>
+        <div class="prod-row-sub">${famNom} · ${fmtE(p.precio)} · IVA ${p.iva}%${p.peso?' · kg':''}</div>
+      </div>
+      <span class="prod-row-stk ${sc}">Stock: ${stkTxt}${minS>0?` (mín ${minS})`:''}
+      </span>
+      <div class="prod-row-btns">
+        <button style="background:#4a80b0;color:#fff" onclick="abrirFormProd(${p._i})">✏️</button>
+        <button style="background:#c0392b;color:#fff" onclick="borrarProd(${p._i})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('prods-list').innerHTML = html || '<p style="text-align:center;color:#888;padding:20px">Sin resultados</p>';
+}
+
+function abrirFormProd(idx) {
+  prodEditIdx = idx;
+  const form = document.getElementById('prod-form');
+  form.classList.add('open');
+  document.getElementById('pf-title').textContent = idx === null ? 'Nuevo producto' : 'Editar producto';
+  if (idx === null) {
+    document.getElementById('pf-codigo').value = '';
+    document.getElementById('pf-nombre').value = '';
+    document.getElementById('pf-emoji').value = '📦';
+    document.getElementById('pf-precio').value = '';
+    document.getElementById('pf-iva').value = '10';
+    document.getElementById('pf-stock').value = '';
+    document.getElementById('pf-minstock').value = '5';
+    document.getElementById('pf-peso').checked = false;
+    document.getElementById('pf-fam').selectedIndex = 0;
+  } else {
+    const p = CAT[idx];
+    document.getElementById('pf-codigo').value = p.codigo || '';
+    document.getElementById('pf-nombre').value = p.nombre || '';
+    document.getElementById('pf-emoji').value = p.emoji || '📦';
+    document.getElementById('pf-precio').value = p.precio || '';
+    document.getElementById('pf-iva').value = String(p.iva || 10);
+    document.getElementById('pf-stock').value = p.stock !== undefined ? p.stock : '';
+    document.getElementById('pf-minstock').value = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
+    document.getElementById('pf-peso').checked = !!p.peso;
+    document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
+  }
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cerrarFormProd() {
+  document.getElementById('prod-form').classList.remove('open');
+  prodEditIdx = null;
+}
+
+function guardarProd() {
+  const nombre = document.getElementById('pf-nombre').value.trim();
+  const precio = parseFloat(document.getElementById('pf-precio').value);
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  if (isNaN(precio) || precio < 0) { alert('Precio no válido'); return; }
+  const prod = {
+    codigo:   document.getElementById('pf-codigo').value.trim() || ('P-' + Date.now()),
+    nombre,
+    emoji:    document.getElementById('pf-emoji').value.trim() || '📦',
+    familia:  document.getElementById('pf-fam').value,
+    precio,
+    iva:      parseInt(document.getElementById('pf-iva').value),
+    stock:    parseInt(document.getElementById('pf-stock').value) || 0,
+    minStock: parseInt(document.getElementById('pf-minstock').value) || STOCK_BAJO,
+    peso:     document.getElementById('pf-peso').checked || false,
+  };
+  if (prodEditIdx === null) {
+    CAT.push(prod);
+  } else {
+    Object.assign(CAT[prodEditIdx], prod);
+  }
+  saveCat();
+  cerrarFormProd();
+  renderProdsList();
+  renderCat();
+  warn(prodEditIdx === null ? '✅ Producto creado' : '✅ Producto actualizado', 2000);
+}
+
+function borrarProd(idx) {
+  if (!confirm(`¿Borrar "${CAT[idx].nombre}"?`)) return;
+  CAT.splice(idx, 1);
+  saveCat();
+  renderProdsList();
+  renderCat();
+  warn('🗑️ Producto eliminado', 2000);
+}
 
 </script>
 
