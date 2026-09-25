@@ -3753,89 +3753,92 @@ function guardarFam() { guardarFamEdit(); }
 .pedido-btn { padding:6px 12px; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
-const SB_URL = 'https://aqbdlvmfbdagypmwxhca.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const SB = 'https://aqbdlvmfbdagypmwxhca.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
+const HDR = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
 let pedidos = [];
+let conocidos = new Set();
 
-async function cargarPedidos() {
-  const { data } = await sb.from('pedidos')
-    .select('*')
-    .in('estado', ['pendiente','preparando'])
-    .order('created_at', { ascending: true });
-  pedidos = data || [];
-  renderPedidos();
-  actualizarBadge();
+async function fetchActivos() {
+  const r = await fetch(SB + '/rest/v1/pedidos?estado=in.(pendiente,preparando)&order=created_at.asc&select=*', { headers: HDR });
+  return r.ok ? r.json() : [];
 }
 
 function renderPedidos() {
   const list = document.getElementById('pedidos-list');
   const empty = document.getElementById('pedidos-empty');
-  if (!pedidos.length) { empty.style.display = ''; list.innerHTML = ''; list.appendChild(empty); return; }
+  if (!pedidos.length) { list.innerHTML = ''; list.appendChild(empty); empty.style.display = ''; return; }
   empty.style.display = 'none';
   list.innerHTML = pedidos.map(p => {
     const hora = new Date(p.created_at).toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
     const items = (p.items||[]).map(x => `${x.q}× ${x.n}`).join(' · ');
-    const total = p.total ? p.total.toFixed(2).replace('.',',') + ' €' : '';
+    const total = p.total ? (+p.total).toFixed(2).replace('.',',') + ' €' : '';
     const nota  = p.nota ? `<div class="pedido-nota">📝 ${p.nota}</div>` : '';
     const btns  = p.estado === 'pendiente'
       ? `<button class="pedido-btn" style="background:#b45309;color:#fff" onclick="cambiarEstado('${p.id}','preparando')">🍳 Preparando</button>
          <button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo</button>`
       : `<button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo / Entregado</button>`;
     return `<div class="pedido-card ${p.estado}" id="pc-${p.id}">
-      <div class="pedido-hora">🕐 ${hora} · ${p.estado === 'preparando' ? '🍳 Preparando' : '🔔 Nuevo'}</div>
-      <div class="pedido-items">${items}</div>
-      ${nota}
+      <div class="pedido-hora">🕐 ${hora} · ${p.estado==='preparando'?'🍳 Preparando':'🔔 Nuevo'}</div>
+      <div class="pedido-items">${items}</div>${nota}
       <div class="pedido-total">Total: ${total}</div>
       <div class="pedido-btns">${btns}</div>
     </div>`;
   }).join('');
 }
 
-async function cambiarEstado(id, estado) {
-  await sb.from('pedidos').update({ estado }).eq('id', id);
-  if (estado === 'listo') {
-    pedidos = pedidos.filter(p => p.id !== id);
-  } else {
-    const p = pedidos.find(p => p.id === id);
-    if (p) p.estado = estado;
-  }
-  renderPedidos();
-  actualizarBadge();
-}
-
 function actualizarBadge() {
   const n = pedidos.filter(p => p.estado === 'pendiente').length;
-  const badge = document.getElementById('badge-pedidos');
-  if (!badge) return;
-  if (n > 0) {
-    badge.textContent = n;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
+  const b = document.getElementById('badge-pedidos');
+  if (!b) return;
+  b.textContent = n;
+  b.style.display = n > 0 ? 'flex' : 'none';
 }
 
 function sonidoNotif() {
   try {
     const ctx = new AudioContext();
-    [523, 659, 784].forEach((f, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+    [523,659,784].forEach((f,i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = f;
-      o.type = 'sine';
-      g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.25);
-      o.start(ctx.currentTime + i * 0.12);
-      o.stop(ctx.currentTime + i * 0.12 + 0.25);
+      o.frequency.value = f; o.type = 'sine';
+      g.gain.setValueAtTime(0.3, ctx.currentTime+i*.12);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*.12+.25);
+      o.start(ctx.currentTime+i*.12); o.stop(ctx.currentTime+i*.12+.25);
     });
   } catch(e) {}
 }
+
+async function cargarPedidos() {
+  try {
+    pedidos = await fetchActivos();
+    pedidos.forEach(p => conocidos.add(p.id));
+    renderPedidos(); actualizarBadge();
+  } catch(e) {}
+}
+
+async function pollPedidos() {
+  try {
+    const lista = await fetchActivos();
+    const nuevos = lista.filter(p => !conocidos.has(p.id));
+    nuevos.forEach(p => conocidos.add(p.id));
+    pedidos = lista;
+    renderPedidos(); actualizarBadge();
+    if (nuevos.length) sonidoNotif();
+  } catch(e) {}
+}
+
+window.cambiarEstado = async function(id, estado) {
+  try {
+    await fetch(SB + '/rest/v1/pedidos?id=eq.' + id, { method:'PATCH', headers:HDR, body: JSON.stringify({estado}) });
+    if (estado === 'listo') pedidos = pedidos.filter(p => p.id !== id);
+    else { const p = pedidos.find(p => p.id === id); if (p) p.estado = estado; }
+    renderPedidos(); actualizarBadge();
+  } catch(e) {}
+};
 
 window.abrirPedidos = function() {
   document.getElementById('ov-pedidos').style.display = 'flex';
@@ -3844,38 +3847,9 @@ window.abrirPedidos = function() {
 window.cerrarPedidos = function() {
   document.getElementById('ov-pedidos').style.display = 'none';
 };
-window.cambiarEstado = cambiarEstado;
-
-sb.channel('pedidos-realtime')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, payload => {
-    if (!pedidos.find(p => p.id === payload.new.id)) {
-      pedidos.push(payload.new);
-      renderPedidos();
-      actualizarBadge();
-      sonidoNotif();
-    }
-  })
-  .subscribe();
-
-async function pollPedidos() {
-  try {
-    const { data } = await sb.from('pedidos')
-      .select('*').in('estado', ['pendiente','preparando'])
-      .order('created_at', { ascending: true });
-    const lista = data || [];
-    const nuevos = lista.filter(p => !pedidos.find(x => x.id === p.id));
-    if (nuevos.length) {
-      nuevos.forEach(p => pedidos.push(p));
-      renderPedidos();
-      actualizarBadge();
-      sonidoNotif();
-    }
-    pedidos = pedidos.filter(p => lista.find(x => x.id === p.id));
-  } catch(e) {}
-}
-setInterval(pollPedidos, 5000);
 
 cargarPedidos();
+setInterval(pollPedidos, 4000);
 })();
 </script>
 
