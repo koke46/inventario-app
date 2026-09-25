@@ -1443,29 +1443,30 @@ function updIVA() {
 function np(k) {
   if (k === ',' && nbuf.includes(',')) return;
   nbuf += k;
-  warn('Cant: ' + nbuf, 0);
+  const v = getN();
+  warn(v !== null ? '💶 ' + fmtE(v) : '', 0);
 }
 function nc() { nbuf = ''; document.getElementById('v-warn').textContent = ''; }
 function npEnter() {
   const n = getN();
-  if (n !== null && selIdx >= 0 && selIdx < ticket.length) {
-    // Actualizar cantidad de la línea seleccionada
-    const l = ticket[selIdx];
-    l.cantidad = n;
-    l.importe  = parseFloat((l.pUnit * n).toFixed(2));
-    nbuf = '';
-    document.getElementById('v-warn').textContent = '';
-    renderTicket();
-  } else if (n === null) {
-    // Sin buffer: si hay ticket abrir cobro, si no ir a buscar
+  if (n !== null) {
+    añadirLibreRapido(n);
+  } else {
     if (ticket.length) abrirCobro();
     else document.getElementById('search-in').focus();
   }
-  // Con buffer pero sin línea seleccionada: esperar al siguiente producto (no hacer nada)
 }
 function getN() {
   const v = parseFloat(nbuf.replace(',', '.'));
   return isNaN(v) ? null : v;
+}
+function añadirLibreRapido(prec) {
+  ticket.push({ codigo: 'LIBRE_' + Date.now(), nombre: 'Artículo libre', iva: 10,
+    pUnit: prec, cantidad: 1, importe: prec, peso: false, dev: false, dto: 0 });
+  selIdx = ticket.length - 1;
+  nbuf = '';
+  document.getElementById('v-warn').textContent = '';
+  renderTicket();
 }
 
 /* ══════════════════════
@@ -1473,7 +1474,7 @@ function getN() {
 ══════════════════════ */
 function añadir(idx, cantForzada = null) {
   const prod = CAT[idx];
-  let cant = cantForzada !== null ? cantForzada : (getN() || 1);
+  let cant = cantForzada !== null ? cantForzada : 1;
 
   // Aviso de stock
   const enTicket = ticket.filter(l => l.codigo === prod.codigo && !l.dev).reduce((s, l) => s + l.cantidad, 0);
@@ -1535,8 +1536,14 @@ function cerrarPeso() {
 function clickPrd(idx) {
   const prod = CAT[idx];
   if (prod.stock === 0) return;
-  if (prod.peso && !nbuf) { pedirPeso(idx); return; }
-  añadir(idx);
+  if (prod.peso) {
+    if (!nbuf) { pedirPeso(idx); return; }
+    const kg = getN();
+    nbuf = ''; document.getElementById('v-warn').textContent = '';
+    añadir(idx, kg);
+    return;
+  }
+  añadir(idx, 1);
 }
 
 /* ══════════════════════
