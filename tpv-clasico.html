@@ -349,6 +349,19 @@ body {
   display:none;
 }
 .prd:hover .prd-edit-btn { display:block; }
+.prd-foto { width:52px;height:52px;object-fit:cover;border-radius:5px;pointer-events:none; }
+.fam-foto { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;opacity:.85; }
+.pf-foto-wrap { display:flex;align-items:center;gap:8px;margin-top:4px; }
+.pf-foto-preview { width:60px;height:60px;object-fit:cover;border-radius:5px;border:1px solid #aaa;display:none; }
+.fam-edit-btn { position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;font-size:10px;border-radius:3px;padding:1px 5px;cursor:pointer;display:none;z-index:2; }
+.fam-btn:hover .fam-edit-btn { display:block; }
+/* tabs en modal productos */
+.prods-tabs { display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid #8aaccc; }
+.prods-tab { padding:7px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#556;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:var(--font); }
+.prods-tab.on { color:var(--btn-to);border-bottom-color:var(--btn-to); }
+/* form familia */
+.fam-form { background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:10px;display:none; }
+.fam-form.open { display:block; }
 
 /* ══ GESTIÓN PRODUCTOS ══ */
 #ov-prods { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
@@ -904,11 +917,18 @@ body {
 <!-- ══ MODAL GESTIÓN PRODUCTOS ══ -->
 <div id="ov-prods">
   <div id="prods-box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <b style="font-size:15px">✏️ Gestión de Productos</b>
       <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-prods').classList.remove('open')">✕</button>
     </div>
-    <!-- Formulario nuevo/editar -->
+    <div class="prods-tabs">
+      <button class="prods-tab on" onclick="prodsTab('prods',this)">📦 Productos</button>
+      <button class="prods-tab" onclick="prodsTab('cats',this)">🗂 Categorías</button>
+    </div>
+
+    <!-- ═══ PANEL PRODUCTOS ═══ -->
+    <div id="prods-panel">
+    <!-- Formulario nuevo/editar producto -->
     <div class="prod-form" id="prod-form">
       <b style="font-size:13px" id="pf-title">Nuevo producto</b>
       <div class="pf-grid" style="margin-top:8px">
@@ -931,6 +951,13 @@ body {
         <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
           <input id="pf-peso" type="checkbox"> Venta por peso (kg)
         </label>
+        <label class="pf-full">Foto del producto
+          <div class="pf-foto-wrap">
+            <input type="file" accept="image/*" onchange="handleFotoProd(this)" style="font-size:12px;flex:1">
+            <img id="pf-foto-preview" class="pf-foto-preview" alt="">
+            <button type="button" style="padding:4px 8px;border:none;border-radius:4px;background:#c0392b;color:#fff;font-size:11px;cursor:pointer" onclick="quitarFotoProd()">✕ Quitar</button>
+          </div>
+        </label>
       </div>
       <div style="display:flex;gap:8px">
         <button style="flex:1;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarProd()">💾 Guardar</button>
@@ -947,6 +974,34 @@ body {
     </div>
     <!-- Lista -->
     <div id="prods-list"></div>
+    </div><!-- fin #prods-panel -->
+
+    <!-- ═══ PANEL CATEGORÍAS ═══ -->
+    <div id="cats-panel" style="display:none">
+      <!-- Formulario editar categoría -->
+      <div class="fam-form" id="fam-form">
+        <b style="font-size:13px" id="ff-title">Editar categoría</b>
+        <div class="pf-grid" style="margin-top:8px">
+          <label>Nombre<input id="ff-nombre" placeholder="Bebidas"></label>
+          <label>Emoji<input id="ff-emoji" placeholder="🥤" maxlength="4"></label>
+          <label>Color de fondo<input id="ff-color" type="color"></label>
+          <label class="pf-full">Foto de categoría
+            <div class="pf-foto-wrap">
+              <input type="file" accept="image/*" onchange="handleFotoCat(this)" style="font-size:12px;flex:1">
+              <img id="ff-foto-preview" class="pf-foto-preview" alt="">
+              <button type="button" style="padding:4px 8px;border:none;border-radius:4px;background:#c0392b;color:#fff;font-size:11px;cursor:pointer" onclick="quitarFotoCat()">✕ Quitar</button>
+            </div>
+          </label>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button style="flex:1;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarFam()">💾 Guardar</button>
+          <button style="flex:1;padding:9px;background:#aaa;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="cerrarFormFam()">Cancelar</button>
+        </div>
+      </div>
+      <!-- Lista categorías -->
+      <div id="cats-list"></div>
+    </div><!-- fin #cats-panel -->
+
   </div>
 </div>
 
@@ -1105,11 +1160,13 @@ const CAT = [
   { codigo:'8410235001004', nombre:'Chocolate',     precio:1.80, iva:21, emoji:'🍫', familia:'snacks', stock:15 },
   { codigo:'8410235001005', nombre:'Pipas',         precio:0.90, iva:21, emoji:'🌻', familia:'snacks', stock:0 },
 ];
-// Cargar catálogo guardado desde localStorage (si existe)
+// Cargar catálogo y familias guardados desde localStorage
 (function() {
-  const saved = JSON.parse(localStorage.getItem('tpv_cat') || 'null');
-  if (saved && saved.length) { CAT.length = 0; saved.forEach(p => CAT.push(p)); }
+  const savedCat = JSON.parse(localStorage.getItem('tpv_cat') || 'null');
+  if (savedCat && savedCat.length) { CAT.length = 0; savedCat.forEach(p => CAT.push(p)); }
   CAT.forEach((p, i) => { p._i = i; });
+  const savedFam = JSON.parse(localStorage.getItem('tpv_familias') || 'null');
+  if (savedFam && savedFam.length) { FAMILIAS.length = 0; savedFam.forEach(f => FAMILIAS.push(f)); }
 })();
 
 /* ══════════════════════
@@ -1337,12 +1394,15 @@ function renderCat() {
   if (!famActual) {
     // Pantalla familias
     g.style.gridTemplateColumns = 'repeat(auto-fill, 90px)';
-    g.innerHTML = FAMILIAS.map(f =>
-      `<button class="fam-btn" style="background:${f.color}" onclick="abrirFam('${f.id}')">
-        <span class="fam-ico">${f.emoji}</span>
-        <span class="fam-nom">${f.nombre}</span>
-      </button>`
-    ).join('');
+    g.innerHTML = FAMILIAS.map(f => {
+      const foto = f.foto ? `<img class="fam-foto" src="${f.foto}" alt="">` : '';
+      const ico  = f.foto ? '' : `<span class="fam-ico">${f.emoji}</span>`;
+      return `<button class="fam-btn" style="background:${f.color}" onclick="abrirFam('${f.id}')">
+        ${foto}${ico}
+        <span class="fam-nom" style="position:relative;z-index:1;${f.foto?'text-shadow:0 1px 4px rgba(0,0,0,.8)':''}">${f.nombre}</span>
+        <button class="fam-edit-btn" onclick="event.stopPropagation();abrirFormFam('${f.id}')">✏️</button>
+      </button>`;
+    }).join('');
   } else {
     g.style.gridTemplateColumns = 'repeat(auto-fill, 78px)';
     const prods = CAT.filter(p => p.familia === famActual || famActual === '__srch__');
@@ -1354,9 +1414,10 @@ function renderCat() {
       const sc = out ? 'cero' : bajo ? 'bajo' : '';
       const lbl = p.peso ? fmtN(p.precio) + '/kg €' : fmtE(p.precio);
       const badge = bajo ? '<span class="prd-min-badge">!</span>' : '';
+      const ico   = p.foto ? `<img class="prd-foto" src="${p.foto}" alt="">` : `<span class="prd-ico">${p.emoji}</span>`;
       return `<button class="prd${out ? ' out' : ''}" onclick="${out ? '' : 'clickPrd(' + p._i + ')'}">
         ${badge}
-        <span class="prd-ico">${p.emoji}</span>
+        ${ico}
         <span class="prd-price">${lbl}</span>
         <span class="prd-stock ${sc}">${p.stock >= 0 ? p.stock : '∞'}</span>
         <span class="prd-nom">${p.nombre}</span>
@@ -2297,9 +2358,11 @@ function renderProdsList() {
 
 function abrirFormProd(idx) {
   prodEditIdx = idx;
+  _pfotoTmp = null;
   const form = document.getElementById('prod-form');
   form.classList.add('open');
   document.getElementById('pf-title').textContent = idx === null ? 'Nuevo producto' : 'Editar producto';
+  const prev = document.getElementById('pf-foto-preview');
   if (idx === null) {
     document.getElementById('pf-codigo').value = '';
     document.getElementById('pf-nombre').value = '';
@@ -2310,6 +2373,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-minstock').value = '5';
     document.getElementById('pf-peso').checked = false;
     document.getElementById('pf-fam').selectedIndex = 0;
+    prev.src = ''; prev.style.display = 'none';
   } else {
     const p = CAT[idx];
     document.getElementById('pf-codigo').value = p.codigo || '';
@@ -2321,6 +2385,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-minstock').value = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
     document.getElementById('pf-peso').checked = !!p.peso;
     document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
+    if (p.foto) { prev.src = p.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
   }
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -2335,6 +2400,7 @@ function guardarProd() {
   const precio = parseFloat(document.getElementById('pf-precio').value);
   if (!nombre) { alert('El nombre es obligatorio'); return; }
   if (isNaN(precio) || precio < 0) { alert('Precio no válido'); return; }
+  const fotoVal = _pfotoTmp !== null ? _pfotoTmp : (prodEditIdx !== null ? CAT[prodEditIdx].foto : undefined);
   const prod = {
     codigo:   document.getElementById('pf-codigo').value.trim() || ('P-' + Date.now()),
     nombre,
@@ -2345,6 +2411,7 @@ function guardarProd() {
     stock:    parseInt(document.getElementById('pf-stock').value) || 0,
     minStock: parseInt(document.getElementById('pf-minstock').value) || STOCK_BAJO,
     peso:     document.getElementById('pf-peso').checked || false,
+    ...(fotoVal ? { foto: fotoVal } : {}),
   };
   if (prodEditIdx === null) {
     CAT.push(prod);
@@ -2365,6 +2432,138 @@ function borrarProd(idx) {
   renderProdsList();
   renderCat();
   warn('🗑️ Producto eliminado', 2000);
+}
+
+/* ══════════════════════
+   FOTOS (resize a base64)
+══════════════════════ */
+let _pfotoTmp = null;  // foto producto temporal
+let _ffotoTmp = null;  // foto familia temporal
+
+function resizeImage(file, maxPx, quality, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxPx / img.width, maxPx / img.height, 1);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleFotoProd(input) {
+  if (!input.files[0]) return;
+  resizeImage(input.files[0], 150, 0.75, b64 => {
+    _pfotoTmp = b64;
+    const prev = document.getElementById('pf-foto-preview');
+    prev.src = b64; prev.style.display = 'block';
+  });
+}
+function quitarFotoProd() {
+  _pfotoTmp = '';
+  const prev = document.getElementById('pf-foto-preview');
+  prev.src = ''; prev.style.display = 'none';
+}
+
+function handleFotoCat(input) {
+  if (!input.files[0]) return;
+  resizeImage(input.files[0], 200, 0.75, b64 => {
+    _ffotoTmp = b64;
+    const prev = document.getElementById('ff-foto-preview');
+    prev.src = b64; prev.style.display = 'block';
+  });
+}
+function quitarFotoCat() {
+  _ffotoTmp = '';
+  const prev = document.getElementById('ff-foto-preview');
+  prev.src = ''; prev.style.display = 'none';
+}
+
+/* ══════════════════════
+   TABS MODAL PRODUCTOS
+══════════════════════ */
+function prodsTab(tab, btn) {
+  document.querySelectorAll('.prods-tab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('prods-panel').style.display = tab === 'prods' ? '' : 'none';
+  document.getElementById('cats-panel').style.display  = tab === 'cats'  ? '' : 'none';
+  if (tab === 'cats') renderCatsList();
+}
+
+/* ══════════════════════
+   GESTIÓN DE FAMILIAS
+══════════════════════ */
+let famEditId = null;
+
+function saveFamilias() {
+  localStorage.setItem('tpv_familias', JSON.stringify(FAMILIAS));
+}
+
+function renderCatsList() {
+  document.getElementById('cats-list').innerHTML = FAMILIAS.map(f => {
+    const fotoHtml = f.foto
+      ? `<img src="${f.foto}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;border:1px solid #aaa">`
+      : `<span style="font-size:28px;line-height:40px">${f.emoji}</span>`;
+    return `<div class="prod-row">
+      <span style="min-width:44px;display:flex;justify-content:center">${fotoHtml}</span>
+      <div style="flex:1;min-width:0">
+        <div class="prod-row-nom">${f.emoji} ${f.nombre}</div>
+        <div class="prod-row-sub">${CAT.filter(p=>p.familia===f.id).length} productos</div>
+      </div>
+      <div style="width:20px;height:20px;border-radius:3px;background:${f.color}"></div>
+      <div class="prod-row-btns">
+        <button style="background:#4a80b0;color:#fff" onclick="abrirFormFam('${f.id}')">✏️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirFormFam(id) {
+  famEditId = id;
+  const f = FAMILIAS.find(x => x.id === id);
+  if (!f) return;
+  _ffotoTmp = null;
+  document.getElementById('ff-title').textContent = 'Editar: ' + f.nombre;
+  document.getElementById('ff-nombre').value = f.nombre;
+  document.getElementById('ff-emoji').value  = f.emoji || '';
+  document.getElementById('ff-color').value  = f.color || '#555555';
+  const prev = document.getElementById('ff-foto-preview');
+  if (f.foto) { prev.src = f.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
+  const form = document.getElementById('fam-form');
+  form.classList.add('open');
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // asegurar que estamos en la tab de categorías
+  if (document.getElementById('cats-panel').style.display === 'none') {
+    document.querySelectorAll('.prods-tab')[1].click();
+  }
+  if (!document.getElementById('ov-prods').classList.contains('open')) {
+    abrirProds();
+  }
+}
+
+function cerrarFormFam() {
+  document.getElementById('fam-form').classList.remove('open');
+  famEditId = null; _ffotoTmp = null;
+}
+
+function guardarFam() {
+  const f = FAMILIAS.find(x => x.id === famEditId);
+  if (!f) return;
+  f.nombre = document.getElementById('ff-nombre').value.trim() || f.nombre;
+  f.emoji  = document.getElementById('ff-emoji').value.trim()  || f.emoji;
+  f.color  = document.getElementById('ff-color').value;
+  if (_ffotoTmp !== null) f.foto = _ffotoTmp || undefined;
+  saveFamilias();
+  cerrarFormFam();
+  renderCatsList();
+  renderCat();
+  warn('✅ Categoría actualizada', 2000);
 }
 
 </script>
