@@ -366,6 +366,18 @@ body {
 /* form familia */
 .fam-form { background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:10px;display:none; }
 .fam-form.open { display:block; }
+/* modal cajeros */
+#ov-cajeros { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-cajeros.open { display:flex; }
+#cajeros-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.caj-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:8px 10px;margin-bottom:5px; }
+.caj-dot { width:22px;height:22px;border-radius:50%;flex-shrink:0; }
+.caj-nom { flex:1;font-weight:600;font-size:13px; }
+.caj-pin { font-family:'Courier New',monospace;font-size:12px;color:#666;min-width:40px; }
+.cajf-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0; }
+.cajf-grid label { font-size:11px;font-weight:700;color:#445;display:flex;flex-direction:column;gap:3px; }
+.cajf-grid input { padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font); }
+
 /* mini-modal editar categoría */
 #ov-famedit { position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:300; }
 #ov-famedit.open { display:flex; }
@@ -702,6 +714,7 @@ body {
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
   <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
   <button class="btn" onclick="abrirTgt()"><span class="ico">🎁</span><span class="lbl">Tarjetas</span></button>
+  <button class="btn" onclick="abrirCajeros()"><span class="ico">👥</span><span class="lbl">Cajeros</span></button>
   <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
   <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
   <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
@@ -1178,12 +1191,13 @@ body {
 ══════════════════════ */
 const STOCK_BAJO = 5;
 
-const CAJEROS = [
+const CAJEROS_DEFAULT = [
   { id:1, nombre:'María',  color:'#c0392b', pin:'1111' },
   { id:2, nombre:'Carlos', color:'#2980b9', pin:'2222' },
   { id:3, nombre:'Ana',    color:'#27ae60', pin:'3333' },
   { id:4, nombre:'Pedro',  color:'#8e44ad', pin:'4444' },
 ];
+const CAJEROS = JSON.parse(localStorage.getItem('tpv_cajeros') || 'null') || CAJEROS_DEFAULT.map(c=>({...c}));
 
 const FAMILIAS = [
   { id:'alimentacion', nombre:'Alimentación',   emoji:'🛒', color:'#d35400' },
@@ -2311,6 +2325,74 @@ function actualizarFiadInfo() {
 ══════════════════════ */
 function saveTarjetas() { localStorage.setItem('tpv_tarjetas', JSON.stringify(tarjetas)); }
 
+// ── CAJEROS ──────────────────────────────────────────────
+function saveCajeros() { localStorage.setItem('tpv_cajeros', JSON.stringify(CAJEROS)); }
+
+function abrirCajeros() {
+  renderCajerosList();
+  cerrarCajForm();
+  document.getElementById('ov-cajeros').classList.add('open');
+}
+
+function cerrarCajForm() {
+  document.getElementById('cajf').style.display = 'none';
+  cajEditId = null;
+}
+
+let cajEditId = null;
+
+function abrirCajForm(id) {
+  cajEditId = id;
+  const f = id !== null ? CAJEROS.find(c => c.id === id) : null;
+  document.getElementById('cajf-title').textContent = f ? 'Editar cajero' : 'Nuevo cajero';
+  document.getElementById('cajf-nom').value   = f ? f.nombre : '';
+  document.getElementById('cajf-color').value = f ? f.color  : '#c0392b';
+  document.getElementById('cajf-pin').value   = f ? f.pin    : '';
+  document.getElementById('cajf').style.display = 'block';
+}
+
+function guardarCajero() {
+  const nom   = document.getElementById('cajf-nom').value.trim();
+  const color = document.getElementById('cajf-color').value;
+  const pin   = document.getElementById('cajf-pin').value.trim();
+  if (!nom) { alert('Escribe un nombre'); return; }
+  if (pin && !/^\d{4}$/.test(pin)) { alert('El PIN debe ser 4 dígitos'); return; }
+  if (cajEditId !== null) {
+    const c = CAJEROS.find(x => x.id === cajEditId);
+    c.nombre = nom; c.color = color; if (pin) c.pin = pin;
+    if (cajero && cajero.id === cajEditId) { cajero.nombre = nom; cajero.color = color; renderCajeros(); }
+  } else {
+    const newId = Math.max(0, ...CAJEROS.map(c => c.id)) + 1;
+    CAJEROS.push({ id: newId, nombre: nom, color, pin: pin || '0000' });
+  }
+  saveCajeros();
+  cerrarCajForm();
+  renderCajerosList();
+}
+
+function borrarCajero(id) {
+  if (CAJEROS.length <= 1) { alert('Debe haber al menos un cajero'); return; }
+  if (cajero && cajero.id === id) { alert('No puedes eliminar el cajero activo'); return; }
+  if (!confirm('¿Eliminar cajero?')) return;
+  const idx = CAJEROS.findIndex(c => c.id === id);
+  if (idx !== -1) CAJEROS.splice(idx, 1);
+  saveCajeros();
+  renderCajerosList();
+}
+
+function renderCajerosList() {
+  const el = document.getElementById('cajeros-list');
+  if (!CAJEROS.length) { el.innerHTML = '<p style="color:#888;font-size:13px">No hay cajeros</p>'; return; }
+  el.innerHTML = CAJEROS.map(c => `
+    <div class="caj-row">
+      <div class="caj-dot" style="background:${c.color}"></div>
+      <span style="flex:1;font-weight:600;font-size:14px">${c.nombre}</span>
+      <span style="font-size:11px;color:#888;margin-right:8px">PIN: ${c.pin ? '****' : '—'}</span>
+      <button onclick="abrirCajForm(${c.id})" style="padding:4px 9px;border:none;background:#5b8dd9;color:#fff;border-radius:5px;cursor:pointer;font-family:var(--font);font-size:12px">✏️</button>
+      <button onclick="borrarCajero(${c.id})" style="padding:4px 9px;border:none;background:#e74c3c;color:#fff;border-radius:5px;cursor:pointer;font-family:var(--font);font-size:12px;margin-left:4px">🗑️</button>
+    </div>`).join('');
+}
+
 function abrirTgt() {
   renderTgtList();
   document.getElementById('tgt-new-importe').value = '';
@@ -2889,6 +2971,32 @@ function guardarFam() { guardarFamEdit(); }
   <div id="cs-body"><div class="cs-idle">Bienvenido/a</div></div>
 </div>
 <script>document.getElementById('cs-nombre-tienda').textContent = config.empresa;</script>
+
+<!-- ══ MODAL CAJEROS ══ -->
+<div id="ov-cajeros">
+  <div id="cajeros-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <b style="font-size:15px">👥 Cajeros</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-cajeros').classList.remove('open')">✕</button>
+    </div>
+    <!-- formulario -->
+    <div id="cajf" style="background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:12px;display:none">
+      <b style="font-size:13px" id="cajf-title">Nuevo cajero</b>
+      <div class="cajf-grid">
+        <label>Nombre<input id="cajf-nom" placeholder="María"></label>
+        <label>Color<input id="cajf-color" type="color" value="#c0392b"></label>
+        <label>PIN (4 dígitos)<input id="cajf-pin" type="password" maxlength="4" placeholder="0000" inputmode="numeric"></label>
+        <label style="justify-content:flex-end;align-items:flex-end">
+          <button style="padding:8px 14px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarCajero()">💾 Guardar</button>
+        </label>
+      </div>
+      <button style="width:100%;padding:6px;background:#aaa;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:var(--font);font-size:12px" onclick="cerrarCajForm()">Cancelar</button>
+    </div>
+    <!-- lista -->
+    <div id="cajeros-list"></div>
+    <button style="margin-top:10px;width:100%;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="abrirCajForm(null)">+ Añadir cajero</button>
+  </div>
+</div>
 
 <!-- ══ MINI-MODAL EDITAR CATEGORÍA ══ -->
 <div id="ov-famedit">
