@@ -3341,7 +3341,8 @@ function borrarFam(id) {
     ? `¿Borrar la categoría "${f.nombre}"? Tiene ${nProds} producto(s) asignado(s) que quedarán sin categoría.`
     : `¿Borrar la categoría "${f.nombre}"?`;
   if (!confirm(msg)) return;
-  FAMILIAS = FAMILIAS.filter(x => x.id !== id);
+  const idx = FAMILIAS.findIndex(x => x.id === id);
+  if (idx !== -1) FAMILIAS.splice(idx, 1);
   saveFamilias();
   renderCatsList();
   renderCat();
