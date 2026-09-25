@@ -355,6 +355,10 @@ body {
 .pf-foto-preview { width:60px;height:60px;object-fit:cover;border-radius:5px;border:1px solid #aaa;display:none; }
 .fam-edit-btn { position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;font-size:10px;border-radius:3px;padding:1px 5px;cursor:pointer;display:none;z-index:2; }
 .fam-btn:hover .fam-edit-btn { display:block; }
+.fam-btn[draggable], .prd[draggable] { cursor:grab; }
+.fam-btn.dragging, .prd.dragging { opacity:.35; }
+.fam-btn.drag-over { outline:3px solid #fff; outline-offset:2px; }
+.prd.drag-over { outline:3px solid #f0c040; outline-offset:2px; }
 /* tabs en modal productos */
 .prods-tabs { display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid #8aaccc; }
 .prods-tab { padding:7px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#556;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:var(--font); }
@@ -1404,10 +1408,16 @@ function renderCat() {
   if (!famActual) {
     // Pantalla familias
     g.style.gridTemplateColumns = 'repeat(auto-fill, 90px)';
-    g.innerHTML = FAMILIAS.map(f => {
+    g.innerHTML = FAMILIAS.map((f, fi) => {
       const foto = f.foto ? `<img class="fam-foto" src="${f.foto}" alt="">` : '';
       const ico  = f.foto ? '' : `<span class="fam-ico">${f.emoji}</span>`;
-      return `<button class="fam-btn" style="background:${f.color}" onclick="abrirFam('${f.id}')">
+      return `<button class="fam-btn" draggable="true" data-fi="${fi}" style="background:${f.color}"
+        onclick="abrirFam('${f.id}')"
+        ondragstart="famDragStart(event,${fi})"
+        ondragover="famDragOver(event)"
+        ondragleave="famDragLeave(event)"
+        ondrop="famDrop(event,${fi})"
+        ondragend="famDragEnd()">
         ${foto}${ico}
         <span class="fam-nom" style="position:relative;z-index:1;${f.foto?'text-shadow:0 1px 4px rgba(0,0,0,.8)':''}">${f.nombre}</span>
         <button class="fam-edit-btn" onclick="event.stopPropagation();abrirFormFam('${f.id}')">✏️</button>
@@ -1425,7 +1435,13 @@ function renderCat() {
       const lbl = p.peso ? fmtN(p.precio) + '/kg €' : fmtE(p.precio);
       const badge = bajo ? '<span class="prd-min-badge">!</span>' : '';
       const ico   = p.foto ? `<img class="prd-foto" src="${p.foto}" alt="">` : `<span class="prd-ico">${p.emoji}</span>`;
-      return `<button class="prd${out ? ' out' : ''}" onclick="${out ? '' : 'clickPrd(' + p._i + ')'}">
+      return `<button class="prd${out ? ' out' : ''}" draggable="true" data-pi="${p._i}"
+        onclick="${out ? '' : 'clickPrd(' + p._i + ')'}"
+        ondragstart="prdDragStart(event,${p._i})"
+        ondragover="prdDragOver(event)"
+        ondragleave="prdDragLeave(event)"
+        ondrop="prdDrop(event,${p._i})"
+        ondragend="prdDragEnd()">
         ${badge}
         ${ico}
         <span class="prd-price">${lbl}</span>
@@ -2157,6 +2173,59 @@ renderCajeros();
 renderTicket();
 updStatus();
 document.getElementById('search-in').focus();
+
+/* ══════════════════════
+   DRAG & DROP — CATEGORÍAS Y PRODUCTOS
+══════════════════════ */
+let _dragFamIdx = null;
+let _dragPrdIdx = null;
+
+// ── Categorías ──
+function famDragStart(e, fi) {
+  _dragFamIdx = fi;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function famDragOver(e) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function famDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function famDragEnd() { renderCat(); _dragFamIdx = null; }
+function famDrop(e, fi) {
+  e.preventDefault();
+  if (_dragFamIdx === null || _dragFamIdx === fi) return;
+  const [moved] = FAMILIAS.splice(_dragFamIdx, 1);
+  FAMILIAS.splice(fi, 0, moved);
+  saveFamilias();
+  renderCat();
+  _dragFamIdx = null;
+}
+
+// ── Productos ──
+function prdDragStart(e, pi) {
+  _dragPrdIdx = pi;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function prdDragOver(e) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function prdDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function prdDragEnd() { renderCat(); _dragPrdIdx = null; }
+function prdDrop(e, pi) {
+  e.preventDefault();
+  if (_dragPrdIdx === null || _dragPrdIdx === pi) return;
+  const from = CAT.findIndex(p => p._i === _dragPrdIdx);
+  const to   = CAT.findIndex(p => p._i === pi);
+  if (from < 0 || to < 0) return;
+  const [moved] = CAT.splice(from, 1);
+  CAT.splice(to, 0, moved);
+  saveCat();
+  renderCat();
+  _dragPrdIdx = null;
+}
 
 /* ══════════════════════
    ATAJOS DE TECLADO
