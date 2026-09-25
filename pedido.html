@@ -175,7 +175,7 @@ function updCart() {
   open.classList.add('show');
   let totQ = 0, totP = 0;
   items.forEach(([id, q]) => {
-    const p = (M.p || []).find(x => x.i === id);
+    const p = (M.p || []).find(x => String(x.i) === id);
     if (p) { totQ += q; totP += p.pr * q; }
   });
   document.getElementById('cart-n').textContent = totQ + ' artículo' + (totQ > 1 ? 's' : '');
@@ -190,7 +190,7 @@ function enviarWA() {
   lines.push('');
   let totP = 0;
   items.forEach(([id, q]) => {
-    const p = (M.p || []).find(x => x.i === id);
+    const p = (M.p || []).find(x => String(x.i) === id);
     if (!p) return;
     const sub = p.pr * q;
     totP += sub;
