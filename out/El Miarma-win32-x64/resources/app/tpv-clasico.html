@@ -224,8 +224,9 @@ body {
 .nk:active { filter: brightness(1.35); }
 .nk-c { color: #f90; }
 .nk-coma { font-size: 13px; }
+.nk-del { background: linear-gradient(to bottom, #c0392b, #922b21) !important; font-size: 18px; }
 .nk-enter {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   background: linear-gradient(to bottom, #2ecc71, #1e8449);
   border-color: #155a32;
   font-size: 15px;
@@ -795,6 +796,7 @@ body {
     <button class="nk nk-c" onclick="nc()">C</button>
     <button class="nk" onclick="np('0')">0</button>
     <button class="nk nk-coma" onclick="np(',')">&#44;</button>
+    <button class="nk nk-del" onclick="acEliminar()" title="Eliminar línea seleccionada">🗑️</button>
     <button class="nk nk-enter" onclick="npEnter()">ENTER ⏎</button>
   </div>
   <div id="cobrar-row">
