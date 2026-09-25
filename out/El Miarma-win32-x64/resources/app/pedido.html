@@ -98,11 +98,20 @@ function fmt(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
 
 function init() {
   const hash = location.hash.replace(/^#/, '');
-  if (!hash) { showError(); return; }
-  try { M = JSON.parse(decodeURIComponent(escape(atob(hash)))); }
-  catch(e) { showError(); return; }
-  if (!M || !M.p) { showError(); return; }
+  if (hash) {
+    try { M = JSON.parse(decodeURIComponent(escape(atob(hash)))); }
+    catch(e) { M = null; }
+  }
+  if (M && M.p) { start(); return; }
+  // Sin hash: intentar cargar menu.json del mismo servidor
+  fetch('menu.json')
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(d => { M = d; start(); })
+    .catch(() => showError());
+}
 
+function start() {
+  if (!M || !M.p) { showError(); return; }
   document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
   document.title = M.n ? M.n + ' — Pedido' : 'Hacer pedido';
   renderFams();

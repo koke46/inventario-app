@@ -2573,7 +2573,7 @@ function abrirQR() {
   warn.style.display = 'none';
   const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂' }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
-  const data = {
+  const menuData = {
     n: config.empresa || '',
     t: (config.tel || '').replace(/\D/g,''),
     f: fams,
@@ -2584,17 +2584,26 @@ function abrirQR() {
       f: famIdx[p.familia] ?? -1
     }))
   };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const url = urlBase.replace(/\/$/, '') + '/pedido.html#' + encoded;
+  window._qrMenuData = menuData;
+  const url = urlBase.replace(/\/$/, '') + '/pedido.html';
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
   try {
-    new QRCode(canvas, { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+    new QRCode(canvas, { text: url, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
   } catch(e) {
     warn.style.display = '';
-    warn.textContent = '⚠️ Error al generar QR: ' + e.message + ' (URL: ' + url.length + ' chars)';
+    warn.textContent = '⚠️ Error al generar QR: ' + e.message;
   }
+}
+function descargarMenuJson() {
+  if (!window._qrMenuData) { warn('⚠️ Abre primero QR Pedidos', 2000); return; }
+  const blob = new Blob([JSON.stringify(window._qrMenuData)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'menu.json';
+  a.click();
+  warn('✅ menu.json descargado — súbelo a Netlify junto con pedido.html', 3000);
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;
@@ -3561,7 +3570,8 @@ function guardarFam() { guardarFamEdit(); }
       </div>
     </div>
     <div id="qr-warn" style="display:none;background:#422a00;color:#fbbf24;border-radius:8px;padding:10px;font-size:12px;line-height:1.4;margin-bottom:10px"></div>
-    <div style="font-size:11px;color:#7a6fa8;text-align:center;line-height:1.5">Pon este QR en la mesa o mostrador.<br>El cliente escanea, elige y te escribe por WhatsApp.</div>
+    <button onclick="descargarMenuJson()" style="width:100%;padding:10px;background:#1a3a1a;color:#86efac;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px">⬇️ Descargar menu.json</button>
+    <div style="font-size:11px;color:#7a6fa8;text-align:center;line-height:1.5">1. Descarga el menu.json · 2. Súbelo a Netlify junto con pedido.html · 3. El QR ya funciona.</div>
   </div>
 </div>
 
