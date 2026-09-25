@@ -33,7 +33,7 @@ body {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-columns: var(--sidebar-w) 1fr 240px;
   grid-template-rows: 58px 1fr 28px;
   gap: 0;
 }
@@ -71,7 +71,7 @@ body {
 
 /* ══ ACCIONES (arriba derecha) ══ */
 #actions {
-  grid-column: 2; grid-row: 1;
+  grid-column: 2 / 4; grid-row: 1;
   display: flex;
   align-items: stretch;
   gap: 3px;
@@ -212,6 +212,16 @@ body {
 .nk:active { filter: brightness(1.35); }
 .nk-c { color: #f90; }
 .nk-coma { font-size: 13px; }
+
+/* ══ COLUMNA DERECHA (ticket) ══ */
+#right-col {
+  grid-column: 3; grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 4px 3px 2px;
+  overflow: hidden;
+}
 
 /* ══ COLUMNA CENTRO ══ */
 #center-col {
@@ -390,12 +400,13 @@ body {
 
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
-  body { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr 1fr auto; height: auto; overflow: auto; }
-  #tools    { grid-column: 1; grid-row: 1; }
-  #actions  { grid-column: 1; grid-row: 2; flex-wrap: wrap; height: auto; min-height: 58px; }
-  #left-col { grid-column: 1; grid-row: 3; height: 55vh; }
+  body { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto auto; height: auto; overflow: auto; }
+  #tools      { grid-column: 1; grid-row: 1; }
+  #actions    { grid-column: 1; grid-row: 2; grid-column: 1; flex-wrap: wrap; height: auto; min-height: 58px; }
+  #left-col   { grid-column: 1; grid-row: 3; height: auto; padding-bottom: 4px; }
   #center-col { grid-column: 1; grid-row: 4; height: 55vh; }
-  #statusbar { grid-column: 1; grid-row: 5; }
+  #right-col  { grid-column: 1; grid-row: 5; height: 40vh; padding: 0 4px 3px; }
+  #statusbar  { grid-column: 1; grid-row: 6; }
   #pgrid { grid-template-columns: repeat(auto-fill, 78px); }
 }
 </style>
@@ -444,20 +455,6 @@ body {
     <button class="btn" onclick="mover(1)">▼</button>
   </div>
 
-  <!-- Ticket -->
-  <div id="ticket-wrap">
-    <div class="t-head">
-      <span>Ud.</span><span>Producto</span><span style="text-align:right">Importe</span>
-    </div>
-    <div id="tbody"></div>
-  </div>
-
-  <!-- Desglose IVA -->
-  <div id="iva-box">
-    <div class="iva-head">Desglose IVA</div>
-    <div id="iva-body"></div>
-  </div>
-
   <!-- Teclado numérico -->
   <div id="numpad">
     <button class="nk" onclick="np('7')">7</button>
@@ -472,6 +469,20 @@ body {
     <button class="nk nk-c" onclick="nc()">C</button>
     <button class="nk" onclick="np('0')">0</button>
     <button class="nk nk-coma" onclick="np(',')">&#44;</button>
+  </div>
+</div>
+
+<!-- ══ COLUMNA DERECHA — TICKET ══ -->
+<div id="right-col">
+  <div id="ticket-wrap">
+    <div class="t-head">
+      <span>Ud.</span><span>Producto</span><span style="text-align:right">Importe</span>
+    </div>
+    <div id="tbody"></div>
+  </div>
+  <div id="iva-box">
+    <div class="iva-head">Desglose IVA</div>
+    <div id="iva-body"></div>
   </div>
 </div>
 
