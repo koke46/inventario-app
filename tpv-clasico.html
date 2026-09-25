@@ -2038,9 +2038,11 @@ function asignarCli() {
 ══════════════════════ */
 function abrirLibre() {
   document.getElementById('lib-nom').value = '';
-  document.getElementById('lib-prec').value = '';
+  const n = getN();
+  document.getElementById('lib-prec').value = n !== null ? n : '';
+  if (n !== null) nbuf = '';
   document.getElementById('ov-libre').classList.add('open');
-  setTimeout(() => document.getElementById('lib-nom').focus(), 80);
+  setTimeout(() => document.getElementById(n !== null ? 'lib-nom' : 'lib-prec').focus(), 80);
 }
 function setLibIva(btn, v) {
   ivaLibre = v;
@@ -2260,11 +2262,20 @@ document.addEventListener('keydown', e => {
       }
     }
     if (e.key === 'Delete') { e.preventDefault(); acEliminar(); }
-    // Teclas numéricas → numpad
-    if (/^[0-9]$/.test(e.key))          { e.preventDefault(); np(e.key); }
-    if (e.key === ',' || e.key === '.')  { e.preventDefault(); np(','); }
-    if (e.key === 'Backspace')           { e.preventDefault(); nc(); }
-    if (e.key === 'Enter')               { e.preventDefault(); npEnter(); }
+    // Teclas numéricas → numpad (o precio libre si ese modal está abierto)
+    if (/^[0-9]$/.test(e.key) || e.key === ',' || e.key === '.') {
+      e.preventDefault();
+      if (document.getElementById('ov-libre').classList.contains('open')) {
+        const f = document.getElementById('lib-prec');
+        f.focus();
+        const v = e.key === '.' ? ',' : e.key;
+        f.value += v;
+      } else {
+        np(e.key === '.' ? ',' : e.key);
+      }
+    }
+    if (e.key === 'Backspace')  { e.preventDefault(); nc(); }
+    if (e.key === 'Enter')      { e.preventDefault(); npEnter(); }
   }
 });
 
