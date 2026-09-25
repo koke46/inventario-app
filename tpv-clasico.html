@@ -544,6 +544,23 @@ body {
 .hist-detail { background:#f4f8fb;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px; }
 .hist-detail-line { display:flex;justify-content:space-between;margin:2px 0; }
 
+/* ══ INFORME FILTRO FECHA ══ */
+.inf-fecha-bar { display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap; }
+.inf-fecha-btn { padding:5px 12px;border:2px solid #6a8faf;background:#fff;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:#4a6788;font-family:var(--font); }
+.inf-fecha-btn.on { background:var(--btn-to);border-color:var(--btn-to);color:#fff; }
+
+/* ══ PANTALLA CLIENTE ══ */
+#ov-cli-screen { position:fixed;inset:0;background:#1a2540;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:500; }
+#ov-cli-screen.open { display:flex; }
+.cs-logo { font-size:48px;margin-bottom:8px; }
+.cs-tienda { font-size:22px;font-weight:700;color:#fff;margin-bottom:4px; }
+.cs-idle { color:#8899bb;font-size:15px;margin-top:8px; }
+.cs-ticket { width:100%;max-width:420px;background:#253050;border-radius:12px;padding:16px;margin-top:16px; }
+.cs-line { display:flex;justify-content:space-between;color:#c8d8f0;font-size:14px;padding:4px 0;border-bottom:1px solid #374060; }
+.cs-line:last-child { border:none; }
+.cs-total { display:flex;justify-content:space-between;color:#fff;font-size:28px;font-weight:700;margin-top:12px;padding-top:8px;border-top:2px solid #5080c0; }
+.cs-close-btn { position:fixed;top:12px;right:12px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;border-radius:6px;padding:4px 10px; }
+
 /* ══ VALE ══ */
 #vale-panel { display:none; }
 #vale-panel.open { display:block; }
@@ -598,6 +615,7 @@ body {
   <button class="btn" onclick="abrirFactura()"><span class="ico">🧾</span><span class="lbl">Factura</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
   <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
+  <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
   <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
   <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
 </div>
@@ -768,6 +786,12 @@ body {
 <div id="ov-inf">
   <div style="background:#dde8f0;border-radius:10px;padding:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">📊 Informes de Ventas</h2>
+    <div class="inf-fecha-bar">
+      <button class="inf-fecha-btn on" onclick="setInfFecha('hoy',this)">Hoy</button>
+      <button class="inf-fecha-btn" onclick="setInfFecha('semana',this)">Esta semana</button>
+      <button class="inf-fecha-btn" onclick="setInfFecha('mes',this)">Este mes</button>
+      <button class="inf-fecha-btn" onclick="setInfFecha('todo',this)">Todo</button>
+    </div>
     <div class="inf-tabs">
       <button class="inf-tab on" onclick="infTab('res')">📋 Resumen</button>
       <button class="inf-tab" onclick="infTab('fam')">🗂 Familias</button>
@@ -1966,6 +1990,175 @@ renderCajeros();
 renderTicket();
 updStatus();
 document.getElementById('search-in').focus();
+
+/* ══════════════════════
+   ATAJOS DE TECLADO
+══════════════════════ */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
+  const modalOpen = document.querySelector('.ov.open, #ov.open, [id^="ov-"].open');
+
+  if (e.key === 'Escape') {
+    const open = document.querySelector('[id^="ov-"].open, #ov.open');
+    if (open) { open.classList.remove('open'); e.preventDefault(); }
+    return;
+  }
+  if (modalOpen && modalOpen.id !== 'ov-tick') return; // no interferir con modales
+
+  if (!inInput) {
+    if (e.key === 'F1') { e.preventDefault(); abrirCobro(); }
+    if (e.key === 'F2') { e.preventDefault(); acAnular(); }
+    if (e.key === 'F3') { e.preventDefault(); acAparcar(); }
+    if (e.key === 'F4') { e.preventDefault(); acRecuperar(); }
+    if (e.key === '+' || e.key === 'Add') {
+      e.preventDefault();
+      if (selIdx >= 0 && selIdx < ticket.length) {
+        const l = ticket[selIdx]; l.cantidad++; l.importe = parseFloat((l.pUnit*l.cantidad).toFixed(2));
+        renderTicket();
+      }
+    }
+    if (e.key === '-' || e.key === 'Subtract') {
+      e.preventDefault();
+      if (selIdx >= 0 && selIdx < ticket.length) {
+        const l = ticket[selIdx];
+        if (l.cantidad > 1) { l.cantidad--; l.importe = parseFloat((l.pUnit*l.cantidad).toFixed(2)); renderTicket(); }
+      }
+    }
+    if (e.key === 'Delete') { e.preventDefault(); acEliminar(); }
+  }
+});
+
+/* ══════════════════════
+   INFORME POR FECHA
+══════════════════════ */
+let infFecha = 'hoy';
+function setInfFecha(rango, btn) {
+  infFecha = rango;
+  document.querySelectorAll('.inf-fecha-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const activo = document.querySelector('.inf-tab.on');
+  if (activo) activo.click();
+}
+function filtrarPorFecha(ventas) {
+  if (infFecha === 'todo') return ventas;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  return ventas.filter(v => {
+    const parts = (v.fecha || '').split('/');
+    if (parts.length < 3) return false;
+    const d = new Date(+parts[2], +parts[1]-1, +parts[0]);
+    if (infFecha === 'hoy') return d >= hoy;
+    if (infFecha === 'semana') { const s = new Date(hoy); s.setDate(hoy.getDate() - hoy.getDay()); return d >= s; }
+    if (infFecha === 'mes') return d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear();
+    return true;
+  });
+}
+
+// Parchear las funciones de informe para que usen filtrarPorFecha
+const _renderInfRes = renderInfRes, _renderInfFam = renderInfFam, _renderInfPrd = renderInfPrd, _renderInfCaj = renderInfCaj;
+renderInfRes = function() {
+  const vs = filtrarPorFecha(histVentas);
+  const tot = vs.reduce((s,v)=>s+v.total,0);
+  const pf = {ef:0,tj:0,biz:0};
+  vs.forEach(v => { if(pf[v.pago]!==undefined) pf[v.pago]+=v.total; else pf.ef+=v.total; });
+  document.getElementById('inf-res').innerHTML = `
+    <div class="inf-section">
+      <div class="inf-title">💳 Por forma de pago</div>
+      <div class="inf-row"><span>Efectivo</span><span class="inf-val">${fmtE(pf.ef)}</span></div>
+      <div class="inf-row"><span>Tarjeta</span><span class="inf-val">${fmtE(pf.tj)}</span></div>
+      <div class="inf-row"><span>Bizum</span><span class="inf-val">${fmtE(pf.biz)}</span></div>
+      <div class="inf-total"><span>TOTAL</span><span class="inf-val">${fmtE(tot)}</span></div>
+    </div>
+    <div class="inf-section">
+      <div class="inf-title">🧾 Tickets</div>
+      <div class="inf-row"><span>Número de tickets</span><span class="inf-val">${vs.length}</span></div>
+      <div class="inf-row"><span>Ticket medio</span><span class="inf-val">${vs.length?fmtE(tot/vs.length):'—'}</span></div>
+      <div class="inf-row"><span>Cajero activo</span><span class="inf-val">${cajero.nombre}</span></div>
+    </div>`;
+};
+renderInfFam = function() {
+  const vs = filtrarPorFecha(histVentas); const fams = {};
+  vs.forEach(v => (v.lineas||[]).filter(l=>!l.dev).forEach(l => {
+    const f = l.familia||'libre'; if (!fams[f]) fams[f]={total:0,uds:0};
+    fams[f].total+=l.importe; fams[f].uds+=l.cantidad;
+  }));
+  const sorted = Object.entries(fams).sort((a,b)=>b[1].total-a[1].total);
+  const max = sorted[0]?.[1].total||1;
+  document.getElementById('inf-fam').innerHTML = sorted.length
+    ? sorted.map(([f,d]) => `<div class="bar-row">
+        <span class="bar-lbl">${(FAMILIAS.find(x=>x.id===f)?.emoji||'📦')+' '+(FAMILIAS.find(x=>x.id===f)?.nombre||f)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.total/max*100).toFixed(1)}%"></div></div>
+        <span class="bar-val">${fmtE(d.total)}</span></div>`).join('')
+    : '<p style="color:#aaa;text-align:center;padding:20px">Sin datos</p>';
+};
+renderInfPrd = function() {
+  const vs = filtrarPorFecha(histVentas); const prds = {};
+  vs.forEach(v => (v.lineas||[]).filter(l=>!l.dev).forEach(l => {
+    if (!prds[l.nombre]) prds[l.nombre]={total:0,uds:0};
+    prds[l.nombre].total+=l.importe; prds[l.nombre].uds+=l.cantidad;
+  }));
+  const sorted = Object.entries(prds).sort((a,b)=>b[1].uds-a[1].uds).slice(0,15);
+  const maxU = sorted[0]?.[1].uds||1;
+  document.getElementById('inf-prd').innerHTML = sorted.length
+    ? sorted.map(([n,d]) => `<div class="bar-row">
+        <span class="bar-lbl">${n}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.uds/maxU*100).toFixed(1)}%"></div></div>
+        <span class="bar-val">${fmtN(d.uds,0)} ud · ${fmtE(d.total)}</span></div>`).join('')
+    : '<p style="color:#aaa;text-align:center;padding:20px">Sin datos</p>';
+};
+renderInfCaj = function() {
+  const vs = filtrarPorFecha(histVentas); const cajs = {};
+  vs.forEach(v => { if (!cajs[v.cajero]) cajs[v.cajero]={total:0,n:0}; cajs[v.cajero].total+=v.total; cajs[v.cajero].n++; });
+  const sorted = Object.entries(cajs).sort((a,b)=>b[1].total-a[1].total);
+  const max = sorted[0]?.[1].total||1;
+  document.getElementById('inf-caj').innerHTML = sorted.length
+    ? sorted.map(([n,d]) => `<div class="bar-row">
+        <span class="bar-lbl">👤 ${n}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.total/max*100).toFixed(1)}%"></div></div>
+        <span class="bar-val">${d.n} tkt · ${fmtE(d.total)}</span></div>`).join('')
+    : '<p style="color:#aaa;text-align:center;padding:20px">Sin datos</p>';
+};
+
+/* ══════════════════════
+   PANTALLA CLIENTE
+══════════════════════ */
+const csBroadcast = new BroadcastChannel('tpv_cliente_screen');
+let csOpen = false;
+
+function toggleCliScreen() {
+  csOpen = !csOpen;
+  document.getElementById('ov-cli-screen').classList.toggle('open', csOpen);
+  if (csOpen) renderCliScreen();
+}
+
+function renderCliScreen() {
+  if (!csOpen) return;
+  const tot = calcTotal();
+  const el = document.getElementById('cs-body');
+  if (!ticket.length) {
+    el.innerHTML = `<div class="cs-idle">Esperando artículos...</div>`;
+  } else {
+    const lines = ticket.filter(l=>!l.dev).map(l =>
+      `<div class="cs-line"><span>${l.nombre}</span><span>${fmtE(l.importe)}</span></div>`
+    ).join('');
+    el.innerHTML = `<div class="cs-ticket">${lines}<div class="cs-total"><span>TOTAL</span><span>${fmtE(tot)}</span></div></div>`;
+  }
+}
+
+// Parchar renderTicket para actualizar pantalla cliente
+const _renderTicket = renderTicket;
+renderTicket = function() { _renderTicket(); renderCliScreen(); };
+
 </script>
+
+<!-- ══ PANTALLA CLIENTE (overlay fullscreen) ══ -->
+<div id="ov-cli-screen">
+  <button class="cs-close-btn" onclick="toggleCliScreen()">✕ Cerrar</button>
+  <div class="cs-logo">🛒</div>
+  <div class="cs-tienda" id="cs-nombre-tienda"></div>
+  <div id="cs-body"><div class="cs-idle">Bienvenido/a</div></div>
+</div>
+<script>document.getElementById('cs-nombre-tienda').textContent = config.empresa;</script>
+
 </body>
 </html>
