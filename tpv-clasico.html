@@ -2260,6 +2260,11 @@ document.addEventListener('keydown', e => {
       }
     }
     if (e.key === 'Delete') { e.preventDefault(); acEliminar(); }
+    // Teclas numéricas → numpad
+    if (/^[0-9]$/.test(e.key))          { e.preventDefault(); np(e.key); }
+    if (e.key === ',' || e.key === '.')  { e.preventDefault(); np(','); }
+    if (e.key === 'Backspace')           { e.preventDefault(); nc(); }
+    if (e.key === 'Enter')               { e.preventDefault(); npEnter(); }
   }
 });
 
