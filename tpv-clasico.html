@@ -642,6 +642,27 @@ body {
 #mix-resto { font-size:14px;font-weight:700;text-align:center;padding:6px;background:#fff;border-radius:var(--r);margin-bottom:10px; }
 #biz-panel { display:none;padding:20px;text-align:center;color:#555;font-size:15px; }
 #biz-panel.open { display:block; }
+#fiad-panel { display:none;padding:12px 0; }
+#fiad-panel.open { display:block; }
+.fiad-info { background:#fff8e1;border:2px solid #f0c040;border-radius:8px;padding:12px;font-size:14px;text-align:center; }
+.fiad-deuda { color:#c0392b;font-weight:700; }
+#tgt-panel { display:none;padding:8px 0; }
+#tgt-panel.open { display:block; }
+.tgt-info { font-size:14px;font-weight:700;text-align:center;padding:8px;border-radius:8px;margin-top:6px; }
+/* cambio final overlay */
+#cambio-final { position:fixed;inset:0;background:rgba(0,110,30,.95);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:600;color:#fff;font-family:var(--font); }
+#cambio-final.open { display:flex; }
+.cf-label { font-size:22px;opacity:.85;margin-bottom:6px; }
+.cf-num { font-size:88px;font-weight:700;letter-spacing:-3px;line-height:1; }
+/* deuda badge en lista clientes */
+.cli-deuda { font-size:11px;font-weight:700;color:#e74c3c;background:#fde8e8;border-radius:4px;padding:1px 5px; }
+/* tarjetas */
+#ov-tgt { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-tgt.open { display:flex; }
+#tgt-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.tgt-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:8px 10px;margin-bottom:5px;font-size:13px; }
+.tgt-cod { font-family:'Courier New',monospace;font-weight:700;font-size:13px;min-width:110px; }
+.tgt-sal { font-weight:700;margin-left:auto;color:#1a5c2a; }
 
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
@@ -679,6 +700,7 @@ body {
   <button class="btn" onclick="abrirProds()"><span class="ico">✏️</span><span class="lbl">Productos</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
   <button class="btn" onclick="abrirCaja()"><span class="ico">🏦</span><span class="lbl">Caja</span></button>
+  <button class="btn" onclick="abrirTgt()"><span class="ico">🎁</span><span class="lbl">Tarjetas</span></button>
   <button class="btn" onclick="toggleCliScreen()"><span class="ico">🖥️</span><span class="lbl">Cliente</span></button>
   <button class="btn" id="btn-cobrar" onclick="abrirCobro()"><span class="ico">💳</span><span class="lbl">COBRAR</span></button>
   <button id="btn-anular" onclick="acAnular()" title="Anular venta"><div class="cx">✕</div></button>
@@ -770,7 +792,9 @@ body {
       <button class="ptab"    id="t-tj"  onclick="setTab('tj')">💳 Tarjeta</button>
       <button class="ptab"    id="t-biz" onclick="setTab('biz')">📱 Bizum</button>
       <button class="ptab"    id="t-mix" onclick="setTab('mix')">≡ Mixto</button>
-      <button class="ptab"    id="t-val" onclick="setTab('val')">🎫 Vale</button>
+      <button class="ptab"    id="t-val"  onclick="setTab('val')">🎫 Vale</button>
+      <button class="ptab"    id="t-fiad" onclick="setTab('fiad')">🏠 Fiado</button>
+      <button class="ptab"    id="t-tgt"  onclick="setTab('tgt')">🎁 Tarjeta</button>
     </div>
     <div id="ef-panel" class="open">
       <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
@@ -788,10 +812,46 @@ body {
       <button style="width:100%;padding:8px;background:var(--btn-to);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px" onclick="validarVale()">🔍 Validar vale</button>
       <div id="vale-info"></div>
     </div>
+    <div id="fiad-panel">
+      <div class="fiad-info" id="fiad-info">Selecciona un cliente antes de usar fiado.</div>
+    </div>
+    <div id="tgt-panel">
+      <input class="vale-inp" id="tgt-code" type="text" placeholder="TGT-XXXXXX" oninput="this.value=this.value.toUpperCase()">
+      <button style="width:100%;padding:8px;background:var(--btn-to);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:6px" onclick="validarTgt()">🔍 Validar tarjeta</button>
+      <div class="tgt-info" id="tgt-cobro-info"></div>
+    </div>
     <div class="mbtns">
       <button id="m-ok" onclick="confirmar()">✅ Confirmar cobro</button>
       <button id="m-cancel" onclick="cerrarModal()">❌ Cancelar</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ CAMBIO FINAL OVERLAY ══ -->
+<div id="cambio-final">
+  <div class="cf-label">💰 CAMBIO A DEVOLVER</div>
+  <div class="cf-num" id="cf-num">0,00 €</div>
+  <div style="margin-top:16px;font-size:16px;opacity:.7">Toca para cerrar</div>
+</div>
+
+<!-- ══ MODAL TARJETAS DE REGALO ══ -->
+<div id="ov-tgt">
+  <div id="tgt-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <b style="font-size:15px">🎁 Tarjetas de regalo</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-tgt').classList.remove('open')">✕</button>
+    </div>
+    <!-- crear nueva -->
+    <div style="background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:12px">
+      <b style="font-size:13px">Nueva tarjeta</b>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <label style="font-size:12px;color:#445;flex:1;display:flex;flex-direction:column;gap:3px">Saldo (€)<input id="tgt-new-importe" type="number" min="1" step="0.01" placeholder="20,00" style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:14px;font-family:var(--font)"></label>
+        <label style="font-size:12px;color:#445;flex:1;display:flex;flex-direction:column;gap:3px">Nombre/nota (opcional)<input id="tgt-new-nom" type="text" placeholder="Ej: cumpleaños Ana" style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font)"></label>
+      </div>
+      <button style="margin-top:8px;width:100%;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="crearTgt()">🎁 Crear y vender tarjeta</button>
+    </div>
+    <!-- lista -->
+    <div id="tgt-list"></div>
   </div>
 </div>
 
@@ -1205,6 +1265,7 @@ let ivaLibre   = 21;
 let movTipo    = 'ent';
 let cajSelId   = null;     // id del cliente seleccionado en el modal
 let clientes   = JSON.parse(localStorage.getItem('tpv_clientes') || '[]');
+let tarjetas   = JSON.parse(localStorage.getItem('tpv_tarjetas') || '[]');
 let vales      = JSON.parse(localStorage.getItem('tpv_vales')    || '[]');
 let config     = JSON.parse(localStorage.getItem('tpv_config')   || JSON.stringify({empresa:'Mi Tienda',nif:'B12345678',direccion:'Calle Mayor 1',tel:'600 000 000'}));
 let nFactura   = parseInt(localStorage.getItem('tpv_nfact')      || '1');
@@ -1577,13 +1638,17 @@ function abrirCobro() {
 function cerrarModal() { document.getElementById('ov').classList.remove('open'); }
 function setTab(t) {
   payMode = t;
-  ['ef','tj','biz','mix','val'].forEach(x => {
-    document.getElementById('t-' + x).classList.toggle('on', t === x);
+  ['ef','tj','biz','mix','val','fiad','tgt'].forEach(x => {
+    document.getElementById('t-' + x)?.classList.toggle('on', t === x);
   });
-  document.getElementById('ef-panel').classList.toggle('open',   t === 'ef');
-  document.getElementById('biz-panel').classList.toggle('open',  t === 'biz');
-  document.getElementById('mix-panel').classList.toggle('open',  t === 'mix');
-  document.getElementById('vale-panel').classList.toggle('open', t === 'val');
+  document.getElementById('ef-panel').classList.toggle('open',    t === 'ef');
+  document.getElementById('biz-panel').classList.toggle('open',   t === 'biz');
+  document.getElementById('mix-panel').classList.toggle('open',   t === 'mix');
+  document.getElementById('vale-panel').classList.toggle('open',  t === 'val');
+  document.getElementById('fiad-panel').classList.toggle('open',  t === 'fiad');
+  document.getElementById('tgt-panel').classList.toggle('open',   t === 'tgt');
+  if (t === 'fiad') actualizarFiadInfo();
+  if (t === 'tgt')  { document.getElementById('tgt-cobro-info').textContent = ''; }
 }
 function calcMixto() {
   const tot = calcTotal();
@@ -1610,10 +1675,12 @@ function calcCambio() {
 }
 function confirmar() {
   const tot = calcTotal();
+  let cambioEf = 0;
   // Validar pago
   if (payMode === 'ef') {
     const ent = parseFloat(document.getElementById('ef-in').value) || 0;
     if (ent < tot) { alert('Importe insuficiente'); return; }
+    cambioEf = parseFloat((ent - tot).toFixed(2));
     pagosDia.ef += tot;
   } else if (payMode === 'tj') {
     pagosDia.tj += tot;
@@ -1629,6 +1696,23 @@ function confirmar() {
     const v = vales.find(x => x.codigo === code && !x.usado);
     if (!v || v.importe < tot - 0.01) { alert('Vale no válido, ya usado o importe insuficiente'); return; }
     v.usado = true; localStorage.setItem('tpv_vales', JSON.stringify(vales));
+    pagosDia.ef += tot;
+  } else if (payMode === 'fiad') {
+    if (!cliente) { alert('Selecciona un cliente para anotar el fiado'); return; }
+    const c = clientes.find(x => x.nombre === cliente);
+    if (!c) { alert('Cliente no encontrado en el sistema'); return; }
+    c.deuda = parseFloat(((c.deuda || 0) + tot).toFixed(2));
+    c.historial = c.historial || [];
+    c.historial.unshift({ tipo:'fiado', fecha: new Date().toLocaleString('es'), nTicket, total: tot });
+    saveClientes();
+  } else if (payMode === 'tgt') {
+    const code = (document.getElementById('tgt-code').value || '').trim().toUpperCase();
+    const t = tarjetas.find(x => x.codigo === code);
+    if (!t || t.saldo < tot - 0.01) { alert('Tarjeta no válida o saldo insuficiente'); return; }
+    t.saldo = parseFloat((t.saldo - tot).toFixed(2));
+    t.historial = t.historial || [];
+    t.historial.push({ tipo:'consumo', imp: tot, fecha: new Date().toLocaleDateString('es') });
+    saveTarjetas();
     pagosDia.ef += tot;
   }
   // Actualizar stock
@@ -1659,6 +1743,7 @@ function confirmar() {
   updStatus();
   buildTicketHtml(ventaGuardada);
   document.getElementById('ov-tick').classList.add('open');
+  if (cambioEf > 0.005) mostrarCambioFinal(cambioEf);
 }
 
 /* ══════════════════════
@@ -2005,7 +2090,10 @@ function filtrarCli() {
   document.getElementById('cli-list').innerHTML = res.length
     ? res.map(c => `<div class="cli-row${cajSelId===c.id?' sel':''}" onclick="selCli(${c.id})">
         <span><b>${c.nombre}</b>${c.nif ? ' · ' + c.nif : ''}</span>
-        <span class="cli-pts">⭐ ${c.puntos||0} pts</span>
+        <span style="display:flex;gap:6px;align-items:center">
+          ${c.deuda > 0 ? `<span class="cli-deuda">Debe ${fmtE(c.deuda)}</span>` : ''}
+          <span class="cli-pts">⭐ ${c.puntos||0} pts</span>
+        </span>
       </div>`).join('')
     : '<div class="cli-row" style="cursor:default;color:#aaa">Sin resultados</div>';
 }
@@ -2173,6 +2261,118 @@ renderCajeros();
 renderTicket();
 updStatus();
 document.getElementById('search-in').focus();
+
+/* ══════════════════════
+   CAMBIO FINAL OVERLAY
+══════════════════════ */
+function mostrarCambioFinal(cambio) {
+  if (cambio < 0.005) return;
+  const ov = document.getElementById('cambio-final');
+  document.getElementById('cf-num').textContent = fmtE(cambio);
+  ov.classList.add('open');
+  const close = () => { ov.classList.remove('open'); ov.removeEventListener('click', close); };
+  ov.addEventListener('click', close);
+  setTimeout(close, 5000);
+}
+
+/* ══════════════════════
+   FIADO
+══════════════════════ */
+function actualizarFiadInfo() {
+  const el = document.getElementById('fiad-info');
+  const tot = calcTotal();
+  if (!cliente) {
+    el.innerHTML = '⚠️ Selecciona un cliente antes de usar fiado.';
+    el.style.background = '#fde8e8'; el.style.borderColor = '#e74c3c';
+    return;
+  }
+  const c = clientes.find(x => x.nombre === cliente);
+  const deudaAct = c?.deuda || 0;
+  el.style.background = '#fff8e1'; el.style.borderColor = '#f0c040';
+  el.innerHTML = `<b>${cliente}</b><br>
+    Deuda actual: <span class="fiad-deuda">${fmtE(deudaAct)}</span><br>
+    Este ticket: <b>${fmtE(tot)}</b><br>
+    Deuda tras fiado: <span class="fiad-deuda">${fmtE(deudaAct + tot)}</span>`;
+}
+
+/* ══════════════════════
+   TARJETAS DE REGALO
+══════════════════════ */
+function saveTarjetas() { localStorage.setItem('tpv_tarjetas', JSON.stringify(tarjetas)); }
+
+function abrirTgt() {
+  renderTgtList();
+  document.getElementById('tgt-new-importe').value = '';
+  document.getElementById('tgt-new-nom').value = '';
+  document.getElementById('ov-tgt').classList.add('open');
+}
+
+function renderTgtList() {
+  const el = document.getElementById('tgt-list');
+  if (!tarjetas.length) { el.innerHTML = '<p style="text-align:center;color:#888;padding:12px">Sin tarjetas creadas</p>'; return; }
+  el.innerHTML = [...tarjetas].reverse().map(t => {
+    const agotada = t.saldo <= 0;
+    return `<div class="tgt-row" style="${agotada?'opacity:.5':''}">
+      <span class="tgt-cod">${t.codigo}</span>
+      <span style="flex:1;font-size:11px;color:#666">${t.nombre||''}<br>${t.fecha}</span>
+      <span class="tgt-sal">${fmtE(t.saldo)} / ${fmtE(t.saldoInicial)}</span>
+      <div style="display:flex;gap:4px">
+        <button style="padding:3px 7px;border:none;border-radius:4px;background:#2980b9;color:#fff;font-size:11px;cursor:pointer" onclick="recargarTgt('${t.codigo}')">+</button>
+        <button style="padding:3px 7px;border:none;border-radius:4px;background:#c0392b;color:#fff;font-size:11px;cursor:pointer" onclick="borrarTgt('${t.codigo}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function crearTgt() {
+  const imp = parseFloat(document.getElementById('tgt-new-importe').value);
+  if (isNaN(imp) || imp <= 0) { alert('Introduce un importe válido'); return; }
+  const nom = document.getElementById('tgt-new-nom').value.trim();
+  const codigo = 'TGT-' + Date.now().toString(36).toUpperCase().slice(-6);
+  tarjetas.push({ codigo, nombre: nom, saldoInicial: imp, saldo: imp, fecha: new Date().toLocaleDateString('es'), historial: [] });
+  saveTarjetas();
+  // Añade al ticket como venta de tarjeta
+  ticket.push({ codigo: 'TGT_VENTA', nombre: `🎁 Tarjeta regalo ${codigo}`, iva: 21, pUnit: imp, cantidad: 1, importe: imp, peso: false, dev: false, dto: 0, familia: 'libre' });
+  selIdx = ticket.length - 1;
+  renderTicket(); renderTgtList();
+  document.getElementById('tgt-new-importe').value = '';
+  document.getElementById('tgt-new-nom').value = '';
+  warn(`🎁 Tarjeta ${codigo} creada — ${fmtE(imp)}`, 3000);
+}
+
+function recargarTgt(cod) {
+  const t = tarjetas.find(x => x.codigo === cod);
+  if (!t) return;
+  const imp = parseFloat(prompt(`Recarga para ${cod} (saldo actual: ${fmtE(t.saldo)})\nImporte a añadir (€):`));
+  if (isNaN(imp) || imp <= 0) return;
+  t.saldo = parseFloat((t.saldo + imp).toFixed(2));
+  t.saldoInicial = parseFloat((t.saldoInicial + imp).toFixed(2));
+  t.historial.push({ tipo: 'recarga', imp, fecha: new Date().toLocaleDateString('es') });
+  saveTarjetas(); renderTgtList();
+  warn(`✅ Recargados ${fmtE(imp)} en ${cod}`, 2000);
+}
+
+function borrarTgt(cod) {
+  if (!confirm(`¿Eliminar tarjeta ${cod}?`)) return;
+  tarjetas = tarjetas.filter(x => x.codigo !== cod);
+  saveTarjetas(); renderTgtList();
+}
+
+function validarTgt() {
+  const code = (document.getElementById('tgt-code').value || '').trim().toUpperCase();
+  const el = document.getElementById('tgt-cobro-info');
+  const t = tarjetas.find(x => x.codigo === code);
+  if (!t) { el.style.background='#fde8e8'; el.style.color='#c00'; el.textContent='❌ Tarjeta no encontrada'; return; }
+  if (t.saldo <= 0) { el.style.background='#fde8e8'; el.style.color='#c00'; el.textContent='❌ Tarjeta sin saldo'; return; }
+  const tot = calcTotal();
+  if (t.saldo < tot - 0.01) {
+    el.style.background='#fff3cd'; el.style.color='#856404';
+    el.textContent=`⚠️ Saldo insuficiente: ${fmtE(t.saldo)} (faltan ${fmtE(tot - t.saldo)})`;
+  } else {
+    el.style.background='#d5f5e3'; el.style.color='#1a5c2a';
+    el.textContent=`✅ Saldo disponible: ${fmtE(t.saldo)} — se descontarán ${fmtE(tot)}`;
+  }
+}
 
 /* ══════════════════════
    DRAG & DROP — CATEGORÍAS Y PRODUCTOS
