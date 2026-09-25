@@ -1,5 +1,7 @@
-const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard, ipcMain } = require('electron');
 const path = require('path');
+const fs   = require('fs');
+const os   = require('os');
 
 // Habilitar Web Bluetooth en Electron
 app.commandLine.appendSwitch('enable-features', 'WebBluetooth');
@@ -24,7 +26,7 @@ function applyWindowOpenHandler(browserWin) {
         minWidth: 900,
         minHeight: 600,
         title: 'El Miarma',
-        webPreferences: { nodeIntegration: false, contextIsolation: true }
+        webPreferences: { nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js') }
       }
     };
   });
@@ -43,7 +45,7 @@ function abrirDesdeProtocolo(url) {
     const clientWin = new BrowserWindow({
       width: 1280, height: 800, minWidth: 900, minHeight: 600,
       title: 'El Miarma',
-      webPreferences: { nodeIntegration: false, contextIsolation: true }
+      webPreferences: { nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js') }
     });
     clientWin.loadFile(file, lic ? { query: { lic } } : {});
     applyWindowOpenHandler(clientWin);
@@ -72,7 +74,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: titulo,
-    webPreferences: { nodeIntegration: false, contextIsolation: true }
+    webPreferences: { nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js') }
   });
 
   win.loadFile(htmlFile);
@@ -164,6 +166,16 @@ function createWindow() {
   ]);
   Menu.setApplicationMenu(menu);
 }
+
+ipcMain.handle('save-menu-json', (event, data) => {
+  try {
+    const dest = path.join(os.homedir(), 'Desktop', 'netlify-deploy', 'menu.json');
+    fs.writeFileSync(dest, JSON.stringify(data), 'utf8');
+    return dest;
+  } catch (e) {
+    throw new Error('No se pudo guardar: ' + e.message);
+  }
+});
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());

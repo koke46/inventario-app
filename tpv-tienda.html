@@ -2747,7 +2747,21 @@ function guardarConfig() {
   config.urlMenu   = document.getElementById('cfg-url-menu').value.trim();
   localStorage.setItem('tpvt_config', JSON.stringify(config));
   cerrarModal('ov-cfg');
-  warn('✅ Configuración guardada', 2000);
+  autoGuardarMenuJson();
+}
+function autoGuardarMenuJson() {
+  if (!window.electronAPI) { warn('✅ Configuración guardada', 2000); return; }
+  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂' }));
+  const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
+  const menuData = {
+    n: config.empresa || '', t: (config.tel || '').replace(/\D/g,''), f: fams,
+    p: CAT.filter(p => p.activo !== false).map((p,i) => ({
+      i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1
+    }))
+  };
+  window.electronAPI.saveMenuJson(menuData)
+    .then(() => warn('✅ Configuración guardada · menu.json actualizado en netlify-deploy', 3500))
+    .catch(() => warn('✅ Configuración guardada', 2000));
 }
 
 // ── NOTA EN TICKET ────────────────────────────────────────
