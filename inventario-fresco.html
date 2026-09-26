@@ -6945,7 +6945,7 @@ function _ckCard(c){
 
   if(c.estado==='cocina')    btn=`<div class="ck-actions" style="display:flex;gap:6px;flex-wrap:wrap">${siguienteBtn}<button class="ck-btn ck-btn-aceptar" style="flex:1" onclick="ckAceptar('${esc(c.id)}')">🍳 Aceptar — en cocina</button>${moverBtn}</div>`;
   if(c.estado==='en_cocina') btn=`<div class="ck-actions" style="display:flex;gap:6px;flex-wrap:wrap">${siguienteBtn}<button class="ck-btn ck-btn-listo" style="flex:1" onclick="ckListo('${esc(c.id)}')">✅ Listo para servir</button>${moverBtn}</div>`;
-  if(c.estado==='listo')     btn=`<div class="ck-actions" style="display:flex;gap:6px">${siguienteBtn}<button class="ck-btn ck-btn-servido" style="flex:1" onclick="ckServido('${esc(c.id)}')">🍽️ Servido a la mesa</button>${moverBtn}</div>`;
+  if(c.estado==='listo')     btn=`<div class="ck-actions" style="display:flex;gap:6px;flex-wrap:wrap">${siguienteBtn}<button class="ck-btn ck-btn-servido" style="flex:1" onclick="ckServido('${esc(c.id)}')">🍽️ Servido</button><button class="ck-btn" style="flex:1;background:#10B981;color:#fff" onclick="cobrarComandaQR('${esc(c.id)}')">💰 Cobrar</button>${moverBtn}</div>`;
   if(c.estado==='servido')   btn=`<div class="ck-actions" style="display:flex;gap:6px"><button class="ck-btn" style="flex:1;background:#10B981;color:#fff" onclick="cobrarComandaQR('${esc(c.id)}')">💰 Cobrar pedido</button></div>`;
   // Barra de progreso: 0-8min verde, 8-15min ámbar, >15min rojo (cap en 30 min)
   const pct=Math.min(100,Math.round(mins/30*100));
