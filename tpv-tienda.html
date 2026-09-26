@@ -4077,8 +4077,10 @@ window.cambiarEstado = async function(id, estado) {
 
 window.cobrarPedidoQR = async function(id) {
   const p = pedidos.find(x => x.id === id);
-  if (!p) return;
-  window.cargarPedidoQR(id, p.items, p.total);
+  if (!p) { alert('ERROR: pedido no encontrado id=' + id); return; }
+  if (typeof window.cargarPedidoQR !== 'function') { alert('ERROR: cargarPedidoQR no definida'); return; }
+  try { window.cargarPedidoQR(id, p.items, p.total); }
+  catch(e) { alert('ERROR en carga: ' + e.message); return; }
   try {
     await fetch(SB + '/rest/v1/pedidos?id=eq.' + id, { method:'PATCH', headers:HDR, body: JSON.stringify({estado:'cobrado'}) });
   } catch(e) {}
