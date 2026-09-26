@@ -126,7 +126,7 @@ function init() {
 
 function start() {
   if (!M || !M.p) { showError(); return; }
-  document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
+document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
   document.title = M.n ? M.n + ' — Pedido' : 'Hacer pedido';
   renderFams();
   if (M.f && M.f.length) selFam(0);
