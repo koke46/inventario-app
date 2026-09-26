@@ -1004,8 +1004,17 @@ async function testSmtp() {
 
 async function enviarEmail(licenciaId){
   const r=_datos.find(x=>x.licencia_id===licenciaId); if(!r) return;
-  const toEmail=_extractEmail(r.notas||'');
-  if(!toEmail){ toast('⚠️ Este cliente no tiene email. Edítalo y añade su email antes de enviar.',true); return; }
+  let toEmail=_extractEmail(r.notas||'');
+  if(!toEmail){
+    toEmail=await _inputDialog('📧 Email del cliente\n\nIntroduce el email al que enviar el acceso:', '');
+    if(!toEmail) return;
+    // Guardar el email en el registro del cliente
+    const notasActualizadas=_buildNotas(toEmail, _stripEmail(r.notas||''));
+    try{
+      await sbPatch(licenciaId,{notas:notasActualizadas});
+      r.notas=notasActualizadas;
+    }catch(e){ /* si falla el guardado, seguimos igualmente enviando */ }
+  }
   if(!_smtpCfg){ abrirSmtpCfg(()=>enviarEmail(licenciaId)); return; }
   const tipo=getTipo(r);
   const archivo=tipo==='tienda'?'tpv-tienda.html':'inventario-fresco.html';
