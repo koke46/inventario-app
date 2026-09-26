@@ -1952,13 +1952,16 @@ window.cargarPedidoQR = function(id, items, total) {
   (items||[]).forEach(x => {
     const nom = x.n || x.nombre || 'Artículo';
     const qty = parseInt(x.q || x.cantidad || 1);
+    const prod = CAT.find(p => p.nombre === nom);
+    const pUnit = prod ? prod.precio : (parseFloat(x.p || x.precio) || 0);
     ticket.push({
-      codigo: 'QR_' + Date.now() + '_' + nom,
+      codigo: prod ? prod.codigo : ('QR_' + Date.now() + '_' + nom),
       nombre: nom,
-      iva: ivaLibre,
-      pUnit: 0,
+      iva: prod ? prod.iva : ivaLibre,
+      familia: prod ? (prod.familia || 'libre') : 'libre',
+      pUnit: pUnit,
       cantidad: qty,
-      importe: 0,
+      importe: pUnit * qty,
       peso: false, dev: false, dto: 0,
     });
   });
