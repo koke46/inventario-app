@@ -2752,7 +2752,7 @@ function abrirQR() {
     return;
   }
   warn.style.display = 'none';
-  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂' }));
+  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
   const menuData = {
     n: config.empresa || '',
@@ -2762,7 +2762,8 @@ function abrirQR() {
       i,
       n: p.nombre,
       pr: parseFloat(p.precio) || 0,
-      f: famIdx[p.familia] ?? -1
+      f: famIdx[p.familia] ?? -1,
+      img: p.foto || null
     }))
   };
   window._qrMenuData = menuData;
@@ -2931,12 +2932,12 @@ function guardarConfig() {
 }
 function autoGuardarMenuJson() {
   if (!window.electronAPI) { warn('✅ Configuración guardada', 2000); return; }
-  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂' }));
+  const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
   const menuData = {
     n: config.empresa || '', t: (config.tel || '').replace(/\D/g,''), f: fams,
     p: CAT.filter(p => p.activo !== false).map((p,i) => ({
-      i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1
+      i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null
     }))
   };
   window.electronAPI.saveMenuJson(menuData)

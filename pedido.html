@@ -24,7 +24,9 @@
 
     #prod-list { padding: 12px 14px 140px; }
     .p-card { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
-    .p-ico  { font-size: 34px; min-width: 46px; text-align: center; line-height: 1; }
+    .p-ico  { font-size: 34px; min-width: 46px; text-align: center; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .p-ico img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+    .f-tab img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 4px; }
     .p-info { flex: 1; min-width: 0; }
     .p-nom  { font-weight: 600; font-size: 15px; line-height: 1.2; }
     .p-prec { color: var(--green); font-weight: 700; font-size: 14px; margin-top: 3px; }
@@ -138,9 +140,10 @@ function showError() {
 }
 
 function renderFams() {
-  document.getElementById('fam-bar').innerHTML = (M.f || []).map((f,i) =>
-    `<button class="f-tab${famSel===i?' on':''}" onclick="selFam(${i})">${f.e||''} ${f.n}</button>`
-  ).join('');
+  document.getElementById('fam-bar').innerHTML = (M.f || []).map((f,i) => {
+    const ico = f.img ? `<img src="${f.img}" alt="">` : (f.e ? f.e + ' ' : '');
+    return `<button class="f-tab${famSel===i?' on':''}" onclick="selFam(${i})">${ico}${f.n}</button>`;
+  }).join('');
 }
 
 function selFam(idx) {
@@ -154,8 +157,9 @@ function selFam(idx) {
   }
   el.innerHTML = prods.map(p => {
     const q = cart[p.i] || 0;
+    const ico = p.img ? `<img src="${p.img}" alt="${p.n}">` : ((M.f && M.f[p.f] && M.f[p.f].img) ? `<img src="${M.f[p.f].img}" alt="">` : ((M.f && M.f[p.f] && M.f[p.f].e) || '📦'));
     return `<div class="p-card">
-      <div class="p-ico">${(M.f && M.f[p.f] && M.f[p.f].e) || '📦'}</div>
+      <div class="p-ico">${ico}</div>
       <div class="p-info">
         <div class="p-nom">${p.n}</div>
         <div class="p-prec">${fmt(p.pr)}</div>
