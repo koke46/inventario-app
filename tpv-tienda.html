@@ -1947,14 +1947,15 @@ function abrirCobro() {
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
 
 window.cargarPedidoQR = function(id, items, total) {
+  const tot = parseFloat(total) || 0;
   ticket.length = 0;
   ticket.push({
     codigo: 'QR_' + id,
     nombre: 'Pedido QR · ' + (items||[]).map(x=>`${x.q||x.cantidad||1}× ${x.n||x.nombre||'Artículo'}`).join(', '),
     iva: ivaLibre,
-    pUnit: total || 0,
+    pUnit: tot,
     cantidad: 1,
-    importe: total || 0,
+    importe: tot,
     peso: false, dev: false, dto: 0,
   });
   selIdx = 0;
