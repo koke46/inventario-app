@@ -2755,9 +2755,11 @@ function abrirQR() {
   const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
   const ingById = Object.fromEntries(INGREDIENTES.map(it => [it.id, it]));
+  const licId = new URLSearchParams(location.search).get('lic') || null;
   const menuData = {
     n: config.empresa || '',
     t: (config.tel || '').replace(/\D/g,''),
+    ...(licId ? { lic: licId } : {}),
     f: fams,
     p: CAT.filter(p => p.activo !== false).map((p,i) => {
       const prodIngIds = new Set([...(p.ings||[]), ...(p.sals||[])]);
@@ -2938,8 +2940,9 @@ function autoGuardarMenuJson() {
   const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
   const ingById2 = Object.fromEntries(INGREDIENTES.map(it => [it.id, it]));
+  const licId2 = new URLSearchParams(location.search).get('lic') || null;
   const menuData = {
-    n: config.empresa || '', t: (config.tel || '').replace(/\D/g,''), f: fams,
+    n: config.empresa || '', t: (config.tel || '').replace(/\D/g,''), ...(licId2 ? { lic: licId2 } : {}), f: fams,
     p: CAT.filter(p => p.activo !== false).map((p,i) => {
       const prodIngIds = new Set([...(p.ings||[]), ...(p.sals||[])]);
       const mods = (p.ings?.length || p.sals?.length) ? {

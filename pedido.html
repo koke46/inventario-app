@@ -62,6 +62,12 @@
     #confirm-box p { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
     #btn-nuevo { padding: 14px 32px; background: var(--green); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
+    #blocked-box { display: none; position: fixed; inset: 0; background: #fff; z-index: 200; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
+    #blocked-box.show { display: flex; }
+    #blocked-box .b-ico { font-size: 72px; margin-bottom: 20px; }
+    #blocked-box h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; color: #dc2626; }
+    #blocked-box p { font-size: 15px; color: var(--muted); }
+
     /* Panel de personalización */
     #mod-ov { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
     #mod-ov.open { display: flex; }
@@ -109,6 +115,12 @@
   <p>Pide al establecimiento el código QR para ver la carta y hacer tu pedido.</p>
 </div>
 
+<div id="blocked-box">
+  <div class="b-ico">🔒</div>
+  <h2>Servicio no disponible</h2>
+  <p>Este servicio está temporalmente desactivado.<br>Consulta con el establecimiento.</p>
+</div>
+
 <div id="confirm-box">
   <div class="c-ico">✅</div>
   <h2>¡Pedido enviado!</h2>
@@ -151,8 +163,23 @@ function init() {
     .catch(() => showError());
 }
 
-function start() {
+async function checkLic() {
+  if (!M.lic) return true;
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/licencias?licencia_id=eq.' + encodeURIComponent(M.lic) + '&select=activa', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!r.ok) return true;
+    const data = await r.json();
+    if (!data.length) return true;
+    return data[0].activa === true;
+  } catch(e) { return true; }
+}
+
+async function start() {
   if (!M || !M.p) { showError(); return; }
+  const activa = await checkLic();
+  if (!activa) { document.getElementById('blocked-box').classList.add('show'); return; }
   document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
   document.title = M.n ? M.n + ' — Pedido' : 'Hacer pedido';
   renderFams();
