@@ -313,7 +313,11 @@ tr:hover td{background:var(--surface2)}
       <div class="modal-title">Nuevo cliente — Nombre del comercio</div>
       <div class="form-group">
         <label class="form-label">Nombre del comercio</label>
-        <input class="form-input" id="w-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="new-password" onkeydown="if(event.key==='Enter')wizardGuardar()">
+        <input class="form-input" id="w-cliente" placeholder="Ej: Bar Pepe · Juan García" autocomplete="new-password" onkeydown="if(event.key==='Enter')document.getElementById('w-email').focus()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email del cliente</label>
+        <input class="form-input" id="w-email" type="email" placeholder="cliente@ejemplo.com" autocomplete="off" onkeydown="if(event.key==='Enter')wizardGuardar()">
       </div>
       <details style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px">
         <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;user-select:none">Opciones avanzadas</summary>
@@ -385,6 +389,10 @@ tr:hover td{background:var(--surface2)}
         <input class="form-input" id="m-expiracion" type="date" placeholder="AAAA-MM-DD" style="flex:1">
         <button type="button" class="btn btn-ghost btn-sm" onclick="ponerDosMeses()" title="Establecer 2 meses gratis desde hoy" style="white-space:nowrap;flex-shrink:0">📅 2 meses gratis</button>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email del cliente</label>
+      <input class="form-input" id="m-email" type="email" placeholder="cliente@ejemplo.com" autocomplete="off">
     </div>
     <div class="form-group">
       <label class="form-label">Notas</label>
@@ -521,6 +529,17 @@ function getTipo(row){
 }
 function getNotas(row){
   return (row.notas||'').replace(/\[bar\]|\[tienda\]/gi,'').trim();
+}
+function _extractEmail(notas){
+  const m=(notas||'').match(/Email:\s*(\S+)/i);
+  return m?m[1]:'';
+}
+function _stripEmail(notas){
+  return (notas||'').replace(/Email:\s*\S+\s*/i,'').replace(/\s+/g,' ').trim();
+}
+function _buildNotas(email,notas){
+  const base=_stripEmail(notas);
+  return email?('Email: '+email+(base?' '+base:'')):base;
 }
 
 // ── STATS ──
@@ -671,6 +690,7 @@ function abrirModalNuevo(){
   document.getElementById('w-usuario').value='admin';
   document.getElementById('w-contrasena').value=genPass();
   document.getElementById('w-cliente').value='';
+  document.getElementById('w-email').value='';
   document.getElementById('w-notas').value='';
   document.getElementById('w-expiracion').value='';
   wizardGenerarId();
@@ -719,6 +739,7 @@ async function wizardGuardar(){
   const usuario=(document.getElementById('w-usuario').value||'admin').trim();
   const contrasena=(document.getElementById('w-contrasena').value||'').trim();
   const notas=(document.getElementById('w-notas').value||'').trim();
+  const emailWiz=(document.getElementById('w-email')?.value||'').trim();
   const fechaExp=(document.getElementById('w-expiracion')?.value)||null;
 
   if(!cliente){toast('⚠️ Escribe el nombre del comercio',true);return;}
@@ -731,7 +752,8 @@ async function wizardGuardar(){
   const licenciaIdUp=licenciaId.toUpperCase();
   const idDetectaTipo=licenciaIdUp.startsWith('BAR')||licenciaIdUp.startsWith('TIENDA');
   const tipoPrefijo=tipo==='bar'?'[bar] ':'[tienda] ';
-  const notasFinal=idDetectaTipo?notas:tipoPrefijo+notas;
+  const notasConEmailWiz=_buildNotas(emailWiz,notas);
+  const notasFinal=idDetectaTipo?notasConEmailWiz:tipoPrefijo+notasConEmailWiz;
 
   try{
     await sbFetch(SB_URL+'/rest/v1/sincronizaciones?licencia_id=eq.'+encodeURIComponent(licenciaId),
@@ -763,7 +785,9 @@ function abrirModalEditar(licenciaId){
   document.getElementById('m-licencia-id').style.opacity='.5';
   document.getElementById('m-usuario').value=r.usuario||'admin';
   document.getElementById('m-contrasena').value=r.contrasena||'';
-  document.getElementById('m-notas').value=getNotas(r);
+  const _notas=getNotas(r);
+  document.getElementById('m-email').value=_extractEmail(_notas);
+  document.getElementById('m-notas').value=_stripEmail(_notas);
   const mExp2=document.getElementById('m-expiracion');if(mExp2) mExp2.value=r.fecha_expiracion||'';
   _modalActiva=r.activa;
   actualizarToggleModal();
@@ -806,6 +830,7 @@ async function guardarCliente(){
   const usuario=(document.getElementById('m-usuario').value||'admin').trim();
   const contrasena=(document.getElementById('m-contrasena').value||'').trim();
   const notasRaw=(document.getElementById('m-notas').value||'').trim();
+  const emailVal=(document.getElementById('m-email').value||'').trim();
   const mFechaExp=(document.getElementById('m-expiracion')?.value)||null;
   const editando=!!document.getElementById('m-id').value;
 
@@ -816,7 +841,8 @@ async function guardarCliente(){
   const tipoPrefijo=tipo==='bar'?'[bar] ':tipo==='tienda'?'[tienda] ':'';
   const licenciaIdUp=licenciaId.toUpperCase();
   const idDetectaTipo=licenciaIdUp.startsWith('BAR')||licenciaIdUp.startsWith('TIENDA');
-  const notas=idDetectaTipo?notasRaw:tipoPrefijo+notasRaw;
+  const notasConEmail=_buildNotas(emailVal,notasRaw);
+  const notas=idDetectaTipo?notasConEmail:tipoPrefijo+notasConEmail;
 
   try{
     if(editando){
@@ -902,11 +928,14 @@ async function enviarEmail(licenciaId){
   const base=await _getAppBase();
   if(!base) return;
   const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
-  const emailMatch=r.notas&&r.notas.match(/Email:\s*(\S+)/);
-  const toEmail=emailMatch?emailMatch[1]:'';
+  const toEmail=_extractEmail(r.notas||'');
+  if(!toEmail){
+    toast('⚠️ Este cliente no tiene email. Edítalo y añade su email antes de enviar.',true);
+    return;
+  }
   const asunto=encodeURIComponent('Tu acceso a El Miarma');
   const cuerpo=encodeURIComponent(`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a El Miarma.\n\nApp: ${url}\nUsuario: ${r.usuario||'—'}\nContraseña: ${r.contrasena||'—'}\n\nTienes 2 meses de prueba gratuita. Cualquier duda escríbeme.\n\nUn saludo`);
-  window.location.href=`mailto:${toEmail}?subject=${asunto}&body=${cuerpo}`;
+  window.open(`mailto:${toEmail}?subject=${asunto}&body=${cuerpo}`);
 }
 
 // ── SOPORTE ──
