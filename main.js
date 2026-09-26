@@ -54,13 +54,19 @@ function abrirDesdeProtocolo(url) {
     if (lic) query.lic = lic;
     if (u)   query.u   = u;
     if (p)   query.p   = p;
-    clientWin.loadFile(file, Object.keys(query).length ? { query } : {});
+    clientWin.loadFile(path.join(__dirname, file), Object.keys(query).length ? { query } : {});
     applyWindowOpenHandler(clientWin);
   } catch (e) {}
 }
 
 // Registrar el protocolo elmiarma://
-app.setAsDefaultProtocolClient('elmiarma');
+// En desarrollo (electron .) hay que incluir la ruta de la app como argumento extra,
+// si no Windows lanza "electron.exe elmiarma://..." y lo toma como ruta de la app
+if (process.defaultApp) {
+  app.setAsDefaultProtocolClient('elmiarma', process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient('elmiarma');
+}
 
 // Si el usuario lanza desde Chrome con elmiarma:// y la app ya está abierta
 app.on('second-instance', (event, commandLine) => {
