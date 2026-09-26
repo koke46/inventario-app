@@ -3361,8 +3361,11 @@ function renderProdsList() {
     const sc = p.stock === 0 ? 'cero' : p.stock <= minS ? 'bajo' : '';
     const stkTxt = p.stock < 0 ? '∞' : String(p.stock);
     const famNom = FAMILIAS.find(f => f.id === p.familia)?.nombre || p.familia;
+    const thumb = p.foto
+      ? `<img src="${p.foto}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0">`
+      : `<span class="prod-row-emo">${p.emoji||'📦'}</span>`;
     return `<div class="prod-row">
-      <span class="prod-row-emo">${p.emoji||'📦'}</span>
+      ${thumb}
       <div style="flex:1;min-width:0">
         <div class="prod-row-nom">${p.nombre}</div>
         <div class="prod-row-sub">${famNom} · ${fmtE(p.precio)} · IVA ${p.iva}%${p.peso?' · kg':''}</div>
