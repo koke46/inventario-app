@@ -3709,6 +3709,7 @@ document.addEventListener('keydown',e=>{
 let _cuentas=[{id:'c1',nombre:'Cuenta 1',items:[]}];
 let _cuentaIdx=0;
 let pedidoActual=_cuentas[0];
+let _cobrandoComandaId=null; // ID de la comanda QR que se está cobrando
 let catActiva='todos';
 let _catAbierta=null;
 
@@ -4594,7 +4595,7 @@ function _asignarTodos(){
   pedidoActual.items.forEach((_,i)=>{_itemPersonas[i]=(i%np)+1;});
   _renderModalCobro();
 }
-function cerrarModalCobro(){document.getElementById('modal-cobro').classList.remove('open');}
+function cerrarModalCobro(){document.getElementById('modal-cobro').classList.remove('open');_cobrandoComandaId=null;}
 function _cobroExacto(){_efectivoEntregado=calcTotal();confirmarCobro('efectivo');}
 function abrirPrecioLibre(){
   document.getElementById('modal-precio-libre').classList.add('open');
@@ -4867,6 +4868,12 @@ function confirmarCobro(metodoPago){
   const btnReim=document.getElementById('btn-reimprimir');if(btnReim)btnReim.style.display='';
   if((metodoPago==='efectivo'||metodoPago==='mixto')&&_btChar) abrirCajonBT();
   setTimeout(_checkStockBajo,800);
+  // Si veníamos de una comanda QR, eliminarla (ya está cobrada con la nueva)
+  if(_cobrandoComandaId){
+    comandas=comandas.filter(c=>c.id!==_cobrandoComandaId);
+    _cobrandoComandaId=null;
+    save();renderComandas();updateSidebarBadges();
+  }
 }
 function enviarACocina(){
   if(!pedidoActual.items.length){toast('⚠️ Añade productos al pedido');return;}
@@ -6939,6 +6946,7 @@ function _ckCard(c){
   if(c.estado==='cocina')    btn=`<div class="ck-actions" style="display:flex;gap:6px;flex-wrap:wrap">${siguienteBtn}<button class="ck-btn ck-btn-aceptar" style="flex:1" onclick="ckAceptar('${esc(c.id)}')">🍳 Aceptar — en cocina</button>${moverBtn}</div>`;
   if(c.estado==='en_cocina') btn=`<div class="ck-actions" style="display:flex;gap:6px;flex-wrap:wrap">${siguienteBtn}<button class="ck-btn ck-btn-listo" style="flex:1" onclick="ckListo('${esc(c.id)}')">✅ Listo para servir</button>${moverBtn}</div>`;
   if(c.estado==='listo')     btn=`<div class="ck-actions" style="display:flex;gap:6px">${siguienteBtn}<button class="ck-btn ck-btn-servido" style="flex:1" onclick="ckServido('${esc(c.id)}')">🍽️ Servido a la mesa</button>${moverBtn}</div>`;
+  if(c.estado==='servido')   btn=`<div class="ck-actions" style="display:flex;gap:6px"><button class="ck-btn" style="flex:1;background:#10B981;color:#fff" onclick="cobrarComandaQR('${esc(c.id)}')">💰 Cobrar pedido</button></div>`;
   // Barra de progreso: 0-8min verde, 8-15min ámbar, >15min rojo (cap en 30 min)
   const pct=Math.min(100,Math.round(mins/30*100));
   const barCls=urgente?'urgent':pronto?'warn':'ok';
@@ -6999,6 +7007,28 @@ function ckServido(id){
   toast('🍽️ "'+c.nombre+'" — servido a la mesa');
 }
 function marcarListoCocina(id){ckListo(id);}
+function cobrarComandaQR(id){
+  const c=comandas.find(x=>x.id===id);if(!c) return;
+  // Cargar artículos de la comanda en el pedido activo
+  pedidoActual.items=c.items.map(it=>({
+    productoId:it.productoId||'',
+    nombre:it.nombre,
+    precio:it.precio,
+    cantidad:it.cantidad,
+    emoji:it.emoji||'📦',
+    imagen:it.imagen||null,
+  }));
+  // Seleccionar la mesa de la comanda
+  const sel=document.getElementById('ped-mesa-sel');
+  if(sel){
+    const opt=[...sel.options].find(o=>o.value===c.nombre);
+    if(opt) sel.value=c.nombre;
+  }
+  _cobrandoComandaId=id;
+  showPage('pos');
+  renderPedido();
+  abrirModalCobro();
+}
 function ckPantallaCompleta(){
   const el=document.getElementById('page-cocina');
   if(!document.fullscreenElement) el.requestFullscreen?.();
