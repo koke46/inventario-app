@@ -671,6 +671,8 @@ body {
 #ticket-choice-box .tc-btns button { flex:1;padding:18px 8px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font); }
 .tc-con { background:linear-gradient(to bottom,#3b82f6,#1d4ed8);color:#fff; }
 .tc-sin { background:linear-gradient(to bottom,#22c55e,#15803d);color:#fff; }
+.tc-con:focus,.tc-sin:focus { outline:3px solid #fff;outline-offset:3px; }
+.tc-con:active,.tc-sin:active { filter:brightness(.85); }
 #tick-sheet { background:#fff;border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
 .tick-center { text-align:center; }
 .tick-hr { border:none;border-top:1px dashed #999;margin:6px 0; }
@@ -1072,8 +1074,8 @@ body {
   <div id="ticket-choice-box">
     <div class="tc-title">¿Desea ticket?</div>
     <div class="tc-btns">
-      <button class="tc-con" onclick="conTicket()">🖨️ Con ticket</button>
-      <button class="tc-sin" onclick="sinTicket()">✅ Sin ticket</button>
+      <button id="tc-btn-con" class="tc-con" onclick="conTicket()">🖨️ Con ticket</button>
+      <button id="tc-btn-sin" class="tc-sin" onclick="sinTicket()">✅ Sin ticket</button>
     </div>
   </div>
 </div>
@@ -1949,6 +1951,7 @@ function confirmar() {
   updStatus();
   buildTicketHtml(ventaGuardada);
   document.getElementById('ov-ticket-choice').classList.add('open');
+  setTimeout(() => document.getElementById('tc-btn-sin').focus(), 60);
   if (cambioEf > 0.005) mostrarCambioFinal(cambioEf);
 }
 
@@ -3039,6 +3042,12 @@ document.addEventListener('keydown', e => {
   const tag = document.activeElement?.tagName;
   const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
   const modalOpen = document.querySelector('.ov.open, #ov.open, [id^="ov-"].open');
+
+  if (document.getElementById('ov-ticket-choice').classList.contains('open')) {
+    if (e.key === 't' || e.key === 'T') { e.preventDefault(); conTicket(); return; }
+    if (e.key === 'n' || e.key === 'N' || e.key === 'Escape') { e.preventDefault(); sinTicket(); return; }
+    return;
+  }
 
   if (e.key === 'Escape') {
     const open = document.querySelector('[id^="ov-"].open, #ov.open');
