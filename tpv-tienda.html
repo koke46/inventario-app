@@ -1945,6 +1945,23 @@ function abrirCobro() {
   setTimeout(() => document.getElementById('ef-in').focus(), 80);
 }
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
+
+window.cargarPedidoQR = function(id, items, total) {
+  ticket.length = 0;
+  ticket.push({
+    codigo: 'QR_' + id,
+    nombre: 'Pedido QR · ' + (items||[]).map(x=>`${x.q||x.cantidad||1}× ${x.n||x.nombre||'Artículo'}`).join(', '),
+    iva: ivaLibre,
+    pUnit: total || 0,
+    cantidad: 1,
+    importe: total || 0,
+    peso: false, dev: false, dto: 0,
+  });
+  selIdx = 0;
+  renderTicket();
+  if (typeof cerrarPedidos === 'function') cerrarPedidos();
+  abrirCobro();
+};
 function setTab(t) {
   payMode = t;
   ['ef','tj','biz','mix','val','fiad','tgt','div'].forEach(x => {
@@ -3968,8 +3985,10 @@ function renderPedidos() {
     const nota  = p.nota ? `<div class="pedido-nota">📝 ${p.nota}</div>` : '';
     const btns  = p.estado === 'pendiente'
       ? `<button class="pedido-btn" style="background:#b45309;color:#fff" onclick="cambiarEstado('${p.id}','preparando')">🍳 Preparando</button>
-         <button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo</button>`
-      : `<button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo / Entregado</button>`;
+         <button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo</button>
+         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">💰 Cobrar</button>`
+      : `<button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo / Entregado</button>
+         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">💰 Cobrar</button>`;
     return `<div class="pedido-card ${p.estado}" id="pc-${p.id}">
       <div class="pedido-hora">🕐 ${hora} · ${p.estado==='preparando'?'🍳 Preparando':'🔔 Nuevo'}</div>
       <div class="pedido-items">${items}</div>${nota}
@@ -4038,6 +4057,17 @@ window.cambiarEstado = async function(id, estado) {
     else { const p = pedidos.find(p => p.id === id); if (p) p.estado = estado; }
     renderPedidos(); actualizarBadge();
   } catch(e) {}
+};
+
+window.cobrarPedidoQR = async function(id) {
+  const p = pedidos.find(x => x.id === id);
+  if (!p) return;
+  window.cargarPedidoQR(id, p.items, p.total);
+  try {
+    await fetch(SB + '/rest/v1/pedidos?id=eq.' + id, { method:'PATCH', headers:HDR, body: JSON.stringify({estado:'cobrado'}) });
+  } catch(e) {}
+  pedidos = pedidos.filter(x => x.id !== id);
+  renderPedidos(); actualizarBadge();
 };
 
 window.abrirPedidos = function() {
