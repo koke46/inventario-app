@@ -2754,17 +2754,20 @@ function abrirQR() {
   warn.style.display = 'none';
   const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
+  const ingById = Object.fromEntries(INGREDIENTES.map(it => [it.id, it]));
   const menuData = {
     n: config.empresa || '',
     t: (config.tel || '').replace(/\D/g,''),
     f: fams,
-    p: CAT.filter(p => p.activo !== false).map((p,i) => ({
-      i,
-      n: p.nombre,
-      pr: parseFloat(p.precio) || 0,
-      f: famIdx[p.familia] ?? -1,
-      img: p.foto || null
-    }))
+    p: CAT.filter(p => p.activo !== false).map((p,i) => {
+      const prodIngIds = new Set([...(p.ings||[]), ...(p.sals||[])]);
+      const mods = (p.ings?.length || p.sals?.length) ? {
+        ings: (p.ings||[]).map(id => ingById[id]).filter(Boolean).map(it => ({ n: it.nombre })),
+        sals: (p.sals||[]).map(id => ingById[id]).filter(Boolean).map(it => ({ n: it.nombre })),
+        ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
+      } : null;
+      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(mods ? { mods } : {}) };
+    })
   };
   window._qrMenuData = menuData;
   const url = urlBase.replace(/\/$/, '');
@@ -2934,11 +2937,18 @@ function autoGuardarMenuJson() {
   if (!window.electronAPI) { warn('✅ Configuración guardada', 2000); return; }
   const fams = FAMILIAS.map(f => ({ n: f.nombre, e: f.emoji || '🗂', img: f.foto || null }));
   const famIdx = Object.fromEntries(FAMILIAS.map((f,i) => [f.id, i]));
+  const ingById2 = Object.fromEntries(INGREDIENTES.map(it => [it.id, it]));
   const menuData = {
     n: config.empresa || '', t: (config.tel || '').replace(/\D/g,''), f: fams,
-    p: CAT.filter(p => p.activo !== false).map((p,i) => ({
-      i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null
-    }))
+    p: CAT.filter(p => p.activo !== false).map((p,i) => {
+      const prodIngIds = new Set([...(p.ings||[]), ...(p.sals||[])]);
+      const mods = (p.ings?.length || p.sals?.length) ? {
+        ings: (p.ings||[]).map(id => ingById2[id]).filter(Boolean).map(it => ({ n: it.nombre })),
+        sals: (p.sals||[]).map(id => ingById2[id]).filter(Boolean).map(it => ({ n: it.nombre })),
+        ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
+      } : null;
+      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(mods ? { mods } : {}) };
+    })
   };
   window.electronAPI.saveMenuJson(menuData)
     .then(() => warn('✅ Configuración guardada · menu.json actualizado en netlify-deploy', 3500))

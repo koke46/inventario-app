@@ -30,6 +30,7 @@
     .p-info { flex: 1; min-width: 0; }
     .p-nom  { font-weight: 600; font-size: 15px; line-height: 1.2; }
     .p-prec { color: var(--green); font-weight: 700; font-size: 14px; margin-top: 3px; }
+    .p-mods-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
     .p-qty  { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .q-btn  { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); background: transparent; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); line-height: 1; font-family: inherit; }
     .q-btn.plus { background: var(--green); border-color: var(--green); color: #fff; }
@@ -60,6 +61,22 @@
     #confirm-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; color: var(--green); }
     #confirm-box p { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
     #btn-nuevo { padding: 14px 32px; background: var(--green); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* Panel de personalización */
+    #mod-ov { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
+    #mod-ov.open { display: flex; }
+    #mod-panel { background: #fff; border-radius: 18px 18px 0 0; width: 100%; max-height: 82vh; overflow-y: auto; padding: 20px 16px 28px; }
+    #mod-panel h2 { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .mod-sec { margin-bottom: 16px; }
+    .mod-sec h4 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .mod-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+    .mod-btn { padding: 8px 14px; border-radius: 20px; border: 2px solid; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .1s; }
+    .mod-btn.on      { background: #166534; border-color: #166534; color: #fff; }
+    .mod-btn.off     { background: #fee2e2; border-color: #ef4444; color: #991b1b; text-decoration: line-through; }
+    .mod-btn.ext-off { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+    .mod-btn.ext-on  { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+    #mod-add-btn { width: 100%; padding: 15px; background: var(--green); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; margin-top: 6px; }
+    #mod-add-btn:active { background: var(--green2); }
   </style>
 </head>
 <body>
@@ -99,6 +116,15 @@
   <button id="btn-nuevo" onclick="nuevoPedido()">Nuevo pedido</button>
 </div>
 
+<!-- Panel personalización bocadillo / producto con ingredientes -->
+<div id="mod-ov" onclick="closeModOv(event)">
+  <div id="mod-panel">
+    <h2 id="mod-title"></h2>
+    <div id="mod-secs"></div>
+    <button id="mod-add-btn" onclick="confirmarMod()">✅ Añadir</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SB_URL = 'https://aqbdlvmfbdagypmwxhca.supabase.co';
@@ -107,6 +133,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let M = null;
 let cart = {};
+let cartMods = [];
 let famSel = null;
 
 function fmt(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
@@ -126,7 +153,7 @@ function init() {
 
 function start() {
   if (!M || !M.p) { showError(); return; }
-document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
+  document.getElementById('h-nom').textContent = M.n || 'Hacer pedido';
   document.title = M.n ? M.n + ' — Pedido' : 'Hacer pedido';
   renderFams();
   if (M.f && M.f.length) selFam(0);
@@ -156,37 +183,60 @@ function selFam(idx) {
     return;
   }
   el.innerHTML = prods.map(p => {
-    const q = cart[p.i] || 0;
+    const q = (cart[p.i] || 0) + cartMods.filter(m => m.pid === p.i).length;
     const ico = p.img ? `<img src="${p.img}" alt="${p.n}">` : ((M.f && M.f[p.f] && M.f[p.f].img) ? `<img src="${M.f[p.f].img}" alt="">` : ((M.f && M.f[p.f] && M.f[p.f].e) || '📦'));
+    const hint = p.mods ? `<div class="p-mods-hint">✏️ Personalizable</div>` : '';
     return `<div class="p-card">
       <div class="p-ico">${ico}</div>
       <div class="p-info">
         <div class="p-nom">${p.n}</div>
         <div class="p-prec">${fmt(p.pr)}</div>
+        ${hint}
       </div>
       <div class="p-qty">
         <button class="q-btn${q>0?' minus-on':''}" onclick="chgQty('${p.i}',-1)">−</button>
         <span class="q-num" id="qn-${p.i}">${q}</span>
-        <button class="q-btn plus" onclick="chgQty('${p.i}',1)">+</button>
+        <button class="q-btn plus" onclick="tapPlus('${p.i}')">+</button>
       </div>
     </div>`;
   }).join('');
 }
 
+function tapPlus(id) {
+  const p = (M.p||[]).find(x => String(x.i) === id);
+  if (!p) return;
+  if (p.mods) { openMod(p); return; }
+  chgQty(id, 1);
+}
+
 function chgQty(id, d) {
+  const p = (M.p||[]).find(x => String(x.i) === id);
+  if (p && p.mods && d < 0) {
+    const idx = cartMods.map(m => m.pid).lastIndexOf(p.i);
+    if (idx >= 0) cartMods.splice(idx, 1);
+    _updateQtyDisplay(id);
+    updCart();
+    return;
+  }
   cart[id] = Math.max(0, (cart[id] || 0) + d);
-  const el = document.getElementById('qn-' + id);
-  if (el) el.textContent = cart[id];
-  const btn = el ? el.previousElementSibling : null;
-  if (btn) btn.className = 'q-btn' + (cart[id] > 0 ? ' minus-on' : '');
+  _updateQtyDisplay(id);
   updCart();
+}
+
+function _updateQtyDisplay(id) {
+  const p = (M.p||[]).find(x => String(x.i) === id);
+  const total = (cart[id]||0) + (p ? cartMods.filter(m => m.pid === p.i).length : 0);
+  const el = document.getElementById('qn-' + id);
+  if (el) el.textContent = total;
+  const btn = el ? el.previousElementSibling : null;
+  if (btn) btn.className = 'q-btn' + (total > 0 ? ' minus-on' : '');
 }
 
 function updCart() {
   const items = Object.entries(cart).filter(([,q]) => q > 0);
   const empty = document.getElementById('cart-empty');
   const open  = document.getElementById('cart-open');
-  if (!items.length) { empty.style.display = ''; open.classList.remove('show'); return; }
+  if (!items.length && !cartMods.length) { empty.style.display = ''; open.classList.remove('show'); return; }
   empty.style.display = 'none';
   open.classList.add('show');
   let totQ = 0, totP = 0;
@@ -194,13 +244,87 @@ function updCart() {
     const p = (M.p || []).find(x => String(x.i) === id);
     if (p) { totQ += q; totP += p.pr * q; }
   });
+  cartMods.forEach(m => { totQ += 1; totP += m.pr; });
   document.getElementById('cart-n').textContent = totQ + ' artículo' + (totQ > 1 ? 's' : '');
   document.getElementById('cart-tot').textContent = fmt(totP);
 }
 
+/* ── Personalización ── */
+let _modProd = null;
+let _modState = {};
+
+function openMod(p) {
+  _modProd = p;
+  _modState = {};
+  (p.mods.ings||[]).forEach((_,i) => _modState['i'+i] = true);
+  (p.mods.sals||[]).forEach((_,i) => _modState['s'+i] = true);
+  (p.mods.ext||[]).forEach((_,i) => _modState['e'+i] = false);
+  document.getElementById('mod-title').textContent = p.n;
+  renderModSecs();
+  document.getElementById('mod-ov').classList.add('open');
+}
+
+function renderModSecs() {
+  const p = _modProd;
+  let html = '';
+  if (p.mods.ings && p.mods.ings.length) {
+    html += `<div class="mod-sec"><h4>🥬 Ingredientes</h4><div class="mod-grid">`;
+    p.mods.ings.forEach((it,i) => {
+      const on = _modState['i'+i];
+      html += `<button class="mod-btn ${on?'on':'off'}" onclick="toggleMod('i${i}')">${it.n}</button>`;
+    });
+    html += `</div></div>`;
+  }
+  if (p.mods.sals && p.mods.sals.length) {
+    html += `<div class="mod-sec"><h4>🧴 Salsas</h4><div class="mod-grid">`;
+    p.mods.sals.forEach((it,i) => {
+      const on = _modState['s'+i];
+      html += `<button class="mod-btn ${on?'on':'off'}" onclick="toggleMod('s${i}')">${it.n}</button>`;
+    });
+    html += `</div></div>`;
+  }
+  if (p.mods.ext && p.mods.ext.length) {
+    html += `<div class="mod-sec"><h4>➕ Extras</h4><div class="mod-grid">`;
+    p.mods.ext.forEach((it,i) => {
+      const on = _modState['e'+i];
+      html += `<button class="mod-btn ${on?'ext-on':'ext-off'}" onclick="toggleMod('e${i}')">${it.n}${it.pr ? ' +'+fmt(it.pr) : ''}</button>`;
+    });
+    html += `</div></div>`;
+  }
+  document.getElementById('mod-secs').innerHTML = html;
+  let extraPr = 0;
+  (p.mods.ext||[]).forEach((it,i) => { if(_modState['e'+i]) extraPr += it.pr||0; });
+  document.getElementById('mod-add-btn').textContent = `✅ Añadir ${fmt(p.pr + extraPr)}`;
+}
+
+function toggleMod(key) {
+  _modState[key] = !_modState[key];
+  renderModSecs();
+}
+
+function closeModOv(e) {
+  if (e.target === document.getElementById('mod-ov')) {
+    document.getElementById('mod-ov').classList.remove('open');
+  }
+}
+
+function confirmarMod() {
+  const p = _modProd;
+  const sin = [], extra = [];
+  let extraPr = 0;
+  (p.mods.ings||[]).forEach((it,i) => { if(!_modState['i'+i]) sin.push(it.n); });
+  (p.mods.sals||[]).forEach((it,i) => { if(!_modState['s'+i]) sin.push(it.n); });
+  (p.mods.ext||[]).forEach((it,i) => { if(_modState['e'+i]) { extra.push(it.n); extraPr += it.pr||0; } });
+  const pr = parseFloat((p.pr + extraPr).toFixed(2));
+  cartMods.push({ pid: p.i, n: p.n, pr, sin, extra, sub: pr });
+  document.getElementById('mod-ov').classList.remove('open');
+  _updateQtyDisplay(String(p.i));
+  updCart();
+}
+
 async function enviarPedido() {
   const entries = Object.entries(cart).filter(([,q]) => q > 0);
-  if (!entries.length) return;
+  if (!entries.length && !cartMods.length) return;
   const btn = document.getElementById('btn-send');
   btn.disabled = true;
   btn.textContent = 'Enviando…';
@@ -209,6 +333,14 @@ async function enviarPedido() {
     const p = (M.p || []).find(x => String(x.i) === id);
     return p ? { n: p.n, q, pr: p.pr, sub: +(p.pr * q).toFixed(2) } : null;
   }).filter(Boolean);
+
+  cartMods.forEach(m => {
+    const notas = [];
+    if (m.sin.length)   notas.push('sin: ' + m.sin.join(', '));
+    if (m.extra.length) notas.push('extra: ' + m.extra.join(', '));
+    const suf = notas.length ? ' (' + notas.join(' | ') + ')' : '';
+    items.push({ n: m.n + suf, q: 1, pr: m.pr, sub: m.sub });
+  });
 
   const total = +items.reduce((s, x) => s + x.sub, 0).toFixed(2);
   const nota  = document.getElementById('nota').value.trim();
@@ -233,6 +365,7 @@ async function enviarPedido() {
 
 function nuevoPedido() {
   cart = {};
+  cartMods = [];
   document.getElementById('nota').value = '';
   const btn = document.getElementById('btn-send');
   btn.disabled = false;
