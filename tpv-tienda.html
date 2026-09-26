@@ -1947,21 +1947,26 @@ function abrirCobro() {
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
 
 window.cargarPedidoQR = function(id, items, total) {
-  const tot = parseFloat(total) || 0;
-  ticket.length = 0;
-  ticket.push({
-    codigo: 'QR_' + id,
-    nombre: 'Pedido QR · ' + (items||[]).map(x=>`${x.q||x.cantidad||1}× ${x.n||x.nombre||'Artículo'}`).join(', '),
-    iva: ivaLibre,
-    pUnit: tot,
-    cantidad: 1,
-    importe: tot,
-    peso: false, dev: false, dto: 0,
-  });
-  selIdx = 0;
-  renderTicket();
-  if (typeof cerrarPedidos === 'function') cerrarPedidos();
-  abrirCobro();
+  try {
+    const tot = parseFloat(total) || 0;
+    ticket.length = 0;
+    ticket.push({
+      codigo: 'QR_' + id,
+      nombre: 'Pedido QR · ' + (items||[]).map(x=>`${x.q||x.cantidad||1}× ${x.n||x.nombre||'Artículo'}`).join(', '),
+      iva: ivaLibre,
+      pUnit: tot,
+      cantidad: 1,
+      importe: tot,
+      peso: false, dev: false, dto: 0,
+    });
+    selIdx = 0;
+    renderTicket();
+    if (typeof cerrarPedidos === 'function') cerrarPedidos();
+    abrirCobro();
+  } catch(e) {
+    warn('❌ Error cobro QR: ' + e.message, 6000);
+    console.error('cargarPedidoQR error:', e);
+  }
 };
 function setTab(t) {
   payMode = t;
