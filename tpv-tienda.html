@@ -1590,8 +1590,9 @@ function pedirPeso(idx) {
 function confirmarPeso() {
   const kg = parseFloat(document.getElementById('p-in').value.replace(',', '.'));
   if (!kg || kg <= 0) return;
+  const idx = pendPeso;
   cerrarPeso();
-  añadir(pendPeso, kg);
+  añadir(idx, kg);
 }
 function cerrarPeso() {
   document.getElementById('pov').classList.remove('open');
