@@ -4116,6 +4116,15 @@ setInterval(pollPedidos, 4000);
 })();
 </script>
 
+<!-- LICENCIA BLOQUEADA -->
+<div id="ov-bloqueado" style="position:fixed;inset:0;background:#0f172a;z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;text-align:center;">
+    <div style="font-size:52px;line-height:1">🔒</div>
+    <div style="color:#f1f5f9;font-size:22px;font-weight:700;font-family:Inter,sans-serif;">Servicio suspendido</div>
+    <div style="color:#94a3b8;font-size:15px;font-family:Inter,sans-serif;line-height:1.5;">La licencia de este TPV está desactivada.<br>Contacta con El Miarma para reactivarla.</div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="ov-login" style="position:fixed;inset:0;background:#0f172a;z-index:9999;display:none;align-items:center;justify-content:center;">
   <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;">
@@ -4133,7 +4142,9 @@ setInterval(pollPedidos, 4000);
 </div>
 
 <script>
-(function(){
+(async function(){
+  const _SB='https://aqbdlvmfbdagypmwxhca.supabase.co';
+  const _KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
   const params=new URLSearchParams(location.search);
   const u=params.get('u'), p=params.get('p');
   if(u&&p){
@@ -4144,6 +4155,21 @@ setInterval(pollPedidos, 4000);
     }catch(e){}
     const lic=params.get('lic');
     history.replaceState(null,'',location.pathname+(lic?'?lic='+lic:''));
+  }
+  const licId=new URLSearchParams(location.search).get('lic');
+  if(licId){
+    try{
+      const r=await fetch(_SB+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId)+'&select=activa',{
+        headers:{'apikey':_KEY,'Authorization':'Bearer '+_KEY}
+      });
+      if(r.ok){
+        const data=await r.json();
+        if(data.length && data[0].activa===false){
+          document.getElementById('ov-bloqueado').style.display='flex';
+          return;
+        }
+      }
+    }catch(e){}
   }
   const auth=JSON.parse(localStorage.getItem('_miarma_auth')||'null');
   if(auth){
