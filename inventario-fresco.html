@@ -8321,6 +8321,59 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
+<!-- LOGIN -->
+<div id="ov-login" style="position:fixed;inset:0;background:#0f172a;z-index:9999;display:none;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;">
+    <div style="font-size:52px;line-height:1">🍺</div>
+    <div style="color:#f1f5f9;font-size:20px;font-weight:700;font-family:Inter,sans-serif;letter-spacing:-0.3px">El Miarma</div>
+    <input id="login-user" type="text" placeholder="Usuario" autocomplete="username"
+      style="width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid #334155;background:#0f172a;color:#f1f5f9;font-size:16px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;"
+      onfocus="this.style.borderColor='#f59e0b'" onblur="this.style.borderColor='#334155'">
+    <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password"
+      style="width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid #334155;background:#0f172a;color:#f1f5f9;font-size:16px;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;"
+      onfocus="this.style.borderColor='#f59e0b'" onblur="this.style.borderColor='#334155'">
+    <div id="login-err" style="color:#f87171;font-size:13px;font-family:Inter,sans-serif;display:none;align-self:flex-start">Usuario o contraseña incorrectos</div>
+    <button onclick="hacerLogin()" style="width:100%;padding:14px;border-radius:10px;border:none;background:#f59e0b;color:#fff;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px;">Entrar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const params=new URLSearchParams(location.search);
+  const u=params.get('u'), p=params.get('p');
+  if(u&&p){
+    try{
+      const dU=decodeURIComponent(atob(u));
+      const dP=decodeURIComponent(atob(p));
+      localStorage.setItem('_miarma_auth',JSON.stringify({u:dU,p:dP}));
+    }catch(e){}
+    const lic=params.get('lic');
+    history.replaceState(null,'',location.pathname+(lic?'?lic='+lic:''));
+  }
+  const auth=JSON.parse(localStorage.getItem('_miarma_auth')||'null');
+  if(auth){
+    const ov=document.getElementById('ov-login');
+    ov.style.display='flex';
+    setTimeout(()=>document.getElementById('login-user').focus(),120);
+  }
+  document.getElementById('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus();});
+  document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')hacerLogin();});
+})();
+function hacerLogin(){
+  const auth=JSON.parse(localStorage.getItem('_miarma_auth')||'null');
+  const u=document.getElementById('login-user').value;
+  const p=document.getElementById('login-pass').value;
+  if(!auth||(u===auth.u&&p===auth.p)){
+    document.getElementById('ov-login').style.display='none';
+    document.getElementById('login-err').style.display='none';
+    return;
+  }
+  document.getElementById('login-err').style.display='block';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-pass').focus();
+}
+</script>
+
 <!-- ── PIN LOCK SCREEN ── -->
 <div id="pin-lock-screen" class="hidden">
   <div class="pin-lock-card">

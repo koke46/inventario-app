@@ -36,19 +36,25 @@ function applyWindowOpenHandler(browserWin) {
   });
 }
 
-// Abre una ventana de cliente a partir de elmiarma://open?file=...&lic=...
+// Abre una ventana de cliente a partir de elmiarma://open?file=...&lic=...&u=...&p=...
 function abrirDesdeProtocolo(url) {
   try {
     const parsed = new URL(url);
     const file = parsed.searchParams.get('file');
     const lic  = parsed.searchParams.get('lic');
+    const u    = parsed.searchParams.get('u');
+    const p    = parsed.searchParams.get('p');
     if (!file) return;
     const clientWin = new BrowserWindow({
       width: 1280, height: 800, minWidth: 900, minHeight: 600,
       title: 'El Miarma',
       webPreferences: { nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js') }
     });
-    clientWin.loadFile(file, lic ? { query: { lic } } : {});
+    const query = {};
+    if (lic) query.lic = lic;
+    if (u)   query.u   = u;
+    if (p)   query.p   = p;
+    clientWin.loadFile(file, Object.keys(query).length ? { query } : {});
     applyWindowOpenHandler(clientWin);
   } catch (e) {}
 }
