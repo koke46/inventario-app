@@ -156,7 +156,6 @@ tr:hover td{background:var(--surface2)}
   <div class="topbar-right">
     <button class="btn btn-ghost btn-sm" onclick="cargar()" id="btn-refresh">🔄 Actualizar</button>
     <button class="btn btn-primary btn-sm" onclick="abrirModalNuevo()">➕ Nuevo cliente</button>
-    <button class="btn btn-ghost btn-sm" onclick="abrirSmtpCfg()" title="Configurar correo saliente">✉️ Correo</button>
     <button class="btn btn-ghost btn-sm" onclick="cambiarUrlBase()" title="Cambiar URL pública de la app">🔗 URL app</button>
     <button class="btn btn-ghost btn-sm" onclick="cerrarSesionPanel()" title="Cerrar sesión" style="color:var(--muted)">🔒 Salir</button>
   </div>
@@ -344,40 +343,6 @@ tr:hover td{background:var(--surface2)}
         <button class="btn btn-ghost" onclick="wizardAtras()">← Atrás</button>
         <button class="btn btn-primary" id="w-btn-crear" onclick="wizardGuardar()">🚀 Crear y abrir app</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONFIGURAR CORREO SALIENTE -->
-<div class="overlay hidden" id="smtp-overlay">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-title">✉️ Configurar correo saliente</div>
-    <div class="form-group">
-      <label class="form-label">Tu email (remitente)</label>
-      <input class="form-input" id="smtp-user" type="email" placeholder="tucorreo@gmail.com" autocomplete="off">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Contraseña</label>
-      <input class="form-input" id="smtp-pass" type="password" placeholder="Contraseña o contraseña de aplicación" autocomplete="off">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Servidor SMTP</label>
-        <input class="form-input" id="smtp-host" placeholder="smtp.gmail.com" autocomplete="off">
-      </div>
-      <div class="form-group" style="max-width:100px">
-        <label class="form-label">Puerto</label>
-        <input class="form-input" id="smtp-port" type="number" placeholder="587" autocomplete="off">
-      </div>
-    </div>
-    <div style="background:#1e293b;border-radius:8px;padding:10px 12px;font-size:12px;color:#94a3b8;margin-bottom:14px;line-height:1.6">
-      <b style="color:#e2e8f0">Gmail:</b> smtp.gmail.com · 587 · usa una <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#818cf8">contraseña de aplicación</a><br>
-      <b style="color:#e2e8f0">Outlook:</b> smtp.office365.com · 587<br>
-      <b style="color:#e2e8f0">Hotmail:</b> smtp-mail.outlook.com · 587
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="cerrarSmtp()">Cancelar</button>
-      <button class="btn btn-primary" id="smtp-test-btn" onclick="testSmtp()">🔌 Probar y guardar</button>
     </div>
   </div>
 </div>
@@ -956,84 +921,23 @@ async function cambiarUrlBase(){
   localStorage.setItem('_panel_app_base',limpio);
   toast('✅ URL guardada: '+limpio);
 }
-// ── SMTP CONFIG ──
-let _smtpCfg = JSON.parse(localStorage.getItem('_panel_smtp_cfg') || 'null');
-
-function abrirSmtpCfg(callbackAfter) {
-  window._smtpCallback = callbackAfter || null;
-  const c = _smtpCfg || {};
-  document.getElementById('smtp-user').value = c.user || '';
-  document.getElementById('smtp-pass').value = c.pass || '';
-  document.getElementById('smtp-host').value = c.host || 'smtp.gmail.com';
-  document.getElementById('smtp-port').value = c.port || '587';
-  document.getElementById('smtp-overlay').classList.remove('hidden');
-  setTimeout(() => document.getElementById('smtp-user').focus(), 50);
-}
-function cerrarSmtp() {
-  document.getElementById('smtp-overlay').classList.add('hidden');
-  window._smtpCallback = null;
-}
-async function testSmtp() {
-  const cfg = {
-    user: document.getElementById('smtp-user').value.trim(),
-    pass: document.getElementById('smtp-pass').value,
-    host: document.getElementById('smtp-host').value.trim() || 'smtp.gmail.com',
-    port: document.getElementById('smtp-port').value || '587'
-  };
-  if (!cfg.user || !cfg.pass) { toast('⚠️ Introduce email y contraseña', true); return; }
-  const btn = document.getElementById('smtp-test-btn');
-  btn.disabled = true; btn.textContent = '⏳ Probando...';
-  try {
-    await window.electronAPI.enviarEmail({
-      smtp: cfg,
-      to: cfg.user,
-      subject: 'El Miarma — prueba de conexión',
-      text: 'Si recibes este correo, la configuración es correcta.'
-    });
-    _smtpCfg = cfg;
-    localStorage.setItem('_panel_smtp_cfg', JSON.stringify(cfg));
-    cerrarSmtp();
-    toast('✅ Correo de prueba enviado a ' + cfg.user);
-    if (window._smtpCallback) { const cb = window._smtpCallback; window._smtpCallback = null; cb(); }
-  } catch (e) {
-    toast('❌ Error: ' + e.message, true);
-  } finally {
-    btn.disabled = false; btn.textContent = '🔌 Probar y guardar';
-  }
-}
-
 async function enviarEmail(licenciaId){
   const r=_datos.find(x=>x.licencia_id===licenciaId); if(!r) return;
   let toEmail=_extractEmail(r.notas||'');
   if(!toEmail){
     toEmail=await _inputDialog('📧 Email del cliente\n\nIntroduce el email al que enviar el acceso:', '');
     if(!toEmail) return;
-    // Guardar el email en el registro del cliente
     const notasActualizadas=_buildNotas(toEmail, _stripEmail(r.notas||''));
-    try{
-      await sbPatch(licenciaId,{notas:notasActualizadas});
-      r.notas=notasActualizadas;
-    }catch(e){ /* si falla el guardado, seguimos igualmente enviando */ }
+    try{ await sbPatch(licenciaId,{notas:notasActualizadas}); r.notas=notasActualizadas; }catch(e){}
   }
-  if(!_smtpCfg){ abrirSmtpCfg(()=>enviarEmail(licenciaId)); return; }
   const tipo=getTipo(r);
   const archivo=tipo==='tienda'?'tpv-tienda.html':'inventario-fresco.html';
   const base=await _getAppBase();
   if(!base) return;
   const url=base+archivo+'?lic='+encodeURIComponent(licenciaId);
-  const cuerpo=`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a El Miarma.\n\nApp: ${url}\nUsuario: ${r.usuario||'—'}\nContraseña: ${r.contrasena||'—'}\n\nTienes 2 meses de prueba gratuita. Cualquier duda escríbeme.\n\nUn saludo`;
-  try {
-    await window.electronAPI.enviarEmail({
-      smtp: _smtpCfg,
-      to: toEmail,
-      subject: 'Tu acceso a El Miarma',
-      text: cuerpo
-    });
-    toast('✅ Email enviado a ' + toEmail);
-  } catch(e) {
-    if(e.message&&e.message.includes('auth')){ toast('❌ Error de autenticación — reconfigura el correo', true); _smtpCfg=null; localStorage.removeItem('_panel_smtp_cfg'); }
-    else toast('❌ Error al enviar: ' + e.message, true);
-  }
+  const asunto=encodeURIComponent('Tu acceso a El Miarma');
+  const cuerpo=encodeURIComponent(`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a El Miarma.\n\nApp: ${url}\nUsuario: ${r.usuario||'—'}\nContraseña: ${r.contrasena||'—'}\n\nTienes 2 meses de prueba gratuita. Cualquier duda escríbeme.\n\nUn saludo`);
+  window.open(`mailto:${toEmail}?subject=${asunto}&body=${cuerpo}`);
 }
 
 // ── SOPORTE ──

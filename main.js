@@ -185,24 +185,6 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 }
 
-// Envío de email por SMTP (nodemailer)
-const nodemailer = require('nodemailer');
-ipcMain.handle('enviar-email', async (event, { smtp, to, subject, text }) => {
-  const transporter = nodemailer.createTransport({
-    host:   smtp.host,
-    port:   parseInt(smtp.port) || 587,
-    secure: parseInt(smtp.port) === 465,
-    auth:   { user: smtp.user, pass: smtp.pass },
-    tls:    { rejectUnauthorized: false }
-  });
-  await transporter.sendMail({
-    from:    `"El Miarma" <${smtp.user}>`,
-    to,
-    subject,
-    text
-  });
-});
-
 // Cajón por red — TCP raw socket (puerto ESC/POS, típicamente 9100)
 ipcMain.handle('abrir-cajon-red', (event, { host, port }) => {
   return new Promise((resolve, reject) => {
