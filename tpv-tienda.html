@@ -673,6 +673,11 @@ body {
 .tc-sin { background:linear-gradient(to bottom,#22c55e,#15803d);color:#fff; }
 .tc-con:focus,.tc-sin:focus { outline:3px solid #fff;outline-offset:3px; }
 .tc-con:active,.tc-sin:active { filter:brightness(.85); }
+#ov-cajon-cfg { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
+#ov-cajon-cfg.open { display:flex; }
+.cmet-label { display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:9px 12px;border-radius:8px;border:2px solid #bcc;background:#f4f8fb; }
+.cmet-label:hover { background:#e8f0f8; }
+.cmet-label input { width:18px;height:18px;cursor:pointer;accent-color:#1d4ed8; }
 #tick-sheet { background:#fff;border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
 .tick-center { text-align:center; }
 .tick-hr { border:none;border-top:1px dashed #999;margin:6px 0; }
@@ -1789,7 +1794,107 @@ function acCliente() { abrirCli(); }
 /* ══════════════════════
    ACCIONES SUPERIORES
 ══════════════════════ */
-function acCajon()     { warn('📂 Cajón abierto', 1500); }
+/* ══════════════════════
+   CAJÓN PORTAMONEDAS
+══════════════════════ */
+const _ESC_KICK = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+let _cajonCfg   = JSON.parse(localStorage.getItem('tpvt_cajon_cfg') || '{"method":"serial","host":"","port":9100}');
+let _serialPort = null;   // Web Serial: puerto en memoria de sesión
+let _btDevice   = null;   // Web Bluetooth: dispositivo en memoria de sesión
+
+function abrirCajonCfg() {
+  const m = _cajonCfg.method || 'serial';
+  document.querySelectorAll('input[name="cajon-met"]').forEach(r => {
+    r.checked = r.value === m;
+    r.onchange = () => {
+      document.getElementById('cajon-red-panel').style.display =
+        document.querySelector('input[name="cajon-met"]:checked')?.value === 'red' ? '' : 'none';
+    };
+  });
+  document.getElementById('cajon-host').value = _cajonCfg.host || '';
+  document.getElementById('cajon-port').value = _cajonCfg.port || 9100;
+  document.getElementById('cajon-red-panel').style.display = m === 'red' ? '' : 'none';
+  document.getElementById('ov-cajon-cfg').classList.add('open');
+}
+
+function guardarCajonCfg() {
+  _cajonCfg = {
+    method: document.querySelector('input[name="cajon-met"]:checked')?.value || 'serial',
+    host:   document.getElementById('cajon-host').value.trim(),
+    port:   parseInt(document.getElementById('cajon-port').value) || 9100
+  };
+  localStorage.setItem('tpvt_cajon_cfg', JSON.stringify(_cajonCfg));
+  cerrarModal('ov-cajon-cfg');
+  warn('✅ Cajón configurado', 1500);
+}
+
+async function acCajon() {
+  try {
+    if      (_cajonCfg.method === 'serial') await _cajonSerial();
+    else if (_cajonCfg.method === 'bt')     await _cajonBT();
+    else                                    await _cajonRed();
+    warn('📂 Cajón abierto', 1000);
+  } catch (e) {
+    warn('⚠ Cajón: ' + (e.message || e), 3000);
+  }
+}
+
+async function probarCajon() {
+  guardarCajonCfg();
+  await acCajon();
+}
+
+// ── USB / Serie (Web Serial API) ────────────────────────────────
+async function _cajonSerial() {
+  if (!navigator.serial) throw new Error('Web Serial no disponible en este navegador');
+  if (!_serialPort) {
+    const existing = await navigator.serial.getPorts();
+    _serialPort = existing.length ? existing[0] : await navigator.serial.requestPort();
+  }
+  try {
+    await _serialPort.open({ baudRate: 9600 });
+    const w = _serialPort.writable.getWriter();
+    await w.write(_ESC_KICK);
+    w.releaseLock();
+    await _serialPort.close();
+  } catch (e) {
+    _serialPort = null;
+    throw e;
+  }
+}
+
+// ── Bluetooth BLE (impresora térmica BLE) ──────────────────────
+const _BT_PROFILES = [
+  { svc: '000018f0-0000-1000-8000-00805f9b34fb', char: '00002af1-0000-1000-8000-00805f9b34fb' },
+  { svc: '49535343-fe7d-4ae5-8fa9-9fafd205e455', char: '49535343-8841-43f4-a8d4-ecbe34729bb3' },
+  { svc: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', char: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
+];
+async function _cajonBT() {
+  if (!navigator.bluetooth) throw new Error('Web Bluetooth no disponible');
+  if (!_btDevice || !_btDevice.gatt.connected) {
+    _btDevice = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: _BT_PROFILES.map(p => p.svc)
+    });
+  }
+  const server = await _btDevice.gatt.connect();
+  for (const { svc, char } of _BT_PROFILES) {
+    try {
+      const service = await server.getPrimaryService(svc);
+      const c = await service.getCharacteristic(char);
+      await c.writeValue(_ESC_KICK);
+      return;
+    } catch {}
+  }
+  throw new Error('Impresora Bluetooth no reconocida — prueba con USB o Red');
+}
+
+// ── Red / IP (TCP raw, puerto ESC/POS) ─────────────────────────
+async function _cajonRed() {
+  if (!_cajonCfg.host) throw new Error('Configura la IP de la impresora en ⚙️ → Cajón');
+  if (!window.electronAPI?.abrirCajonRed) throw new Error('Solo disponible en la app de escritorio');
+  await window.electronAPI.abrirCajonRed(_cajonCfg.host, _cajonCfg.port || 9100);
+}
 function acReimprimir(){ warn('🖨️ Reimprimiendo...', 1500); }
 
 function acAparcar() {
@@ -3584,6 +3689,44 @@ function guardarFam() { guardarFamEdit(); }
       <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirQR()">
         <span class="ct-ico">📲</span>QR Pedidos
       </button>
+      <button class="cfg-tile" onclick="cerrarModal('ov-menu-cfg');abrirCajonCfg()">
+        <span class="ct-ico">📂</span>Cajón
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CAJÓN PORTAMONEDAS ══ -->
+<div id="ov-cajon-cfg">
+  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:340px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <b style="font-size:15px">📂 Cajón portamonedas</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-cajon-cfg')">✕</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#556;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Método de conexión</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <label class="cmet-label">
+        <input type="radio" name="cajon-met" value="serial">
+        🔌 USB / Puerto COM (Serie)
+      </label>
+      <label class="cmet-label">
+        <input type="radio" name="cajon-met" value="bt">
+        📶 Bluetooth (impresora BLE)
+      </label>
+      <label class="cmet-label">
+        <input type="radio" name="cajon-met" value="red">
+        🌐 Red / IP (impresora de red)
+      </label>
+    </div>
+    <div id="cajon-red-panel" style="display:none;background:#f0f4f8;border-radius:8px;padding:10px;margin-bottom:12px">
+      <label style="font-size:12px;color:#556;display:block;margin-bottom:4px">IP de la impresora</label>
+      <input id="cajon-host" type="text" placeholder="192.168.1.100" style="width:100%;padding:7px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:8px;font-family:var(--font)">
+      <label style="font-size:12px;color:#556;display:block;margin-bottom:4px">Puerto TCP</label>
+      <input id="cajon-port" type="number" value="9100" placeholder="9100" style="width:100%;padding:7px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;box-sizing:border-box;font-family:var(--font)">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="probarCajon()" style="flex:1;padding:11px;border:none;border-radius:6px;background:#4a6788;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">▶ Probar</button>
+      <button onclick="guardarCajonCfg()" style="flex:1;padding:11px;border:none;border-radius:6px;background:linear-gradient(to bottom,#2ecc71,#1e8449);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">✅ Guardar</button>
     </div>
   </div>
 </div>

@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard, ipcMain } = requi
 const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
+const net  = require('net');
 
 // Habilitar Web Bluetooth en Electron
 app.commandLine.appendSwitch('enable-features', 'WebBluetooth');
@@ -80,6 +81,23 @@ function createWindow() {
   win.loadFile(htmlFile);
   applyWindowOpenHandler(win);
   if (!esPanel) win.webContents.on('did-finish-load', () => win.setFullScreen(true));
+
+  // Web Serial — selector de puerto y permisos para cajón por USB/COM
+  win.webContents.session.on('select-serial-port', (event, portList, webContents, callback) => {
+    event.preventDefault();
+    if (!portList.length) { callback(''); return; }
+    if (portList.length === 1) { callback(portList[0].portId); return; }
+    dialog.showMessageBox(win, {
+      type: 'question',
+      title: 'Puerto del cajón',
+      message: 'Elige el puerto al que está conectado el cajón / impresora:',
+      buttons: [...portList.map(p => p.displayName || p.portName || p.portId), 'Cancelar'],
+      cancelId: portList.length, defaultId: 0
+    }).then(({ response }) => callback(response < portList.length ? portList[response].portId : ''));
+  });
+  win.webContents.session.setDevicePermissionHandler(details =>
+    details.deviceType === 'serial' || details.deviceType === 'bluetooth'
+  );
 
   // Menú contextual (clic derecho) con Cortar / Copiar / Pegar
   win.webContents.on('context-menu', (e, params) => {
@@ -166,6 +184,22 @@ function createWindow() {
   ]);
   Menu.setApplicationMenu(menu);
 }
+
+// Cajón por red — TCP raw socket (puerto ESC/POS, típicamente 9100)
+ipcMain.handle('abrir-cajon-red', (event, { host, port }) => {
+  return new Promise((resolve, reject) => {
+    const client = new net.Socket();
+    client.setTimeout(3000);
+    client.connect(port, host, () => {
+      client.write(Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), () => {
+        client.destroy();
+        resolve();
+      });
+    });
+    client.on('timeout', () => { client.destroy(); reject(new Error('Sin respuesta (timeout)')); });
+    client.on('error',   (e) => reject(new Error(e.message)));
+  });
+});
 
 ipcMain.handle('save-menu-json', (event, data) => {
   try {
