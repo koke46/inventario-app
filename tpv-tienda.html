@@ -663,6 +663,14 @@ body {
 /* ══ TICKET PRINT ══ */
 #ov-tick { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-tick.open { display:flex; }
+#ov-ticket-choice { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:201; }
+#ov-ticket-choice.open { display:flex; }
+#ticket-choice-box { background:#1e2d45;border-radius:12px;padding:28px 24px;width:300px;max-width:92vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6); }
+#ticket-choice-box .tc-title { font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:20px; }
+#ticket-choice-box .tc-btns { display:flex;gap:12px; }
+#ticket-choice-box .tc-btns button { flex:1;padding:18px 8px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font); }
+.tc-con { background:linear-gradient(to bottom,#3b82f6,#1d4ed8);color:#fff; }
+.tc-sin { background:linear-gradient(to bottom,#22c55e,#15803d);color:#fff; }
 #tick-sheet { background:#fff;border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
 .tick-center { text-align:center; }
 .tick-hr { border:none;border-top:1px dashed #999;margin:6px 0; }
@@ -1055,6 +1063,17 @@ body {
     <div class="mbtns no-print" style="margin-top:12px">
       <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="window.print()">🖨️ Imprimir</button>
       <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-fac').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ELECCIÓN TICKET ══ -->
+<div id="ov-ticket-choice">
+  <div id="ticket-choice-box">
+    <div class="tc-title">¿Desea ticket?</div>
+    <div class="tc-btns">
+      <button class="tc-con" onclick="conTicket()">🖨️ Con ticket</button>
+      <button class="tc-sin" onclick="sinTicket()">✅ Sin ticket</button>
     </div>
   </div>
 </div>
@@ -1929,7 +1948,7 @@ function confirmar() {
   renderCat();
   updStatus();
   buildTicketHtml(ventaGuardada);
-  document.getElementById('ov-tick').classList.add('open');
+  document.getElementById('ov-ticket-choice').classList.add('open');
   if (cambioEf > 0.005) mostrarCambioFinal(cambioEf);
 }
 
@@ -2197,6 +2216,14 @@ function imprimirTicket(v) {
   if (!src && !ticket.length) { warn('⚠ No hay ticket para imprimir', 2000); return; }
   buildTicketHtml(src || null);
   document.getElementById('ov-tick').classList.add('open');
+}
+function conTicket() {
+  document.getElementById('ov-ticket-choice').classList.remove('open');
+  document.getElementById('ov-tick').classList.add('open');
+}
+function sinTicket() {
+  document.getElementById('ov-ticket-choice').classList.remove('open');
+  warn('✅ Venta completada', 1500);
 }
 
 function abrirHistorico() {
