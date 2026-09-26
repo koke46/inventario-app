@@ -1947,26 +1947,36 @@ function abrirCobro() {
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
 
 window.cargarPedidoQR = function(id, items, total) {
-  try {
-    const tot = parseFloat(total) || 0;
-    ticket.length = 0;
+  const tot = parseFloat(total) || 0;
+  ticket.length = 0;
+  (items||[]).forEach(x => {
+    const nom = x.n || x.nombre || 'Artículo';
+    const qty = parseInt(x.q || x.cantidad || 1);
+    ticket.push({
+      codigo: 'QR_' + Date.now() + '_' + nom,
+      nombre: nom,
+      iva: ivaLibre,
+      pUnit: 0,
+      cantidad: qty,
+      importe: 0,
+      peso: false, dev: false, dto: 0,
+    });
+  });
+  if (!ticket.length) {
     ticket.push({
       codigo: 'QR_' + id,
-      nombre: 'Pedido QR · ' + (items||[]).map(x=>`${x.q||x.cantidad||1}× ${x.n||x.nombre||'Artículo'}`).join(', '),
+      nombre: 'Pedido QR',
       iva: ivaLibre,
       pUnit: tot,
       cantidad: 1,
       importe: tot,
       peso: false, dev: false, dto: 0,
     });
-    selIdx = 0;
-    renderTicket();
-    if (typeof cerrarPedidos === 'function') cerrarPedidos();
-    abrirCobro();
-  } catch(e) {
-    warn('❌ Error cobro QR: ' + e.message, 6000);
-    console.error('cargarPedidoQR error:', e);
   }
+  selIdx = ticket.length - 1;
+  renderTicket();
+  if (typeof cerrarPedidos === 'function') cerrarPedidos();
+  warn('✓ Pedido QR cargado — añade lo que necesites y pulsa COBRAR', 4000);
 };
 function setTab(t) {
   payMode = t;
@@ -3992,9 +4002,9 @@ function renderPedidos() {
     const btns  = p.estado === 'pendiente'
       ? `<button class="pedido-btn" style="background:#b45309;color:#fff" onclick="cambiarEstado('${p.id}','preparando')">🍳 Preparando</button>
          <button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo</button>
-         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">💰 Cobrar</button>`
+         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">📥 Al ticket</button>`
       : `<button class="pedido-btn" style="background:#15803d;color:#fff" onclick="cambiarEstado('${p.id}','listo')">✅ Listo / Entregado</button>
-         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">💰 Cobrar</button>`;
+         <button class="pedido-btn" style="background:#1d4ed8;color:#fff" onclick="cobrarPedidoQR('${p.id}')">📥 Al ticket</button>`;
     return `<div class="pedido-card ${p.estado}" id="pc-${p.id}">
       <div class="pedido-hora">🕐 ${hora} · ${p.estado==='preparando'?'🍳 Preparando':'🔔 Nuevo'}</div>
       <div class="pedido-items">${items}</div>${nota}
