@@ -1141,7 +1141,7 @@ body {
         <label>Nombre<input id="pf-nombre" placeholder="Nombre del producto"></label>
         <label>Emoji<input id="pf-emoji" placeholder="🛒" maxlength="4"></label>
         <label>Familia
-          <select id="pf-fam"></select>
+          <select id="pf-fam" onchange="renderIngFormFields()"></select>
         </label>
         <label>Precio (€)<input id="pf-precio" type="number" step="0.01" min="0" placeholder="0.00"></label>
         <label>IVA
@@ -2833,10 +2833,14 @@ function borrarIng(i) {
 // Formulario producto — campos dinámicos de ingredientes
 let _pfIngs = new Set();
 let _pfSals = new Set();
-function renderIngFormFields(prod) {
+function renderIngFormFields() {
+  const famId = document.getElementById('pf-fam').value;
+  const fam = FAMILIAS.find(f => f.id === famId);
+  const esBocadillo = fam && fam.nombre.toLowerCase().includes('bocadillo');
+  if (!esBocadillo) { document.getElementById('pf-ings-wrap').innerHTML = ''; return; }
   const ings = INGREDIENTES.filter(it => it.cat === 'ing');
   const sals = INGREDIENTES.filter(it => it.cat === 'sal');
-  if (!ings.length && !sals.length) { document.getElementById('pf-ings-wrap').innerHTML = ''; return; }
+  if (!ings.length && !sals.length) { document.getElementById('pf-ings-wrap').innerHTML = '<div style="margin-top:10px;font-size:12px;color:#888">No hay ingredientes creados. Añádelos en ⚙️ → Ingredientes.</div>'; return; }
   const mkGrid = (items, set) => items.map(it =>
     `<button type="button" class="ing-tog ${set.has(it.id) ? 'on' : 'extra-off'}"
      onclick="toggleIngForm('${it.cat}','${it.id}',this)">${it.nombre}</button>`
@@ -3451,7 +3455,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-fam').selectedIndex = 0;
     prev.src = ''; prev.style.display = 'none';
     _pfIngs = new Set(); _pfSals = new Set();
-    renderIngFormFields(null);
+    renderIngFormFields();
   } else {
     const p = CAT[idx];
     document.getElementById('pf-codigo').value = p.codigo || '';
@@ -3466,7 +3470,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
     if (p.foto) { prev.src = p.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
     _pfIngs = new Set(p.ings || []); _pfSals = new Set(p.sals || []);
-    renderIngFormFields(p);
+    renderIngFormFields();
   }
   document.querySelector('.prods-toolbar').style.display = 'none';
   document.getElementById('prods-list').style.display = 'none';
