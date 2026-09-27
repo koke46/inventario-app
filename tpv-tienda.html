@@ -2775,8 +2775,7 @@ function abrirQR() {
         sals: (p.sals||[]).map(id => ingById[id]).filter(Boolean).map(it => ({ n: it.nombre })),
         ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
       } : null;
-      const ingNames = [...(p.ings||[]).map(id=>ingById[id]?.nombre).filter(Boolean), ...(p.sals||[]).map(id=>ingById[id]?.nombre).filter(Boolean)];
-      const desc = ingNames.join(', ');
+      const desc = mods ? [...(mods.ings||[]).map(it=>it.n), ...(mods.sals||[]).map(it=>it.n)].join(', ') : '';
       return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(desc ? { desc } : {}), ...(mods ? { mods } : {}) };
     })
   };
@@ -2967,8 +2966,7 @@ function autoGuardarMenuJson() {
         sals: (p.sals||[]).map(id => ingById2[id]).filter(Boolean).map(it => ({ n: it.nombre })),
         ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
       } : null;
-      const ingNames2 = [...(p.ings||[]).map(id=>ingById2[id]?.nombre).filter(Boolean), ...(p.sals||[]).map(id=>ingById2[id]?.nombre).filter(Boolean)];
-      const desc2 = ingNames2.join(', ');
+      const desc2 = mods ? [...(mods.ings||[]).map(it=>it.n), ...(mods.sals||[]).map(it=>it.n)].join(', ') : '';
       return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(desc2 ? { desc: desc2 } : {}), ...(mods ? { mods } : {}) };
     })
   };
