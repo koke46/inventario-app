@@ -334,6 +334,8 @@ body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   z-index: 1;
 }
+.prd-nom.has-desc { white-space: normal; line-height: 1.2; padding: 3px 2px 4px; }
+.prd-nom-desc { display:block; font-size:8px; color:#a8d8ff; font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .prd-price {
   position: absolute; top: 3px; right: 3px;
   background: #111; color: #fff;
@@ -1136,7 +1138,7 @@ body {
     <div class="prod-form" id="prod-form">
       <b style="font-size:13px" id="pf-title">Nuevo producto</b>
       <div class="pf-grid" style="margin-top:8px">
-        <label>Código de barras<input id="pf-codigo" placeholder="8410000000000"></label>
+        <label id="pf-codigo-row">Código de barras<input id="pf-codigo" placeholder="8410000000000"></label>
         <label>Nombre<input id="pf-nombre" placeholder="Nombre del producto"></label>
         <label>Emoji<input id="pf-emoji" placeholder="🛒" maxlength="4"></label>
         <label>Familia
@@ -1150,8 +1152,9 @@ body {
             <option value="21">21% (general)</option>
           </select>
         </label>
-        <label>Stock actual<input id="pf-stock" type="number" min="-1" placeholder="—1 = sin control"></label>
-        <label>Stock mínimo (alerta)<input id="pf-minstock" type="number" min="0" placeholder="5"></label>
+        <label id="pf-stock-row">Stock actual<input id="pf-stock" type="number" min="-1" placeholder="—1 = sin control"></label>
+        <label id="pf-minstock-row">Stock mínimo (alerta)<input id="pf-minstock" type="number" min="0" placeholder="5"></label>
+        <label id="pf-desc-row" class="pf-full" style="display:none">Descripción / ingredientes<textarea id="pf-desc" rows="2" placeholder="Ej: Jamón serrano, queso manchego, tomate..." style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font);resize:vertical;width:100%;box-sizing:border-box"></textarea></label>
         <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
           <input id="pf-peso" type="checkbox"> Venta por peso (kg)
         </label>
@@ -1678,7 +1681,7 @@ function renderCat() {
         ${ico}
         <span class="prd-price">${lbl}</span>
         <span class="prd-stock ${sc}">${p.stock >= 0 ? p.stock : '∞'}</span>
-        <span class="prd-nom">${p.nombre}</span>
+        <span class="prd-nom${p.descripcion ? ' has-desc' : ''}">${p.nombre}${p.descripcion ? `<span class="prd-nom-desc">${p.descripcion}</span>` : ''}</span>
         <button class="prd-edit-btn" onclick="event.stopPropagation();abrirFormProd(${p._i})">✏️</button>
       </button>`;
     }).join('');
@@ -2833,6 +2836,10 @@ function renderIngFormFields() {
   const famId = document.getElementById('pf-fam').value;
   const fam = FAMILIAS.find(f => f.id === famId);
   const esBocadillo = fam && fam.nombre.toLowerCase().includes('bocadillo');
+  ['pf-codigo-row','pf-stock-row','pf-minstock-row'].forEach(id => {
+    document.getElementById(id).style.display = esBocadillo ? 'none' : '';
+  });
+  document.getElementById('pf-desc-row').style.display = esBocadillo ? '' : 'none';
   if (!esBocadillo) { document.getElementById('pf-ings-wrap').innerHTML = ''; return; }
   const ings = INGREDIENTES.filter(it => it.cat === 'ing');
   const sals = INGREDIENTES.filter(it => it.cat === 'sal');
@@ -3449,6 +3456,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-peso').checked = false;
     document.getElementById('pf-fav').checked  = false;
     document.getElementById('pf-fam').selectedIndex = 0;
+    document.getElementById('pf-desc').value = '';
     prev.src = ''; prev.style.display = 'none';
     _pfIngs = new Set(); _pfSals = new Set();
     renderIngFormFields();
@@ -3464,6 +3472,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-peso').checked = !!p.peso;
     document.getElementById('pf-fav').checked  = !!p.favorito;
     document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
+    document.getElementById('pf-desc').value = p.descripcion || '';
     if (p.foto) { prev.src = p.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
     _pfIngs = new Set(p.ings || []); _pfSals = new Set(p.sals || []);
     renderIngFormFields();
@@ -3498,6 +3507,7 @@ function guardarProd() {
     favorito: document.getElementById('pf-fav').checked  || false,
     ings:     [..._pfIngs],
     sals:     [..._pfSals],
+    descripcion: document.getElementById('pf-desc').value.trim() || '',
     ...(fotoVal ? { foto: fotoVal } : {}),
   };
   if (prodEditIdx === null) {
