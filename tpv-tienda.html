@@ -278,9 +278,9 @@ body {
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, 100px);
-  gap: 5px;
+  gap: 9px;
   align-content: start;
-  padding: 4px;
+  padding: 8px;
 }
 
 /* Carpeta familia */
@@ -336,6 +336,9 @@ body {
 }
 .prd-nom.has-desc { white-space: normal; line-height: 1.2; padding: 3px 4px 5px; }
 .prd-nom-desc { display:block; font-size:10px; color:#a8d8ff; font-weight:400; white-space:normal; line-height:1.3; margin-top:2px; }
+/* Tarjeta bocadillo — descripción sin tapar la imagen */
+.prd.boc { height:auto; min-height:100px; justify-content:flex-start; padding-top:6px; }
+.prd.boc .prd-nom { position:relative; bottom:auto; left:auto; right:auto; margin-top:auto; width:100%; border-radius:0 0 var(--r) var(--r); }
 .prd-price {
   position: absolute; top: 3px; right: 3px;
   background: #111; color: #fff;
@@ -1675,7 +1678,7 @@ function renderCat() {
       const famObj = FAMILIAS.find(f => f.id === p.familia);
       const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
       if (esBoc) { out = false; }
-      return `<button class="prd${out ? ' out' : ''}" draggable="true" data-pi="${p._i}"
+      return `<button class="prd${out ? ' out' : ''}${esBoc ? ' boc' : ''}" draggable="true" data-pi="${p._i}"
         onclick="${out ? '' : 'clickPrd(' + p._i + ')'}"
         ondragstart="prdDragStart(event,${p._i})"
         ondragover="prdDragOver(event)"
