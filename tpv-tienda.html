@@ -1670,6 +1670,8 @@ function renderCat() {
       const lbl = p.peso ? fmtN(p.precio) + '/kg €' : fmtE(p.precio);
       const badge = bajo ? '<span class="prd-min-badge">!</span>' : '';
       const ico   = p.foto ? `<img class="prd-foto" src="${p.foto}" alt="">` : `<span class="prd-ico">${p.emoji}</span>`;
+      const famObj = FAMILIAS.find(f => f.id === p.familia);
+      const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
       return `<button class="prd${out ? ' out' : ''}" draggable="true" data-pi="${p._i}"
         onclick="${out ? '' : 'clickPrd(' + p._i + ')'}"
         ondragstart="prdDragStart(event,${p._i})"
@@ -1680,7 +1682,7 @@ function renderCat() {
         ${badge}
         ${ico}
         <span class="prd-price">${lbl}</span>
-        <span class="prd-stock ${sc}">${p.stock >= 0 ? p.stock : '∞'}</span>
+        ${esBoc ? '' : `<span class="prd-stock ${sc}">${p.stock >= 0 ? p.stock : '∞'}</span>`}
         <span class="prd-nom${p.descripcion ? ' has-desc' : ''}">${p.nombre}${p.descripcion ? `<span class="prd-nom-desc">${p.descripcion}</span>` : ''}</span>
         <button class="prd-edit-btn" onclick="event.stopPropagation();abrirFormProd(${p._i})">✏️</button>
       </button>`;
@@ -3427,8 +3429,7 @@ function renderProdsList() {
         <div class="prod-row-nom">${p.nombre}</div>
         <div class="prod-row-sub">${famNom} · ${fmtE(p.precio)} · IVA ${p.iva}%${p.peso?' · kg':''}</div>
       </div>
-      <span class="prod-row-stk ${sc}">Stock: ${stkTxt}${minS>0?` (mín ${minS})`:''}
-      </span>
+      ${famNom.toLowerCase().includes('bocadillo') ? '' : `<span class="prod-row-stk ${sc}">Stock: ${stkTxt}${minS>0?` (mín ${minS})`:''}</span>`}
       <div class="prod-row-btns">
         <button style="background:#4a80b0;color:#fff" onclick="abrirFormProd(${p._i})">✏️</button>
         <button style="background:#c0392b;color:#fff" onclick="borrarProd(${p._i})">🗑️</button>
