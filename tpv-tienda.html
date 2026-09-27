@@ -2775,7 +2775,9 @@ function abrirQR() {
         sals: (p.sals||[]).map(id => ingById[id]).filter(Boolean).map(it => ({ n: it.nombre })),
         ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
       } : null;
-      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(mods ? { mods } : {}) };
+      const ingNames = [...(p.ings||[]).map(id=>ingById[id]?.nombre).filter(Boolean), ...(p.sals||[]).map(id=>ingById[id]?.nombre).filter(Boolean)];
+      const desc = p.descripcion || (ingNames.length ? ingNames.join(', ') : '');
+      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(desc ? { desc } : {}), ...(mods ? { mods } : {}) };
     })
   };
   window._qrMenuData = menuData;
@@ -2965,7 +2967,9 @@ function autoGuardarMenuJson() {
         sals: (p.sals||[]).map(id => ingById2[id]).filter(Boolean).map(it => ({ n: it.nombre })),
         ext:  INGREDIENTES.filter(it => !prodIngIds.has(it.id)).map(it => ({ n: it.nombre, pr: it.precioExtra || 0 }))
       } : null;
-      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(mods ? { mods } : {}) };
+      const ingNames2 = [...(p.ings||[]).map(id=>ingById2[id]?.nombre).filter(Boolean), ...(p.sals||[]).map(id=>ingById2[id]?.nombre).filter(Boolean)];
+      const desc2 = p.descripcion || (ingNames2.length ? ingNames2.join(', ') : '');
+      return { i, n: p.nombre, pr: parseFloat(p.precio) || 0, f: famIdx[p.familia] ?? -1, img: p.foto || null, ...(desc2 ? { desc: desc2 } : {}), ...(mods ? { mods } : {}) };
     })
   };
   window.electronAPI.saveMenuJson(menuData)

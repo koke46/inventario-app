@@ -30,6 +30,7 @@
     .p-info { flex: 1; min-width: 0; }
     .p-nom  { font-weight: 600; font-size: 15px; line-height: 1.2; }
     .p-prec { color: var(--green); font-weight: 700; font-size: 14px; margin-top: 3px; }
+    .p-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
     .p-mods-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
     .p-qty  { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .q-btn  { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); background: transparent; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); line-height: 1; font-family: inherit; }
@@ -217,6 +218,7 @@ function selFam(idx) {
       <div class="p-ico">${ico}</div>
       <div class="p-info">
         <div class="p-nom">${p.n}</div>
+        ${p.desc?`<div class="p-desc">${p.desc}</div>`:''}
         <div class="p-prec">${fmt(p.pr)}</div>
         ${hint}
       </div>
