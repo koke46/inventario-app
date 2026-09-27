@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El Miarma Tienda — Prueba gratis 2 meses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#2563eb;--blue2:#1d4ed8;--blue-light:#eff6ff;--blue-mid:#bfdbfe;
+  --text:#0f172a;--muted:#64748b;--border:#e2e8f0;--surface:#fff;--bg:#f8fafc;
+  --green:#16a34a;--radius:14px;
+}
+body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);line-height:1.5}
+
+/* NAV */
+nav{background:#fff;border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.nav-brand{font-size:17px;font-weight:800;color:var(--blue)}
+.nav-brand span{color:var(--text)}
+.nav-cta{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);color:#fff;padding:64px 20px 72px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:20px;text-transform:uppercase}
+.hero h1{font-size:clamp(28px,6vw,48px);font-weight:900;line-height:1.1;margin-bottom:16px}
+.hero h1 em{font-style:normal;color:#93c5fd}
+.hero p{font-size:clamp(15px,3vw,18px);color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 32px}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-hero{display:inline-block;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:inherit;text-decoration:none;transition:transform .12s,box-shadow .12s}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.btn-hero.prim{background:#fff;color:var(--blue)}
+.btn-hero.sec{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4)}
+
+/* PRUEBA BADGE */
+.prueba-strip{background:var(--green);color:#fff;text-align:center;padding:12px 20px;font-size:14px;font-weight:600}
+
+/* FEATURES */
+.section{max-width:900px;margin:0 auto;padding:56px 20px}
+.section-label{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.section-title{font-size:clamp(22px,4vw,32px);font-weight:800;line-height:1.2;margin-bottom:12px}
+.section-sub{color:var(--muted);font-size:15px;max-width:500px}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:36px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:box-shadow .15s}
+.feat:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.feat-ico{font-size:32px;margin-bottom:12px}
+.feat-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* PASOS */
+.steps-bg{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;margin-top:36px}
+.step{text-align:center;padding:20px}
+.step-num{width:44px;height:44px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.step-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.step-desc{font-size:13px;color:var(--muted)}
+
+/* FORMULARIO */
+.form-section{background:linear-gradient(180deg,var(--bg) 0%,#eff6ff 100%)}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;max-width:520px;margin:0 auto;box-shadow:0 4px 32px rgba(37,99,235,.08)}
+.form-card h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.form-card .sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+.form-row{margin-bottom:18px}
+.form-row label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.form-row label span{color:#ef4444}
+.form-row input,.form-row textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);background:#fafafa;transition:border-color .15s}
+.form-row input:focus,.form-row textarea:focus{outline:none;border-color:var(--blue);background:#fff}
+.form-row textarea{resize:vertical;min-height:70px}
+.btn-submit{width:100%;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,transform .12s;margin-top:8px}
+.btn-submit:hover{background:var(--blue2);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.legal{font-size:11px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+.err-msg{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none}
+.err-msg.show{display:block}
+
+/* ÉXITO */
+.ok-card{display:none;text-align:center}
+.ok-card.show{display:block}
+.ok-ico{font-size:52px;margin-bottom:16px}
+.ok-card h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.ok-card p{font-size:15px;color:var(--muted);line-height:1.6}
+.ok-ref{display:inline-block;background:var(--blue-light);color:var(--blue);border-radius:8px;padding:8px 18px;font-size:15px;font-weight:700;margin:14px 0;letter-spacing:.5px}
+
+/* FAQ */
+.faq{max-width:680px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--border);padding:20px 0}
+.faq-q{font-size:15px;font-weight:700;margin-bottom:8px}
+.faq-a{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* FOOTER */
+footer{background:var(--text);color:#94a3b8;text-align:center;padding:28px 20px;font-size:13px}
+footer strong{color:#fff}
+
+@media(max-width:480px){
+  .form-card{padding:24px 18px;border-radius:14px}
+  .hero{padding:48px 16px 56px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">El Miarma <span>Tienda</span></div>
+  <a class="nav-cta" href="#formulario">Empezar gratis</a>
+</nav>
+
+<div class="prueba-strip">🎁 Prueba gratuita 2 meses — sin tarjeta, sin compromiso</div>
+
+<div class="hero">
+  <div class="hero-badge">TPV + Inventario para comercios</div>
+  <h1>Gestiona tu tienda<br><em>sin complicaciones</em></h1>
+  <p>Cobro rápido en caja, control de stock en tiempo real y carta QR para tus clientes. Todo desde el móvil o el ordenador.</p>
+  <div class="hero-btns">
+    <a class="btn-hero prim" href="#formulario">Probar gratis 2 meses</a>
+    <a class="btn-hero sec" href="#como-funciona">Ver cómo funciona</a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Funcionalidades</div>
+  <div class="section-title">Todo lo que necesita tu comercio</div>
+  <div class="section-sub">Diseñado para tiendas, bocaterías y pequeños comercios que quieren ir más rápido.</div>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-ico">🛒</div>
+      <div class="feat-title">TPV táctil</div>
+      <div class="feat-desc">Cobra en segundos. Organiza productos por categorías, escanea códigos de barras y cierra caja al instante.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ico">📦</div>
+      <div class="feat-title">Control de stock</div>
+      <div class="feat-desc">Alertas cuando el stock baja del mínimo. Nunca te quedes sin saber qué tienes o qué te falta.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ico">📱</div>
+      <div class="feat-title">Carta QR de pedidos</div>
+      <div class="feat-desc">Tus clientes escanean un QR y hacen su pedido directamente desde el móvil. Ideal para bocaterías.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ico">☁️</div>
+      <div class="feat-title">Sin instalar nada</div>
+      <div class="feat-desc">Funciona en el navegador, en cualquier dispositivo. También disponible como app de escritorio para Windows.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ico">🔒</div>
+      <div class="feat-title">Acceso por contraseña</div>
+      <div class="feat-desc">Tu caja protegida con usuario y contraseña. Solo entra quien tú quieras.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-ico">🧾</div>
+      <div class="feat-title">Tickets e informes</div>
+      <div class="feat-desc">Historial de ventas, totales por día e impresión de tickets. Siempre sabrás cómo va el negocio.</div>
+    </div>
+  </div>
+</div>
+
+<div class="steps-bg" id="como-funciona">
+  <div class="section">
+    <div style="text-align:center">
+      <div class="section-label" style="justify-content:center;display:flex">Cómo funciona</div>
+      <div class="section-title" style="text-align:center">Listo en menos de 5 minutos</div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Rellena el formulario</div>
+        <div class="step-desc">Nombre, negocio y teléfono. Sin tarjeta ni pago.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Recibes tu código</div>
+        <div class="step-desc">Te contactamos en menos de 24 h con tu código de acceso.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Empieza a usarlo</div>
+        <div class="step-desc">Accede con tu código, configura tus productos y a cobrar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-section" id="formulario">
+  <div class="section">
+    <div class="form-card">
+      <div id="formulario-wrap">
+        <h2>Solicita tu prueba gratuita</h2>
+        <p class="sub">2 meses gratis, sin tarjeta. Te avisamos en menos de 24 horas.</p>
+        <form onsubmit="enviar(event)" novalidate>
+          <div class="form-row">
+            <label>Nombre <span>*</span></label>
+            <input id="f-nombre" type="text" placeholder="Tu nombre" required>
+          </div>
+          <div class="form-row">
+            <label>Nombre del comercio <span>*</span></label>
+            <input id="f-negocio" type="text" placeholder="Ej: Alimentación García" required>
+          </div>
+          <div class="form-row">
+            <label>Teléfono <span>*</span></label>
+            <input id="f-tel" type="tel" placeholder="600 000 000" required>
+          </div>
+          <div class="form-row">
+            <label>Email <span>*</span></label>
+            <input id="f-email" type="email" placeholder="tu@email.com" required>
+          </div>
+          <div class="form-row">
+            <label>¿Algo más que quieras contarnos? <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+            <textarea id="f-msg" placeholder="Tipo de comercio, número de empleados, dudas..."></textarea>
+          </div>
+          <button class="btn-submit" id="btn-send" type="submit">Solicitar prueba gratuita →</button>
+          <div class="err-msg" id="err"></div>
+        </form>
+        <p class="legal">Al enviar aceptas que te contactemos para gestionar tu acceso. Sin spam, sin compromisos.</p>
+      </div>
+
+      <div class="ok-card" id="ok">
+        <div class="ok-ico">🎉</div>
+        <h2>¡Solicitud recibida!</h2>
+        <p>Te contactaremos en menos de <strong>24 horas</strong> con tu código de acceso para empezar la prueba de 2 meses.</p>
+        <div class="ok-ref" id="ok-ref"></div>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px">Guarda este número de referencia por si necesitas consultarnos algo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="background:#fff;border-top:1px solid var(--border)">
+  <div class="section">
+    <div class="section-label">Preguntas frecuentes</div>
+    <div class="section-title">¿Tienes dudas?</div>
+    <div class="faq" style="margin-top:32px">
+      <div class="faq-item">
+        <div class="faq-q">¿La prueba es realmente gratis?</div>
+        <div class="faq-a">Sí, 2 meses completos sin ningún coste. No pedimos tarjeta ni datos de pago.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Qué pasa cuando terminan los 2 meses?</div>
+        <div class="faq-a">El acceso se desactiva automáticamente. Te avisaremos antes para que decidas si quieres continuar con el servicio de pago.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Necesito instalar algo?</div>
+        <div class="faq-a">No. El TPV funciona directamente en el navegador. También puedes instalarlo como aplicación de escritorio en Windows si lo prefieres.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Puedo usarlo en el móvil?</div>
+        <div class="faq-a">Sí, la interfaz está adaptada para móvil y tablet. Funciona en cualquier dispositivo con navegador.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Mis datos están seguros?</div>
+        <div class="faq-a">Los datos del inventario y configuración se guardan en tu dispositivo. Nadie más tiene acceso a ellos.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <strong>El Miarma Tienda</strong> · TPV e inventario para pequeños comercios<br>
+  <span style="margin-top:6px;display:block">¿Preguntas? Escríbenos a <strong>jorgelinerochamorro@gmail.com</strong></span>
+</footer>
+
+<script>
+const SB_URL='https://aqbdlvmfbdagypmwxhca.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYmRsdm1mYmRhZ3lwbXd4aGNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1ODM0NjIsImV4cCI6MjEwMzE1OTQ2Mn0.14wGoy4AQXhu9ZBTz4IAKBUXvRqveQZ1z-OKAMjm4gE';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+function refId(){
+  const n=Date.now().toString(36).toUpperCase().slice(-5);
+  const r=Math.random().toString(36).toUpperCase().slice(2,6);
+  return 'SOL-'+n+r;
+}
+
+async function enviar(e){
+  e.preventDefault();
+  const err=document.getElementById('err');
+  const btn=document.getElementById('btn-send');
+  err.classList.remove('show');
+
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const negocio=document.getElementById('f-negocio').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const msg=document.getElementById('f-msg').value.trim();
+
+  if(!nombre||!negocio||!tel||!email){
+    err.textContent='Por favor rellena todos los campos obligatorios.';
+    err.classList.add('show');
+    return;
+  }
+
+  const ref=refId();
+  btn.disabled=true;
+  btn.textContent='Enviando…';
+
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/solicitudes',{
+      method:'POST',
+      headers:{...SB_H,'Prefer':'return=minimal'},
+      body:JSON.stringify({nombre,telefono:tel,negocio,email,tipo:'tienda',mensaje:msg||null,ref})
+    });
+    if(!r.ok&&r.status!==201) throw new Error('HTTP '+r.status);
+    document.getElementById('formulario-wrap').style.display='none';
+    const ok=document.getElementById('ok');
+    ok.classList.add('show');
+    document.getElementById('ok-ref').textContent=ref;
+  }catch(ex){
+    err.textContent='No se ha podido enviar. Inténtalo de nuevo o escríbenos a jorgelinerochamorro@gmail.com';
+    err.classList.add('show');
+    btn.disabled=false;
+    btn.textContent='Solicitar prueba gratuita →';
+  }
+}
+
+// Scroll suave a formulario
+document.querySelectorAll('a[href="#formulario"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.getElementById('formulario').scrollIntoView({behavior:'smooth'});
+  });
+});
+document.querySelector('a[href="#como-funciona"]').addEventListener('click',e=>{
+  e.preventDefault();
+  document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'});
+});
+</script>
+</body>
+</html>

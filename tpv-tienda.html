@@ -4185,14 +4185,18 @@ setInterval(pollPedidos, 4000);
   const licId=new URLSearchParams(location.search).get('lic');
   if(licId){
     try{
-      const r=await fetch(_SB+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId)+'&select=activa',{
+      const r=await fetch(_SB+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId)+'&select=activa,fecha_expiracion',{
         headers:{'apikey':_KEY,'Authorization':'Bearer '+_KEY}
       });
       if(r.ok){
         const data=await r.json();
-        if(data.length && data[0].activa===false){
-          document.getElementById('ov-bloqueado').style.display='flex';
-          return;
+        if(data.length){
+          const lic=data[0];
+          const expirada=lic.fecha_expiracion && new Date(lic.fecha_expiracion)<new Date();
+          if(lic.activa===false||expirada){
+            document.getElementById('ov-bloqueado').style.display='flex';
+            return;
+          }
         }
       }
     }catch(e){}
