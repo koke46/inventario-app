@@ -1672,6 +1672,7 @@ function renderCat() {
       const ico   = p.foto ? `<img class="prd-foto" src="${p.foto}" alt="">` : `<span class="prd-ico">${p.emoji}</span>`;
       const famObj = FAMILIAS.find(f => f.id === p.familia);
       const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
+      if (esBoc) { out = false; }
       return `<button class="prd${out ? ' out' : ''}" draggable="true" data-pi="${p._i}"
         onclick="${out ? '' : 'clickPrd(' + p._i + ')'}"
         ondragstart="prdDragStart(event,${p._i})"
