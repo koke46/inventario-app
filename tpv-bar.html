@@ -58,6 +58,7 @@ body{font-family:var(--font);background:var(--bg);height:100vh;overflow:hidden;}
 .v2{text-align:center;color:var(--vr);font-size:11px;min-height:15px;}
 .v3{display:flex;justify-content:space-between;font-size:10px;opacity:.7;}
 .vmsg{color:var(--vr);font-size:10px;min-height:13px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vmsg.num{color:#4ade80;font-size:20px;font-weight:700;letter-spacing:1px;line-height:1;}
 
 /* Flechas */
 #arrows{display:flex;gap:3px;flex-shrink:0;height:28px;}
@@ -494,7 +495,7 @@ const calcTotal = ()=>mesa().ticket.reduce((s,l)=>s+l.importe,0);
 let warnTimer=null;
 function warn(msg,ms=3000){
   const el=document.getElementById('v-msg');
-  el.textContent=msg;
+  el.textContent=msg;el.classList.remove('num');
   clearTimeout(warnTimer);
   if(ms) warnTimer=setTimeout(()=>el.textContent='',ms);
 }
@@ -561,8 +562,8 @@ function moverSel(d){
 /* ══════════════════════════════════
    NUMPAD
 ══════════════════════════════════ */
-function np(k){nbuf+=k;warn('Cantidad: '+nbuf,0);}
-function nc(){nbuf='';document.getElementById('v-msg').textContent='';}
+function np(k){nbuf+=k;const el=document.getElementById('v-msg');el.textContent=nbuf;el.classList.add('num');clearTimeout(warnTimer);}
+function nc(){nbuf='';const el=document.getElementById('v-msg');el.textContent='';el.classList.remove('num');}
 function getN(){const v=parseFloat(nbuf);return isNaN(v)?null:v;}
 
 function restarUno(){
@@ -598,7 +599,7 @@ function añadir(nombre,precio,source){
   }
   lastPrd={nombre,precio};
   nbuf='';
-  document.getElementById('v-msg').textContent='';
+  const _vm=document.getElementById('v-msg');_vm.textContent='';_vm.classList.remove('num');
   renderTicket();
 }
 
