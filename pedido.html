@@ -214,13 +214,10 @@ function selFam(idx) {
     const q = (cart[p.i] || 0) + cartMods.filter(m => m.pid === p.i).length;
     const ico = p.img ? `<img src="${p.img}" alt="${p.n}">` : ((M.f && M.f[p.f] && M.f[p.f].img) ? `<img src="${M.f[p.f].img}" alt="">` : ((M.f && M.f[p.f] && M.f[p.f].e) || '📦'));
     const hint = p.mods ? `<div class="p-mods-hint">✏️ Personalizable</div>` : '';
-    const modsIngNames = p.mods ? [...(p.mods.ings||[]).map(it=>it.n), ...(p.mods.sals||[]).map(it=>it.n)].filter(Boolean) : [];
-    const descText = p.desc || (modsIngNames.length ? modsIngNames.join(', ') : '');
     return `<div class="p-card">
       <div class="p-ico">${ico}</div>
       <div class="p-info">
         <div class="p-nom">${p.n}</div>
-        ${descText?`<div class="p-desc">${descText}</div>`:''}
         <div class="p-prec">${fmt(p.pr)}</div>
         ${hint}
       </div>
