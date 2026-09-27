@@ -1511,12 +1511,9 @@ function updIVA() {
 function np(k) {
   if (k === ',' && nbuf.includes(',')) return;
   nbuf += k;
-  const v = getN();
-  if (v !== null) {
-    const el = document.getElementById('v-total');
-    el.textContent = fmtE(v);
-    el.style.color = '#16a34a';
-  }
+  const el = document.getElementById('v-total');
+  el.textContent = nbuf;
+  el.style.color = '#4ade80';
 }
 function nc() {
   nbuf = '';
