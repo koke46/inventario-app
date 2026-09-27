@@ -1611,7 +1611,9 @@ function cerrarPeso() {
 ══════════════════════ */
 function clickPrd(idx) {
   const prod = CAT[idx];
-  if (prod.stock === 0) return;
+  const famObj = FAMILIAS.find(f => f.id === prod.familia);
+  const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
+  if (!esBoc && prod.stock === 0) return;
   if (prod.peso) {
     if (!nbuf) { pedirPeso(idx); return; }
     const kg = getN();
