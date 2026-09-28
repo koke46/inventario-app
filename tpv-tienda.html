@@ -1317,6 +1317,17 @@ body {
 </div>
 
 <script>
+// Namespace localStorage por licencia — aísla datos entre clientes en el mismo dispositivo
+(function(){
+  const _lic=(new URLSearchParams(location.search).get('lic')||'').toLowerCase().replace(/[^a-z0-9]/g,'_');
+  if(!_lic) return;
+  const _p=_lic+'_';
+  const _g=Storage.prototype.getItem,_s=Storage.prototype.setItem,_r=Storage.prototype.removeItem;
+  Storage.prototype.getItem   =function(k){return _g.call(this,k.startsWith('tpvt_')?_p+k:k);};
+  Storage.prototype.setItem   =function(k,v){return _s.call(this,k.startsWith('tpvt_')?_p+k:k,v);};
+  Storage.prototype.removeItem=function(k){return _r.call(this,k.startsWith('tpvt_')?_p+k:k);};
+})();
+
 /* ══════════════════════
    CATÁLOGO
 ══════════════════════ */
