@@ -4203,7 +4203,7 @@ setInterval(pollPedidos, 4000);
   const licId=new URLSearchParams(location.search).get('lic');
   if(licId){
     try{
-      const r=await fetch(_SB+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId)+'&select=activa,fecha_expiracion,usuario,contrasena',{
+      const r=await fetch(_SB+'/rest/v1/licencias?licencia_id=eq.'+encodeURIComponent(licId)+'&select=activa,fecha_expiracion,usuario,contrasena,cliente',{
         headers:{'apikey':_KEY,'Authorization':'Bearer '+_KEY}
       });
       if(r.ok){
@@ -4212,6 +4212,12 @@ setInterval(pollPedidos, 4000);
           const lic=data[0];
           if(lic.usuario&&lic.contrasena){
             localStorage.setItem('_miarma_auth',JSON.stringify({u:lic.usuario,p:lic.contrasena}));
+          }
+          // Pre-rellenar nombre del negocio desde la licencia si el cliente no lo ha configurado aún
+          if(lic.cliente&&config.empresa==='Mi Tienda'){
+            config.empresa=lic.cliente;
+            localStorage.setItem('tpvt_config',JSON.stringify(config));
+            _actualizarBrandNombre();
           }
           const expirada=lic.fecha_expiracion && new Date(lic.fecha_expiracion)<new Date();
           if(lic.activa===false||expirada){
