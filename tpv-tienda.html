@@ -2798,7 +2798,8 @@ function abrirQR() {
     })
   };
   window._qrMenuData = menuData;
-  const url = urlBase.replace(/\/$/, '');
+  const urlBase2 = urlBase.replace(/\/$/, '');
+  const url = licId ? urlBase2 + (urlBase2.includes('?') ? '&' : '?') + 'lic=' + encodeURIComponent(licId) : urlBase2;
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
