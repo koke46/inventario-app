@@ -3293,6 +3293,7 @@ function prdDrop(e, pi) {
    ATAJOS DE TECLADO
 ══════════════════════ */
 document.addEventListener('keydown', e => {
+  if (_locked) { e.preventDefault(); e.stopPropagation(); return; }
   const tag = document.activeElement?.tagName;
   const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
   const modalOpen = document.querySelector('.ov.open, #ov.open, [id^="ov-"].open');
@@ -3804,19 +3805,15 @@ function bloquearPantalla() {
   _locked  = true;
   _lockActualizarDots();
   document.getElementById('lock-error').textContent = '';
-  // Ocultar y deshabilitar cada elemento del body excepto el overlay
+  // Bloquear todos los elementos del body excepto el overlay con inert
   Array.from(document.body.children).forEach(el => {
-    if (el.id !== 'ov-lock') {
-      el.dataset.lockVis = el.style.visibility || '';
-      el.dataset.lockPe  = el.style.pointerEvents || '';
-      el.style.visibility   = 'hidden';
-      el.style.pointerEvents = 'none';
-    }
+    if (el.id !== 'ov-lock') el.setAttribute('inert', '');
   });
   const ov = document.getElementById('ov-lock');
   ov.style.display = 'flex';
   ov.style.position = 'fixed';
-  ov.style.inset = '0';
+  ov.style.top = '0'; ov.style.left = '0';
+  ov.style.width = '100vw'; ov.style.height = '100vh';
   ov.style.zIndex = '999999';
   ov.style.background = '#0f172a';
 }
@@ -3824,12 +3821,8 @@ function bloquearPantalla() {
 function _lockDesbloquear() {
   _locked = false;
   _lockBuf = '';
-  // Restaurar todos los elementos
   Array.from(document.body.children).forEach(el => {
-    if (el.id !== 'ov-lock') {
-      el.style.visibility    = el.dataset.lockVis || '';
-      el.style.pointerEvents = el.dataset.lockPe  || '';
-    }
+    if (el.id !== 'ov-lock') el.removeAttribute('inert');
   });
   document.getElementById('ov-lock').style.display = 'none';
 }
@@ -3935,6 +3928,7 @@ function _recepCancelar() {
 (function(){
   let _buf='', _t=null;
   document.addEventListener('keydown', e => {
+    if (_locked) return;
     // En el modal de recepción, Enter confirma
     if (document.getElementById('ov-recep').style.display === 'flex') {
       if (e.key === 'Enter') { e.preventDefault(); _recepConfirmar(); }
