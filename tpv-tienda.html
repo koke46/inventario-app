@@ -3248,6 +3248,14 @@ function prdDrop(e, pi) {
    ATAJOS DE TECLADO
 ══════════════════════ */
 document.addEventListener('keydown', e => {
+  // Si la pantalla está bloqueada, solo procesar teclas del PIN
+  if (document.getElementById('ov-lock').style.display === 'flex') {
+    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); lockNp(e.key); }
+    if (e.key === 'Backspace')  { e.preventDefault(); lockNp('C'); }
+    if (e.key === 'Enter')      { e.preventDefault(); lockNp('OK'); }
+    return;
+  }
+
   const tag = document.activeElement?.tagName;
   const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
   const modalOpen = document.querySelector('.ov.open, #ov.open, [id^="ov-"].open');
@@ -3866,6 +3874,8 @@ function _recepCancelar() {
 (function(){
   let _buf='', _t=null;
   document.addEventListener('keydown', e => {
+    // Si la pantalla está bloqueada, ignorar todo
+    if (document.getElementById('ov-lock').style.display === 'flex') return;
     // En el modal de recepción, Enter confirma
     if (document.getElementById('ov-recep').style.display === 'flex') {
       if (e.key === 'Enter') { e.preventDefault(); _recepConfirmar(); }
