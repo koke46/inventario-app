@@ -2162,10 +2162,12 @@ function confirmar() {
   });
   // Puntos de cliente
   const cliObj = clientes.find(c => c.nombre === cliente);
+  let _ptsGanados = 0, _ptsCanjTicket = 0, _ptsTotales = 0;
   if (cliObj) {
-    const ptsSumados  = Math.floor(tot);
-    const ptsGastados = ptsCanjeados * 100;
-    cliObj.puntos = Math.max(0, (cliObj.puntos || 0) - ptsGastados + ptsSumados);
+    _ptsGanados    = Math.floor(tot);
+    _ptsCanjTicket = ptsCanjeados * 100;
+    cliObj.puntos  = Math.max(0, (cliObj.puntos || 0) - _ptsCanjTicket + _ptsGanados);
+    _ptsTotales    = cliObj.puntos;
     cliObj.historial = cliObj.historial || [];
     cliObj.historial.unshift({ fecha: new Date().toLocaleString('es'), nTicket, total: tot, articulos: ticket.length });
     saveClientes();
@@ -2173,7 +2175,7 @@ function confirmar() {
   ptsCanjeados = 0;
   // Historial del día
   const entregadoEf = payMode === 'ef' ? (parseFloat(document.getElementById('ef-in').value) || 0) : 0;
-  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)) });
+  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)), ptsGanados: _ptsGanados, ptsCanje: _ptsCanjTicket, ptsTotales: _ptsTotales });
   notaTicket = '';
   const btnNota = [...document.querySelectorAll('#actions .btn')].find(b => b.textContent.includes('Nota'));
   if (btnNota) { btnNota.style.outline = ''; btnNota.style.outlineOffset = ''; }
@@ -2449,10 +2451,21 @@ function buildTicketHtml(v) {
   const notaImpresa = (v ? v.nota : notaTicket) || '';
   const notaHtml = notaImpresa ? `<div style="margin:6px 0;padding:6px;border:1px dashed var(--ticket-border);border-radius:4px;font-size:11px;text-align:left">${notaImpresa}</div>` : '';
   const cliNomTicket = v ? v.cliente : cliente;
-  const cliObjTicket = cliNomTicket ? clientes.find(c => c.nombre === cliNomTicket) : null;
-  const ptsHtml = cliObjTicket
-    ? `<div style="margin:6px 0;font-size:11px;font-weight:700">⭐ Puntos acumulados: ${cliObjTicket.puntos || 0} pts</div>`
-    : '';
+  let ptsHtml = '';
+  if (cliNomTicket) {
+    if (v && v.ptsGanados !== undefined) {
+      // Ticket guardado en historial — tenemos datos exactos
+      const lines = [];
+      if (v.ptsCanje > 0)   lines.push(`🎁 Puntos canjeados: -${v.ptsCanje} pts`);
+      if (v.ptsGanados > 0) lines.push(`⭐ Puntos ganados esta compra: +${v.ptsGanados} pts`);
+      if (v.ptsCanje > 0 || v.ptsGanados > 0) lines.push(`Total acumulado: ${v.ptsTotales} pts`);
+      if (lines.length) ptsHtml = `<div style="margin:6px 0;font-size:11px;line-height:1.6">${lines.join('<br>')}</div>`;
+    } else {
+      // Ticket en vivo (sin datos guardados aún) — mostramos saldo actual del cliente
+      const cliObjTicket = clientes.find(c => c.nombre === cliNomTicket);
+      if (cliObjTicket) ptsHtml = `<div style="margin:6px 0;font-size:11px">⭐ Puntos acumulados: ${cliObjTicket.puntos || 0} pts</div>`;
+    }
+  }
   document.getElementById('tick-footer').innerHTML =
     `${notaHtml}${ptsHtml}${config.pie || '¡Gracias por su compra!'}<br>${new Date().toLocaleString('es')}`;
 }
