@@ -3285,6 +3285,8 @@ document.addEventListener('keydown', e => {
       }
     }
     if (e.key === 'Delete') { e.preventDefault(); acEliminar(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); mover(-1); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); mover(1);  }
     // Teclas numéricas → numpad (o precio libre si ese modal está abierto)
     if (/^[0-9]$/.test(e.key) || e.key === ',' || e.key === '.') {
       e.preventDefault();
