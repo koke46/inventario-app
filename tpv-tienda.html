@@ -602,18 +602,18 @@ body {
 /* ══ MODAL CLIENTES ══ */
 #ov-cli { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-cli.open { display:flex; }
-.cli-search { width:100%;padding:8px 10px;font-size:14px;border:2px solid #6a8faf;border-radius:var(--r);margin-bottom:8px;font-family:var(--font); }
-.cli-list { max-height:180px;overflow-y:auto;border:1px solid #aab8c8;border-radius:var(--r);margin-bottom:8px; }
-.cli-row { display:grid;grid-template-columns:1fr auto auto;padding:7px 10px;border-bottom:1px solid #dde;cursor:pointer;align-items:center;gap:8px;font-size:13px; }
+.cli-search { width:100%;padding:8px 10px;font-size:14px;border:2px solid var(--ticket-border);border-radius:var(--r);margin-bottom:8px;font-family:var(--font);background:var(--ticket-bg);color:var(--text); }
+.cli-list { max-height:180px;overflow-y:auto;border:1px solid var(--ticket-border);border-radius:var(--r);margin-bottom:8px;background:var(--ticket-bg); }
+.cli-row { display:grid;grid-template-columns:1fr auto auto;padding:7px 10px;border-bottom:1px solid var(--ticket-row-border);cursor:pointer;align-items:center;gap:8px;font-size:13px;color:var(--text); }
 .cli-row:last-child { border-bottom:none; }
-.cli-row:hover { background:#c8d8e8; }
+.cli-row:hover { background:var(--ticket-hover); }
 .cli-row.sel { background:var(--ticket-sel);color:#fff; }
-.cli-pts { font-size:11px;color:#888; }
+.cli-pts { font-size:11px;color:var(--muted); }
 .cli-row.sel .cli-pts { color:#adf; }
-.cli-form { display:none;margin-top:10px;padding-top:10px;border-top:2px solid #b0b8c8; }
+.cli-form { display:none;margin-top:10px;padding-top:10px;border-top:2px solid var(--ticket-border); }
 .cli-form.open { display:block; }
-.cli-form input { width:100%;padding:7px 9px;margin-bottom:6px;border:2px solid #8a9aaa;border-radius:var(--r);font-size:13px;font-family:var(--font); }
-.cli-form label { font-size:11px;color:#555;display:block;margin-bottom:2px; }
+.cli-form input { width:100%;padding:7px 9px;margin-bottom:6px;border:2px solid var(--ticket-border);border-radius:var(--r);font-size:13px;font-family:var(--font);background:var(--ticket-bg);color:var(--text); }
+.cli-form label { font-size:11px;color:var(--muted);display:block;margin-bottom:2px; }
 
 /* ══ MODAL ARTÍCULO LIBRE ══ */
 #ov-libre { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
@@ -1276,8 +1276,8 @@ body {
 
 <!-- ══ MODAL CLIENTES ══ -->
 <div id="ov-cli">
-  <div class="mbox-sm" id="mbox-cli" style="width:460px;background:#dde8f0;border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
-    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">👤 Clientes</h2>
+  <div class="mbox-sm" id="mbox-cli" style="width:460px;background:var(--surface);color:var(--text);border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:var(--text)">👤 Clientes</h2>
     <input class="cli-search" id="cli-q" type="text" placeholder="🔍 Buscar por nombre o NIF..." oninput="filtrarCli()">
     <div class="cli-list" id="cli-list"></div>
     <button style="width:100%;padding:8px;background:linear-gradient(to bottom,#5c7ca0,#4a6788);color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px" onclick="toggleCliForm()">➕ Nuevo cliente</button>
