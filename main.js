@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, MenuItem, dialog, clipboard, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
@@ -17,6 +17,10 @@ function applyWindowOpenHandler(browserWin) {
   browserWin.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('elmiarma://')) {
       abrirDesdeProtocolo(url);
+      return { action: 'deny' };
+    }
+    if (url.startsWith('mailto:')) {
+      shell.openExternal(url);
       return { action: 'deny' };
     }
     return {
