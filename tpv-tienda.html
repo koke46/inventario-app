@@ -1274,6 +1274,19 @@ body {
   </div>
 </div>
 
+<!-- ══ MODAL CANJE PUNTOS ══ -->
+<div id="ov-pts" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);align-items:center;justify-content:center;z-index:300">
+  <div style="background:var(--surface);color:var(--text);border-radius:12px;padding:24px;width:320px;max-width:92vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+    <div style="font-size:36px;margin-bottom:8px">⭐</div>
+    <div id="pts-msg" style="font-size:15px;font-weight:700;margin-bottom:6px"></div>
+    <div id="pts-sub" style="font-size:13px;color:var(--muted);margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="_ptsUsar()" style="flex:1;padding:12px;background:linear-gradient(to bottom,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">Usar puntos</button>
+      <button onclick="_ptsGuardar()" style="flex:1;padding:12px;background:var(--ticket-bg);color:var(--text);border:2px solid var(--ticket-border);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">Guardarlos</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL CLIENTES ══ -->
 <div id="ov-cli">
   <div class="mbox-sm" id="mbox-cli" style="width:460px;background:var(--surface);color:var(--text);border-radius:10px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.55)">
@@ -2594,9 +2607,21 @@ function asignarCli() {
   const ptsDisp = c.puntos || 0;
   const eurosMax = Math.floor(ptsDisp / 100);
   if (eurosMax >= 1) {
-    const usar = confirm(`⭐ ${c.nombre} tiene ${ptsDisp} puntos (${eurosMax}€ de descuento disponibles).\n\n¿Aplicar ${eurosMax}€ de descuento por puntos?`);
-    if (usar) canjearPuntos(c, eurosMax);
+    _ptsCliId = c.id;
+    _ptsEuros = eurosMax;
+    document.getElementById('pts-msg').textContent = `${c.nombre} tiene ${ptsDisp} puntos`;
+    document.getElementById('pts-sub').textContent = `Puedes aplicar ${eurosMax}€ de descuento o seguir acumulando`;
+    document.getElementById('ov-pts').style.display = 'flex';
   }
+}
+let _ptsCliId = null, _ptsEuros = 0;
+function _ptsUsar() {
+  document.getElementById('ov-pts').style.display = 'none';
+  const c = clientes.find(x => x.id === _ptsCliId);
+  if (c) canjearPuntos(c, _ptsEuros);
+}
+function _ptsGuardar() {
+  document.getElementById('ov-pts').style.display = 'none';
 }
 function canjearPuntos(c, euros) {
   // Quitar descuento anterior de puntos si hubiera
