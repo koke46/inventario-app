@@ -3804,16 +3804,34 @@ function bloquearPantalla() {
   _locked  = true;
   _lockActualizarDots();
   document.getElementById('lock-error').textContent = '';
-  // Ocultar TODO el contenido del body y mostrar solo el overlay
-  document.body.classList.add('app-locked');
-  document.getElementById('ov-lock').classList.add('active');
+  // Ocultar y deshabilitar cada elemento del body excepto el overlay
+  Array.from(document.body.children).forEach(el => {
+    if (el.id !== 'ov-lock') {
+      el.dataset.lockVis = el.style.visibility || '';
+      el.dataset.lockPe  = el.style.pointerEvents || '';
+      el.style.visibility   = 'hidden';
+      el.style.pointerEvents = 'none';
+    }
+  });
+  const ov = document.getElementById('ov-lock');
+  ov.style.display = 'flex';
+  ov.style.position = 'fixed';
+  ov.style.inset = '0';
+  ov.style.zIndex = '999999';
+  ov.style.background = '#0f172a';
 }
 
 function _lockDesbloquear() {
   _locked = false;
   _lockBuf = '';
-  document.getElementById('ov-lock').classList.remove('active');
-  document.body.classList.remove('app-locked');
+  // Restaurar todos los elementos
+  Array.from(document.body.children).forEach(el => {
+    if (el.id !== 'ov-lock') {
+      el.style.visibility    = el.dataset.lockVis || '';
+      el.style.pointerEvents = el.dataset.lockPe  || '';
+    }
+  });
+  document.getElementById('ov-lock').style.display = 'none';
 }
 
 function lockNp(k) {
