@@ -1281,8 +1281,8 @@ body {
     <div id="pts-msg" style="font-size:15px;font-weight:700;margin-bottom:6px"></div>
     <div id="pts-sub" style="font-size:13px;color:var(--muted);margin-bottom:20px"></div>
     <div style="display:flex;gap:10px">
-      <button onclick="_ptsUsar()" style="flex:1;padding:12px;background:linear-gradient(to bottom,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">Usar puntos</button>
-      <button onclick="_ptsGuardar()" style="flex:1;padding:12px;background:var(--ticket-bg);color:var(--text);border:2px solid var(--ticket-border);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">Guardarlos</button>
+      <button onclick="_ptsUsar()" style="flex:1;padding:12px;background:linear-gradient(to bottom,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">🎁 Canjear</button>
+      <button onclick="_ptsGuardar()" style="flex:1;padding:12px;background:var(--ticket-bg);color:var(--text);border:2px solid var(--ticket-border);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">⭐ Acumular</button>
     </div>
   </div>
 </div>
@@ -2160,22 +2160,12 @@ function confirmar() {
     const p = CAT.find(x => x.codigo === l.codigo);
     if (p && p.stock >= 0) p.stock = Math.max(0, p.stock + (l.dev ? Math.abs(l.cantidad) : -l.cantidad));
   });
-  // Puntos de cliente
-  const cliObj = clientes.find(c => c.nombre === cliente);
-  let _ptsGanados = 0, _ptsCanjTicket = 0, _ptsTotales = 0;
-  if (cliObj) {
-    _ptsGanados    = Math.floor(tot);
-    _ptsCanjTicket = ptsCanjeados * 100;
-    cliObj.puntos  = Math.max(0, (cliObj.puntos || 0) - _ptsCanjTicket + _ptsGanados);
-    _ptsTotales    = cliObj.puntos;
-    cliObj.historial = cliObj.historial || [];
-    cliObj.historial.unshift({ fecha: new Date().toLocaleString('es'), nTicket, total: tot, articulos: ticket.length });
-    saveClientes();
-  }
-  ptsCanjeados = 0;
-  // Historial del día
+  // Guardar nombre cliente antes de resetear
+  const _cliNomPostPago = cliente;
+  const _ptsGanadosCalc = Math.floor(tot);
+  // Historial del día (sin datos de puntos aún — se completan en el modal)
   const entregadoEf = payMode === 'ef' ? (parseFloat(document.getElementById('ef-in').value) || 0) : 0;
-  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)), ptsGanados: _ptsGanados, ptsCanje: _ptsCanjTicket, ptsTotales: _ptsTotales });
+  histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)), ptsGanados: 0, ptsCanje: 0, ptsTotales: 0 });
   notaTicket = '';
   const btnNota = [...document.querySelectorAll('#actions .btn')].find(b => b.textContent.includes('Nota'));
   if (btnNota) { btnNota.style.outline = ''; btnNota.style.outlineOffset = ''; }
@@ -2190,9 +2180,30 @@ function confirmar() {
   renderCat();
   updStatus();
   buildTicketHtml(ventaGuardada);
-  document.getElementById('ov-ticket-choice').classList.add('open');
-  setTimeout(() => document.getElementById('tc-btn-sin').focus(), 60);
   if (cambioEf > 0.005) mostrarCambioFinal(cambioEf);
+  // --- Flujo de puntos post-pago ---
+  const _cliRef = _cliNomPostPago ? clientes.find(c => c.nombre === _cliNomPostPago) : null;
+  if (_cliRef) {
+    const eurosDisp = Math.floor((_cliRef.puntos || 0) / 100);
+    if (eurosDisp >= 1) {
+      // Tiene puntos para canjear — mostrar modal antes del ticket
+      _ptsCliId    = _cliRef.id;
+      _ptsEuros    = eurosDisp;
+      _ptsVentaRef = ventaGuardada;
+      _ptsGanadosPost = _ptsGanadosCalc;
+      document.getElementById('pts-msg').textContent = `${_cliRef.nombre} tiene ${_cliRef.puntos} puntos`;
+      document.getElementById('pts-sub').textContent = `Puedes canjear ${eurosDisp}€ de descuento o seguir acumulando`;
+      document.getElementById('ov-pts').style.display = 'flex';
+    } else {
+      // Puntos pero no suficientes para canjear — sumar y mostrar ticket directo
+      _aplicarPuntosSinCanje(_cliRef, ventaGuardada, _ptsGanadosCalc);
+      document.getElementById('ov-tick').classList.add('open');
+    }
+  } else {
+    // Sin cliente — mostrar elección de ticket como antes
+    document.getElementById('ov-ticket-choice').classList.add('open');
+    setTimeout(() => document.getElementById('tc-btn-sin').focus(), 60);
+  }
 }
 
 /* ══════════════════════
@@ -2616,28 +2627,44 @@ function asignarCli() {
   cliente = c.nombre;
   updVisor();
   cerrarCli();
-  // Ofrecer canje de puntos si tiene suficientes
-  const ptsDisp = c.puntos || 0;
-  const eurosMax = Math.floor(ptsDisp / 100);
-  if (eurosMax >= 1) {
-    _ptsCliId = c.id;
-    _ptsEuros = eurosMax;
-    document.getElementById('pts-msg').textContent = `${c.nombre} tiene ${ptsDisp} puntos`;
-    document.getElementById('pts-sub').textContent = `Puedes aplicar ${eurosMax}€ de descuento o seguir acumulando`;
-    document.getElementById('ov-pts').style.display = 'flex';
-  }
+  if (c.puntos >= 100) warn(`⭐ ${c.nombre} tiene ${c.puntos} pts acumulados`, 2000);
 }
-let _ptsCliId = null, _ptsEuros = 0;
+let _ptsCliId = null, _ptsEuros = 0, _ptsVentaRef = null, _ptsGanadosPost = 0;
 function _ptsUsar() {
   document.getElementById('ov-pts').style.display = 'none';
   const c = clientes.find(x => x.id === _ptsCliId);
-  if (c) canjearPuntos(c, _ptsEuros);
+  if (!c) { document.getElementById('ov-tick').classList.add('open'); return; }
+  const ptsGastados = _ptsEuros * 100;
+  c.puntos = Math.max(0, (c.puntos || 0) - ptsGastados + _ptsGanadosPost);
+  c.historial = c.historial || [];
+  c.historial.unshift({ fecha: new Date().toLocaleString('es'), total: _ptsVentaRef?.total || 0 });
+  if (_ptsVentaRef) {
+    _ptsVentaRef.ptsCanje    = ptsGastados;
+    _ptsVentaRef.ptsGanados  = _ptsGanadosPost;
+    _ptsVentaRef.ptsTotales  = c.puntos;
+  }
+  saveClientes();
+  localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+  if (_ptsVentaRef) buildTicketHtml(_ptsVentaRef);
+  document.getElementById('ov-tick').classList.add('open');
 }
 function _ptsGuardar() {
   document.getElementById('ov-pts').style.display = 'none';
+  const c = clientes.find(x => x.id === _ptsCliId);
+  if (c) _aplicarPuntosSinCanje(c, _ptsVentaRef, _ptsGanadosPost);
+  document.getElementById('ov-tick').classList.add('open');
+}
+function _aplicarPuntosSinCanje(c, venta, ganados) {
+  c.puntos = (c.puntos || 0) + ganados;
+  c.historial = c.historial || [];
+  c.historial.unshift({ fecha: new Date().toLocaleString('es'), total: venta?.total || 0 });
+  if (venta) { venta.ptsGanados = ganados; venta.ptsTotales = c.puntos; }
+  saveClientes();
+  localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+  if (venta) buildTicketHtml(venta);
 }
 function canjearPuntos(c, euros) {
-  // Quitar descuento anterior de puntos si hubiera
+  // Canje pre-pago (ya no se usa — se mantiene por compatibilidad)
   ticket = ticket.filter(l => !l._canje);
   ticket.push({ nombre: `⭐ Descuento puntos (${euros * 100} pts)`, cantidad: 1, pUnit: -euros, importe: -euros, ivaT: 0, _canje: true });
   ptsCanjeados = euros;
