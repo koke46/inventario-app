@@ -802,6 +802,7 @@ body {
     <span id="tpv-brand-nombre" style="font-size:13px;font-weight:900;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px"></span>
   </div>
   <div class="sep"></div>
+  <button class="btn" onclick="bloquearPantalla()" id="btn-lock" style="display:none"><span class="ico">🔒</span><span class="lbl">Bloquear</span></button>
   <button class="btn" style="background:linear-gradient(to bottom,#4a3070,#2d1a55);color:#fff" onclick="abrirMenuConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
   <div class="sep"></div>
   <button class="btn" id="btn-pedidos" style="background:linear-gradient(to bottom,#15803d,#14532d);color:#fff;position:relative" onclick="abrirPedidos()">
@@ -2964,6 +2965,7 @@ function abrirConfig() {
   document.getElementById('cfg-tel').value     = config.tel     || '';
   document.getElementById('cfg-pie').value     = config.pie     || '¡Gracias por su compra!';
   document.getElementById('cfg-url-menu').value = config.urlMenu || '';
+  document.getElementById('cfg-pin').value = config.pin || '';
   document.getElementById('ov-cfg').classList.add('open');
 }
 function guardarConfig() {
@@ -2973,8 +2975,11 @@ function guardarConfig() {
   config.tel       = document.getElementById('cfg-tel').value.trim();
   config.pie       = document.getElementById('cfg-pie').value.trim() || '¡Gracias por su compra!';
   config.urlMenu   = document.getElementById('cfg-url-menu').value.trim();
+  const pinVal = document.getElementById('cfg-pin').value.replace(/\D/g,'').slice(0,4);
+  config.pin = pinVal;
   localStorage.setItem('tpvt_config', JSON.stringify(config));
   _actualizarBrandNombre();
+  _lockActualizarBoton();
   cerrarModal('ov-cfg');
   autoGuardarMenuJson();
 }
@@ -3740,6 +3745,54 @@ function guardarFamEdit() {
 
 function guardarFam() { guardarFamEdit(); }
 
+// ── BLOQUEO DE PANTALLA CON PIN ──────────────────────────────────────────────
+let _lockBuf = '';
+
+function _lockActualizarDots() {
+  document.querySelectorAll('.ldot').forEach((d, i) => d.classList.toggle('on', i < _lockBuf.length));
+}
+
+function bloquearPantalla() {
+  if (!config.pin) { warn('Configura un PIN en Configuración primero', 2500); return; }
+  _lockBuf = '';
+  _lockActualizarDots();
+  document.getElementById('lock-error').textContent = '';
+  document.getElementById('ov-lock').style.display = 'flex';
+}
+
+function lockNp(k) {
+  if (k === 'C') {
+    _lockBuf = _lockBuf.slice(0, -1);
+    _lockActualizarDots();
+    return;
+  }
+  if (k === 'OK' || _lockBuf.length === 4) {
+    const pin = k === 'OK' ? _lockBuf : _lockBuf + (k !== 'OK' ? k : '');
+    if (k !== 'OK') _lockBuf = pin;
+    _lockActualizarDots();
+    if (_lockBuf === config.pin) {
+      document.getElementById('ov-lock').style.display = 'none';
+      _lockBuf = '';
+    } else {
+      document.getElementById('lock-error').textContent = 'PIN incorrecto';
+      _lockBuf = '';
+      _lockActualizarDots();
+      setTimeout(() => { document.getElementById('lock-error').textContent = ''; }, 1500);
+    }
+    return;
+  }
+  if (_lockBuf.length < 4) {
+    _lockBuf += k;
+    _lockActualizarDots();
+    if (_lockBuf.length === 4) lockNp('OK');
+  }
+}
+
+function _lockActualizarBoton() {
+  const btn = document.getElementById('btn-lock');
+  if (btn) btn.style.display = config.pin ? '' : 'none';
+}
+
 // ── REPETIR ÚLTIMA VENTA ─────────────────────────────────────────────────────
 function repetirUltimaVenta() {
   if (!histVentas.length) { warn('No hay ninguna venta anterior', 2000); return; }
@@ -3850,7 +3903,7 @@ function _recepCancelar() {
   <div class="cs-tienda" id="cs-nombre-tienda"></div>
   <div id="cs-body"><div class="cs-idle">Bienvenido/a</div></div>
 </div>
-<script>document.getElementById('cs-nombre-tienda').textContent = config.empresa; _actualizarBrandNombre();</script>
+<script>document.getElementById('cs-nombre-tienda').textContent = config.empresa; _actualizarBrandNombre(); _lockActualizarBoton();</script>
 
 <!-- ══ MENÚ CONFIGURACIÓN ══ -->
 <div id="ov-menu-cfg">
@@ -4024,6 +4077,8 @@ function _recepCancelar() {
       <input id="cfg-pie" type="text" placeholder="¡Gracias por su compra!" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
       <label style="font-size:12px;color:#555">URL pública del menú <span style="color:#888">(para el QR de pedidos)</span></label>
       <input id="cfg-url-menu" type="text" placeholder="https://tudominio.com" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
+      <label style="font-size:12px;color:#555">PIN de bloqueo de pantalla <span style="color:#888">(4 dígitos, vacío = sin bloqueo)</span></label>
+      <input id="cfg-pin" type="password" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px;letter-spacing:4px">
     </div>
     <button style="margin-top:14px;width:100%;padding:10px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarConfig()">💾 Guardar</button>
   </div>
@@ -4362,6 +4417,37 @@ function hacerLogin(){
   document.getElementById('login-pass').focus();
 }
 </script>
+
+<!-- ══ PANTALLA DE BLOQUEO ══ -->
+<div id="ov-lock" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+  <div style="font-size:48px">🔒</div>
+  <div style="color:#fff;font-size:20px;font-weight:800;letter-spacing:1px">Pantalla bloqueada</div>
+  <div style="color:#94a3b8;font-size:13px;margin-bottom:8px">Introduce el PIN para desbloquear</div>
+  <div id="lock-dots" style="display:flex;gap:14px;margin-bottom:10px">
+    <span class="ldot"></span><span class="ldot"></span><span class="ldot"></span><span class="ldot"></span>
+  </div>
+  <div id="lock-error" style="color:#f87171;font-size:13px;min-height:18px"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-top:6px">
+    <button class="lk" onclick="lockNp('1')">1</button>
+    <button class="lk" onclick="lockNp('2')">2</button>
+    <button class="lk" onclick="lockNp('3')">3</button>
+    <button class="lk" onclick="lockNp('4')">4</button>
+    <button class="lk" onclick="lockNp('5')">5</button>
+    <button class="lk" onclick="lockNp('6')">6</button>
+    <button class="lk" onclick="lockNp('7')">7</button>
+    <button class="lk" onclick="lockNp('8')">8</button>
+    <button class="lk" onclick="lockNp('9')">9</button>
+    <button class="lk" onclick="lockNp('C')" style="background:#334155;font-size:18px">⌫</button>
+    <button class="lk" onclick="lockNp('0')">0</button>
+    <button class="lk" onclick="lockNp('OK')" style="background:#1d4ed8;font-size:18px">✓</button>
+  </div>
+</div>
+<style>
+.ldot { width:16px;height:16px;border-radius:50%;background:#334155;transition:background .15s }
+.ldot.on { background:#60a5fa }
+.lk { width:72px;height:72px;border:none;border-radius:14px;background:#1e293b;color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .1s }
+.lk:active { background:#3b82f6 }
+</style>
 
 <!-- ══ MODAL RECEPCIÓN MERCANCÍA ══ -->
 <div id="ov-recep" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9900;align-items:center;justify-content:center">
