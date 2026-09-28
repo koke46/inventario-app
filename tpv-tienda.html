@@ -3754,14 +3754,25 @@ function _lockActualizarDots() {
 }
 
 function bloquearPantalla() {
-  if (!config.pin) { warn('Configura un PIN en Configuración primero', 2500); return; }
+  if (!config.pin) { warn('⚠ Configura un PIN en Configuración primero', 3000); return; }
   _lockBuf = '';
   _locked  = true;
   _lockActualizarDots();
   document.getElementById('lock-error').textContent = '';
   const ov = document.getElementById('ov-lock');
-  ov.style.display = 'flex';
-  ov.focus();
+  ov.style.cssText = [
+    'display:flex',
+    'position:fixed',
+    'top:0','left:0','right:0','bottom:0',
+    'background:#0f172a',
+    'z-index:2147483647',
+    'flex-direction:column',
+    'align-items:center',
+    'justify-content:center',
+    'gap:20px',
+    'outline:none'
+  ].join(';');
+  setTimeout(() => ov.focus(), 30);
 }
 
 function _lockDesbloquear() {
