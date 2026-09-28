@@ -2435,8 +2435,13 @@ function buildTicketHtml(v) {
 
   const notaImpresa = (v ? v.nota : notaTicket) || '';
   const notaHtml = notaImpresa ? `<div style="margin:6px 0;padding:6px;border:1px dashed var(--ticket-border);border-radius:4px;font-size:11px;text-align:left">${notaImpresa}</div>` : '';
+  const cliNomTicket = v ? v.cliente : cliente;
+  const cliObjTicket = cliNomTicket ? clientes.find(c => c.nombre === cliNomTicket) : null;
+  const ptsHtml = cliObjTicket
+    ? `<div style="margin:6px 0;font-size:11px;font-weight:700">⭐ Puntos acumulados: ${cliObjTicket.puntos || 0} pts</div>`
+    : '';
   document.getElementById('tick-footer').innerHTML =
-    `${notaHtml}${config.pie || '¡Gracias por su compra!'}<br>${new Date().toLocaleString('es')}`;
+    `${notaHtml}${ptsHtml}${config.pie || '¡Gracias por su compra!'}<br>${new Date().toLocaleString('es')}`;
 }
 
 function imprimirTicket(v) {
