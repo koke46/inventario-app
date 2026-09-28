@@ -8,6 +8,7 @@
 /* ══ COLORES ══ */
 :root {
   --bg: #bdd0f0;
+  --surface: #d4e3f7;
   --sidebar-w: 190px;
   --btn-from: #2563eb;
   --btn-to: #1d4ed8;
@@ -23,6 +24,47 @@
   --anular: #c0392b;
   --font: Arial, sans-serif;
   --r: 5px;
+  --ticket-bg: #fff;
+  --ticket-border: #8a9aaa;
+  --ticket-head-bg: #d0d8e4;
+  --ticket-row-border: #eef;
+  --ticket-hover: #e8f0f8;
+  --iva-bg: #f0f4f8;
+  --text: #222;
+  --muted: #666;
+  --brand-color: #1e3a8a;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f172a; --surface: #1e293b; --visor-bg: #0a0a0a; --visor-green: #4ade80;
+  --numpad-from: #374151; --numpad-to: #1f2937; --ticket-sel: #2563eb;
+  --cobrar-from: #16a34a; --cobrar-to: #15803d; --anular: #dc2626;
+  --ticket-bg: #1e293b; --ticket-border: #334155; --ticket-head-bg: #0f172a;
+  --ticket-row-border: #334155; --ticket-hover: #334155; --iva-bg: #1e293b;
+  --text: #e2e8f0; --muted: #94a3b8; --brand-color: #93c5fd;
+}}
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --btn-from: #2563eb;
+  --btn-to: #1d4ed8;
+  --visor-bg: #0a0a0a;
+  --visor-green: #4ade80;
+  --status-bg: #1e3a8a;
+  --numpad-from: #374151;
+  --numpad-to: #1f2937;
+  --ticket-sel: #2563eb;
+  --cobrar-from: #16a34a;
+  --cobrar-to: #15803d;
+  --anular: #dc2626;
+  --ticket-bg: #1e293b;
+  --ticket-border: #334155;
+  --ticket-head-bg: #0f172a;
+  --ticket-row-border: #334155;
+  --ticket-hover: #334155;
+  --iva-bg: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --brand-color: #93c5fd;
 }
 
 /* ══ RESET / BASE ══ */
@@ -30,6 +72,7 @@
 body {
   font-family: var(--font);
   background: var(--bg);
+  color: var(--text);
   height: 100vh;
   overflow: hidden;
   display: grid;
@@ -152,8 +195,8 @@ body {
 /* Ticket */
 #ticket-wrap {
   flex: 1;
-  background: #fff;
-  border: 1px solid #8a9aaa;
+  background: var(--ticket-bg);
+  border: 1px solid var(--ticket-border);
   border-radius: 3px;
   overflow-y: auto;
   min-height: 0;
@@ -163,39 +206,40 @@ body {
   display: grid;
   grid-template-columns: 32px 1fr 54px;
   padding: 2px 4px;
-  background: #d0d8e4;
-  border-bottom: 1px solid #b0b8c8;
+  background: var(--ticket-head-bg);
+  border-bottom: 1px solid var(--ticket-border);
   font-size: 10px;
   font-weight: 700;
-  color: #444;
+  color: var(--text);
   position: sticky; top: 0;
 }
 .t-row {
   display: grid;
   grid-template-columns: 32px 1fr 54px;
   padding: 3px 4px;
-  border-bottom: 1px solid #eef;
+  border-bottom: 1px solid var(--ticket-row-border);
   cursor: pointer;
   align-items: center;
+  color: var(--text);
 }
-.t-row:hover { background: #e8f0f8; }
+.t-row:hover { background: var(--ticket-hover); }
 .t-row.sel { background: var(--ticket-sel); color: #fff; }
-.t-row.dev { color: #c00; }
-.t-row.sel.dev { color: #faa; }
+.t-row.dev { color: #f87171; }
+.t-row.sel.dev { color: #fca5a5; }
 .t-qty { text-align: right; font-weight: 700; padding-right: 4px; }
 .t-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .t-imp { text-align: right; font-family: 'Courier New', monospace; }
-.t-empty { padding: 14px; text-align: center; color: #aaa; font-size: 11px; }
+.t-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 11px; }
 
 /* IVA */
 #iva-box {
-  background: #f0f4f8;
-  border: 1px solid #8a9aaa;
+  background: var(--iva-bg);
+  border: 1px solid var(--ticket-border);
   border-radius: 3px;
   padding: 3px 6px;
   flex-shrink: 0;
   font-size: 10px;
-  color: #333;
+  color: var(--text);
 }
 .iva-head { font-weight: 700; color: #555; margin-bottom: 2px; }
 .iva-row { display: flex; justify-content: space-between; gap: 4px; }
@@ -803,6 +847,7 @@ body {
   </div>
   <div class="sep"></div>
   <button class="btn" onclick="bloquearPantalla()" id="btn-lock" style="display:none"><span class="ico">🔒</span><span class="lbl">Bloquear</span></button>
+  <button class="btn" id="btn-darkmode" onclick="toggleDarkMode()"><span class="ico">🌙</span><span class="lbl">Oscuro</span></button>
   <button class="btn" style="background:linear-gradient(to bottom,#4a3070,#2d1a55);color:#fff" onclick="abrirMenuConfig()"><span class="ico">⚙️</span><span class="lbl">Config</span></button>
   <div class="sep"></div>
   <button class="btn" id="btn-pedidos" style="background:linear-gradient(to bottom,#15803d,#14532d);color:#fff;position:relative" onclick="abrirPedidos()">
@@ -3939,7 +3984,26 @@ function _recepCancelar() {
   <div class="cs-tienda" id="cs-nombre-tienda"></div>
   <div id="cs-body"><div class="cs-idle">Bienvenido/a</div></div>
 </div>
-<script>document.getElementById('cs-nombre-tienda').textContent = config.empresa; _actualizarBrandNombre(); _lockActualizarBoton();</script>
+<script>
+document.getElementById('cs-nombre-tienda').textContent = config.empresa;
+_actualizarBrandNombre();
+_lockActualizarBoton();
+// Modo oscuro — aplicar preferencia guardada al arrancar
+(function(){
+  const t = localStorage.getItem('tpvt_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = document.getElementById('btn-darkmode');
+  if (btn) { btn.querySelector('.ico').textContent = t === 'dark' ? '☀️' : '🌙'; btn.querySelector('.lbl').textContent = t === 'dark' ? 'Claro' : 'Oscuro'; }
+})();
+function toggleDarkMode(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('tpvt_theme', next);
+  const btn = document.getElementById('btn-darkmode');
+  if (btn) { btn.querySelector('.ico').textContent = next === 'dark' ? '☀️' : '🌙'; btn.querySelector('.lbl').textContent = next === 'dark' ? 'Claro' : 'Oscuro'; }
+}
+</script>
 
 <!-- ══ MENÚ CONFIGURACIÓN ══ -->
 <div id="ov-menu-cfg">
