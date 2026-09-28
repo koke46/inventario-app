@@ -81,6 +81,10 @@ app.on('second-instance', (event, commandLine) => {
 });
 
 function createWindow() {
+  // Si se lanzó via protocolo elmiarma://, solo abrir esa ventana — no la de demo
+  const protocolUrl = process.argv.find(arg => arg.startsWith('elmiarma://'));
+  if (protocolUrl) { abrirDesdeProtocolo(protocolUrl); return; }
+
   const esPanel  = process.argv.includes('--panel');
   const esTienda = !esPanel && (process.execPath.toLowerCase().includes('tienda') || process.argv.includes('--tienda'));
   const htmlFile = esPanel ? 'panel-control.html' : esTienda ? 'tpv-tienda.html' : 'inventario-fresco.html';
@@ -163,10 +167,6 @@ function createWindow() {
       });
     }, 1200); // espera 1.2 s para que aparezcan más dispositivos antes de mostrar el diálogo
   });
-
-  // Si se lanzó directamente via protocolo (app no estaba abierta)
-  const protocolUrl = process.argv.find(arg => arg.startsWith('elmiarma://'));
-  if (protocolUrl) abrirDesdeProtocolo(protocolUrl);
 
   const menu = Menu.buildFromTemplate([
     {
