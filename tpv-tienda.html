@@ -3248,14 +3248,6 @@ function prdDrop(e, pi) {
    ATAJOS DE TECLADO
 ══════════════════════ */
 document.addEventListener('keydown', e => {
-  // Si la pantalla está bloqueada, solo procesar teclas del PIN
-  if (document.getElementById('ov-lock').style.display === 'flex') {
-    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); lockNp(e.key); }
-    if (e.key === 'Backspace')  { e.preventDefault(); lockNp('C'); }
-    if (e.key === 'Enter')      { e.preventDefault(); lockNp('OK'); }
-    return;
-  }
-
   const tag = document.activeElement?.tagName;
   const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
   const modalOpen = document.querySelector('.ov.open, #ov.open, [id^="ov-"].open');
@@ -3755,6 +3747,7 @@ function guardarFam() { guardarFamEdit(); }
 
 // ── BLOQUEO DE PANTALLA CON PIN ──────────────────────────────────────────────
 let _lockBuf = '';
+let _locked  = false;
 
 function _lockActualizarDots() {
   document.querySelectorAll('.ldot').forEach((d, i) => d.classList.toggle('on', i < _lockBuf.length));
@@ -3763,36 +3756,40 @@ function _lockActualizarDots() {
 function bloquearPantalla() {
   if (!config.pin) { warn('Configura un PIN en Configuración primero', 2500); return; }
   _lockBuf = '';
+  _locked  = true;
   _lockActualizarDots();
   document.getElementById('lock-error').textContent = '';
-  document.getElementById('ov-lock').style.display = 'flex';
+  const ov = document.getElementById('ov-lock');
+  ov.style.display = 'flex';
+  ov.focus();
+}
+
+function _lockDesbloquear() {
+  _locked = false;
+  _lockBuf = '';
+  document.getElementById('ov-lock').style.display = 'none';
 }
 
 function lockNp(k) {
+  if (!_locked) return;
   if (k === 'C') {
     _lockBuf = _lockBuf.slice(0, -1);
     _lockActualizarDots();
     return;
   }
-  if (k === 'OK' || _lockBuf.length === 4) {
-    const pin = k === 'OK' ? _lockBuf : _lockBuf + (k !== 'OK' ? k : '');
-    if (k !== 'OK') _lockBuf = pin;
-    _lockActualizarDots();
-    if (_lockBuf === config.pin) {
-      document.getElementById('ov-lock').style.display = 'none';
-      _lockBuf = '';
-    } else {
-      document.getElementById('lock-error').textContent = 'PIN incorrecto';
-      _lockBuf = '';
-      _lockActualizarDots();
-      setTimeout(() => { document.getElementById('lock-error').textContent = ''; }, 1500);
-    }
-    return;
-  }
-  if (_lockBuf.length < 4) {
+  if (/^[0-9]$/.test(k) && _lockBuf.length < 4) {
     _lockBuf += k;
     _lockActualizarDots();
-    if (_lockBuf.length === 4) lockNp('OK');
+    if (_lockBuf.length === 4) {
+      if (_lockBuf === config.pin) {
+        _lockDesbloquear();
+      } else {
+        document.getElementById('lock-error').textContent = 'PIN incorrecto';
+        _lockBuf = '';
+        _lockActualizarDots();
+        setTimeout(() => { document.getElementById('lock-error').textContent = ''; }, 1500);
+      }
+    }
   }
 }
 
@@ -3800,6 +3797,26 @@ function _lockActualizarBoton() {
   const btn = document.getElementById('btn-lock');
   if (btn) btn.style.display = config.pin ? '' : 'none';
 }
+
+// Captura TODOS los eventos cuando está bloqueado — fase de captura, máxima prioridad
+document.addEventListener('keydown', e => {
+  if (!_locked) return;
+  e.preventDefault(); e.stopPropagation();
+  if (/^[0-9]$/.test(e.key)) lockNp(e.key);
+  if (e.key === 'Backspace') lockNp('C');
+}, true);
+
+document.addEventListener('mousedown', e => {
+  if (!_locked) return;
+  const ov = document.getElementById('ov-lock');
+  if (!ov.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
+}, true);
+
+document.addEventListener('click', e => {
+  if (!_locked) return;
+  const ov = document.getElementById('ov-lock');
+  if (!ov.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
+}, true);
 
 // ── REPETIR ÚLTIMA VENTA ─────────────────────────────────────────────────────
 function repetirUltimaVenta() {
@@ -3874,8 +3891,6 @@ function _recepCancelar() {
 (function(){
   let _buf='', _t=null;
   document.addEventListener('keydown', e => {
-    // Si la pantalla está bloqueada, ignorar todo
-    if (document.getElementById('ov-lock').style.display === 'flex') return;
     // En el modal de recepción, Enter confirma
     if (document.getElementById('ov-recep').style.display === 'flex') {
       if (e.key === 'Enter') { e.preventDefault(); _recepConfirmar(); }
@@ -4429,7 +4444,7 @@ function hacerLogin(){
 </script>
 
 <!-- ══ PANTALLA DE BLOQUEO ══ -->
-<div id="ov-lock" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+<div id="ov-lock" tabindex="0" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:20px;outline:none">
   <div style="font-size:48px">🔒</div>
   <div style="color:#fff;font-size:20px;font-weight:800;letter-spacing:1px">Pantalla bloqueada</div>
   <div style="color:#94a3b8;font-size:13px;margin-bottom:8px">Introduce el PIN para desbloquear</div>
