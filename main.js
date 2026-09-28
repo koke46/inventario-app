@@ -60,6 +60,7 @@ function abrirDesdeProtocolo(url) {
     if (p)   query.p   = p;
     clientWin.loadFile(path.join(__dirname, file), Object.keys(query).length ? { query } : {});
     applyWindowOpenHandler(clientWin);
+    clientWin.once('ready-to-show', () => clientWin.focus());
   } catch (e) {}
 }
 
@@ -75,7 +76,7 @@ if (process.defaultApp) {
 // Si el usuario lanza desde Chrome con elmiarma:// y la app ya está abierta
 app.on('second-instance', (event, commandLine) => {
   const url = commandLine.find(arg => arg.startsWith('elmiarma://'));
-  if (url) abrirDesdeProtocolo(url);
+  if (url) { abrirDesdeProtocolo(url); return; }
   if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
 });
 
