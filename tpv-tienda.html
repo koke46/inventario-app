@@ -3730,6 +3730,27 @@ function guardarFamEdit() {
 
 function guardarFam() { guardarFamEdit(); }
 
+// ── PISTOLA DE CÓDIGO DE BARRAS ──────────────────────────────────────────────
+(function(){
+  let _buf='', _t=null;
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable) return;
+    if(e.key==='Enter'){
+      if(_t){ clearTimeout(_t); _t=null; }
+      const cod=_buf.trim();
+      _buf='';
+      if(cod.length<3) return;
+      const idx=CAT.findIndex(p=>p.codigo===cod);
+      if(idx>=0){ añadir(idx); warn('✅ '+CAT[idx].nombre, 1200); }
+      else { warn('⚠ Código no encontrado: '+cod, 2500); }
+    } else if(e.key.length===1){
+      _buf+=e.key;
+      if(_t) clearTimeout(_t);
+      _t=setTimeout(()=>{ _buf=''; _t=null; }, 120);
+    }
+  });
+})();
+
 </script>
 
 <!-- ══ PANTALLA CLIENTE (overlay fullscreen) ══ -->
