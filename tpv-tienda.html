@@ -730,9 +730,9 @@ body {
 .cmet-label { display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:9px 12px;border-radius:8px;border:2px solid #bcc;background:#f4f8fb; }
 .cmet-label:hover { background:#e8f0f8; }
 .cmet-label input { width:18px;height:18px;cursor:pointer;accent-color:#1d4ed8; }
-#tick-sheet { background:#fff;border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
+#tick-sheet { background:var(--ticket-bg);color:var(--text);border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
 .tick-center { text-align:center; }
-.tick-hr { border:none;border-top:1px dashed #999;margin:6px 0; }
+.tick-hr { border:none;border-top:1px dashed var(--ticket-border);margin:6px 0; }
 .tick-line { display:flex;justify-content:space-between;gap:4px;margin:1px 0; }
 .tick-line .tl-nom { flex:1;word-break:break-word;overflow-wrap:anywhere; }
 .tick-total-row { display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin:2px 0; }
@@ -740,12 +740,12 @@ body {
 /* ══ HISTÓRICO ══ */
 #ov-hist { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-hist.open { display:flex; }
-#hist-box { background:#dde8f0;border-radius:10px;padding:20px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
-.hist-row { display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:#fff;margin-bottom:5px;cursor:pointer;font-size:13px; }
-.hist-row:hover { background:#c8d8e8; }
+#hist-box { background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.hist-row { display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:var(--ticket-bg);color:var(--text);margin-bottom:5px;cursor:pointer;font-size:13px; }
+.hist-row:hover { background:var(--ticket-hover); }
 .hist-num { font-family:'Courier New',monospace;font-weight:700;font-size:14px;min-width:44px; }
 .hist-tot { font-weight:700;margin-left:auto;font-size:14px; }
-.hist-detail { background:#f4f8fb;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px; }
+.hist-detail { background:var(--iva-bg);color:var(--text);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px; }
 .hist-detail-line { display:flex;justify-content:space-between;margin:2px 0; }
 
 /* ══ INFORME FILTRO FECHA ══ */
@@ -1153,7 +1153,7 @@ body {
     <hr class="tick-hr">
     <div id="tick-totales"></div>
     <hr class="tick-hr">
-    <div id="tick-footer" class="tick-center" style="font-size:10px;color:#777;margin-top:4px"></div>
+    <div id="tick-footer" class="tick-center" style="font-size:10px;color:var(--muted);margin-top:4px"></div>
     <div class="mbtns no-print" style="margin-top:12px">
       <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="window.print()">🖨️ Imprimir</button>
       <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-tick').classList.remove('open')">Cerrar</button>
@@ -2408,9 +2408,9 @@ function buildTicketHtml(v) {
 
   document.getElementById('tick-lines').innerHTML = lineas.filter(l=>!l.dev).map(l => {
     const multi = l.peso || l.cantidad !== 1;
-    const subline = multi ? `<div style="padding-left:8px;font-size:10px;color:#666">${fmtN(l.cantidad,l.peso?3:0)} × ${fmtE(l.pUnit)}</div>` : '';
+    const subline = multi ? `<div style="padding-left:8px;font-size:10px;color:var(--muted)">${fmtN(l.cantidad,l.peso?3:0)} × ${fmtE(l.pUnit)}</div>` : '';
     const modsLine = l.mods
-      ? `<div style="padding-left:8px;font-size:10px;color:#666">${[...(l.mods.sin||[]).map(s=>'sin '+s), ...(l.mods.extra||[]).map(e=>'+'+e)].join(', ')}</div>`
+      ? `<div style="padding-left:8px;font-size:10px;color:var(--muted)">${[...(l.mods.sin||[]).map(s=>'sin '+s), ...(l.mods.extra||[]).map(e=>'+'+e)].join(', ')}</div>`
       : '';
     return `<div class="tick-line">
        <span class="tl-nom">${l.nombre}${l.dto?` -${l.dto}%`:''}</span>
@@ -2422,7 +2422,7 @@ function buildTicketHtml(v) {
   const cambio    = v ? v.cambio    : 0;
   const cambioRow = (cambio > 0.005)
     ? `<div class="tick-line" style="font-size:11px"><span class="tl-nom">Entregado</span><span>${fmtE(entregado)}</span></div>
-       <div class="tick-line" style="font-size:13px;font-weight:700;color:#1a5c2a"><span class="tl-nom">💰 Cambio</span><span>${fmtE(cambio)}</span></div>`
+       <div class="tick-line" style="font-size:13px;font-weight:700;color:#22c55e"><span class="tl-nom">💰 Cambio</span><span>${fmtE(cambio)}</span></div>`
     : '';
   document.getElementById('tick-totales').innerHTML =
     ivaRows +
@@ -2431,7 +2431,7 @@ function buildTicketHtml(v) {
      ${cambioRow}`;
 
   const notaImpresa = (v ? v.nota : notaTicket) || '';
-  const notaHtml = notaImpresa ? `<div style="margin:6px 0;padding:6px;border:1px dashed #999;border-radius:4px;font-size:11px;text-align:left">${notaImpresa}</div>` : '';
+  const notaHtml = notaImpresa ? `<div style="margin:6px 0;padding:6px;border:1px dashed var(--ticket-border);border-radius:4px;font-size:11px;text-align:left">${notaImpresa}</div>` : '';
   document.getElementById('tick-footer').innerHTML =
     `${notaHtml}${config.pie || '¡Gracias por su compra!'}<br>${new Date().toLocaleString('es')}`;
 }
@@ -2459,8 +2459,8 @@ function abrirHistorico() {
       const num = String(v.nTicket).padStart(4,'0');
       return `<div class="hist-row" onclick="verTicketHist(${v.nTicket})">
         <span class="hist-num">#${num}</span>
-        <span style="font-size:11px;color:#555">${v.fecha} ${v.hora}</span>
-        <span style="font-size:11px;color:#666">${v.cajero}${v.cliente?' · '+v.cliente:''}</span>
+        <span style="font-size:11px;color:var(--muted)">${v.fecha} ${v.hora}</span>
+        <span style="font-size:11px;color:var(--muted)">${v.cajero}${v.cliente?' · '+v.cliente:''}</span>
         <span class="hist-tot">${fmtE(v.total)}</span>
         <button style="padding:4px 8px;border:none;border-radius:4px;background:var(--btn-to);color:#fff;font-size:11px;cursor:pointer" onclick="event.stopPropagation();imprimirTicket(histVentas.find(x=>x.nTicket===${v.nTicket}))">🖨️</button>
       </div>`;
@@ -2481,7 +2481,7 @@ function verTicketHist(nq) {
   const div = document.createElement('div');
   div.id = 'hd-'+nq;
   div.className = 'hist-detail';
-  div.innerHTML = rows + `<div class="hist-detail-line" style="font-weight:700;border-top:1px solid #ccc;margin-top:4px;padding-top:4px"><span>TOTAL</span><span>${fmtE(v.total)}</span></div>`;
+  div.innerHTML = rows + `<div class="hist-detail-line" style="font-weight:700;border-top:1px solid var(--ticket-border);margin-top:4px;padding-top:4px"><span>TOTAL</span><span>${fmtE(v.total)}</span></div>`;
   // insertarlo después de la fila correspondiente
   const rows2 = document.querySelectorAll('#hist-list .hist-row');
   const target = [...rows2].find(r => r.querySelector('.hist-num')?.textContent === '#'+String(nq).padStart(4,'0'));
