@@ -1472,7 +1472,8 @@ let histVentas = JSON.parse(localStorage.getItem('tpvt_histventas') || '[]');
 let nTicket    = histVentas.length ? Math.max(...histVentas.map(v=>v.nTicket)) + 1 : 1;
 let ivaLibre   = 21;
 let movTipo    = 'ent';
-let cajSelId   = null;     // id del cliente seleccionado en el modal
+let cajSelId      = null;  // id del cliente seleccionado en el modal
+let ptsCanjeados  = 0;     // euros descontados por puntos en el ticket actual
 let clientes   = JSON.parse(localStorage.getItem('tpvt_clientes') || '[]');
 let tarjetas   = JSON.parse(localStorage.getItem('tpvt_tarjetas') || '[]');
 let vales      = JSON.parse(localStorage.getItem('tpvt_vales')    || '[]');
@@ -1980,7 +1981,7 @@ function acReimprimir(){ warn('🖨️ Reimprimiendo...', 1500); }
 function acAparcar() {
   if (!ticket.length) return;
   aparcadas.push({ ticket: JSON.parse(JSON.stringify(ticket)), cliente });
-  ticket = []; cliente = ''; selIdx = -1;
+  ticket = []; cliente = ''; selIdx = -1; ptsCanjeados = 0;
   renderTicket(); updStatus();
   warn('⏸️ Venta aparcada', 1500);
 }
@@ -1995,7 +1996,7 @@ function acRecuperar() {
 function acAnular() {
   if (!ticket.length) return;
   if (!confirm('¿Anular la venta actual?')) return;
-  ticket = []; cliente = ''; selIdx = -1; nbuf = '';
+  ticket = []; cliente = ''; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
   renderTicket();
 }
 
@@ -2149,12 +2150,14 @@ function confirmar() {
   // Puntos de cliente
   const cliObj = clientes.find(c => c.nombre === cliente);
   if (cliObj) {
-    const pts = Math.floor(tot);
-    cliObj.puntos = (cliObj.puntos || 0) + pts;
+    const ptsSumados  = Math.floor(tot);
+    const ptsGastados = ptsCanjeados * 100;
+    cliObj.puntos = Math.max(0, (cliObj.puntos || 0) - ptsGastados + ptsSumados);
     cliObj.historial = cliObj.historial || [];
     cliObj.historial.unshift({ fecha: new Date().toLocaleString('es'), nTicket, total: tot, articulos: ticket.length });
     saveClientes();
   }
+  ptsCanjeados = 0;
   // Historial del día
   const entregadoEf = payMode === 'ef' ? (parseFloat(document.getElementById('ef-in').value) || 0) : 0;
   histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)) });
@@ -2166,7 +2169,7 @@ function confirmar() {
   cajaHoy += tot;
   nTicket++;
   const ventaGuardada = histVentas[histVentas.length-1];
-  ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = '';
+  ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
   cerrarModal();
   renderTicket();
   renderCat();
@@ -2578,8 +2581,26 @@ function guardarCli() {
 function asignarCli() {
   if (!cajSelId) { alert('Selecciona un cliente'); return; }
   const c = clientes.find(x => x.id === cajSelId);
-  if (c) { cliente = c.nombre; updVisor(); }
+  if (!c) { cerrarCli(); return; }
+  cliente = c.nombre;
+  updVisor();
   cerrarCli();
+  // Ofrecer canje de puntos si tiene suficientes
+  const ptsDisp = c.puntos || 0;
+  const eurosMax = Math.floor(ptsDisp / 100);
+  if (eurosMax >= 1) {
+    const usar = confirm(`⭐ ${c.nombre} tiene ${ptsDisp} puntos (${eurosMax}€ de descuento disponibles).\n\n¿Aplicar ${eurosMax}€ de descuento por puntos?`);
+    if (usar) canjearPuntos(c, eurosMax);
+  }
+}
+function canjearPuntos(c, euros) {
+  // Quitar descuento anterior de puntos si hubiera
+  ticket = ticket.filter(l => !l._canje);
+  ticket.push({ nombre: `⭐ Descuento puntos (${euros * 100} pts)`, cantidad: 1, pUnit: -euros, importe: -euros, ivaT: 0, _canje: true });
+  ptsCanjeados = euros;
+  selIdx = ticket.length - 1;
+  renderTicket();
+  warn(`⭐ ${euros}€ de descuento aplicados`, 2000);
 }
 
 /* ══════════════════════
@@ -2801,7 +2822,7 @@ function cobrarParteDiv(met) {
       lineas: JSON.parse(JSON.stringify(ticket)), split: splitPartes.map(p=>({...p})) });
     localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
     const stockUpdates = [...ticket];
-    ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = '';
+    ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
     notaTicket = '';
     nTicket++;
     stockUpdates.forEach(l => { const p = CAT.find(x=>x.id===l.id); if (p&&p.stock!=null) p.stock = Math.max(0, p.stock - l.cantidad); });
