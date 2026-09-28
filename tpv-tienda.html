@@ -794,6 +794,7 @@ body {
   <button class="btn" onclick="abrirDev()"><span class="ico">🔄</span><span class="lbl">Devolución</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
   <button class="btn" onclick="abrirNota()"><span class="ico">📋</span><span class="lbl">Nota</span></button>
+  <button class="btn" onclick="repetirUltimaVenta()"><span class="ico">🔁</span><span class="lbl">Repetir</span></button>
   <button class="btn" id="btn-recepcion" onclick="toggleModoRecepcion()"><span class="ico">📥</span><span class="lbl">Recepción</span></button>
   <div class="sep"></div>
   <div id="tpv-brand" style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 10px;min-width:120px;color:#1e3a8a;line-height:1.2;pointer-events:none;user-select:none">
@@ -3738,6 +3739,21 @@ function guardarFamEdit() {
 }
 
 function guardarFam() { guardarFamEdit(); }
+
+// ── REPETIR ÚLTIMA VENTA ─────────────────────────────────────────────────────
+function repetirUltimaVenta() {
+  if (!histVentas.length) { warn('No hay ninguna venta anterior', 2000); return; }
+  const ultima = histVentas[histVentas.length - 1];
+  const lineas = (ultima.lineas || []).filter(l => !l.dev);
+  if (!lineas.length) { warn('La última venta no tiene líneas', 2000); return; }
+  if (ticket.length > 0) {
+    if (!confirm('El ticket actual tiene productos. ¿Reemplazarlo con la última venta?')) return;
+  }
+  ticket = lineas.map(l => ({ ...l }));
+  selIdx = ticket.length - 1;
+  renderTicket();
+  warn('🔁 Última venta cargada', 1500);
+}
 
 // ── PISTOLA DE CÓDIGO DE BARRAS ──────────────────────────────────────────────
 let _modoRecepcion = false;
