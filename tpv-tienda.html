@@ -2642,6 +2642,9 @@ function _ptsUsar() {
     _ptsVentaRef.ptsCanje    = ptsGastados;
     _ptsVentaRef.ptsGanados  = _ptsGanadosPost;
     _ptsVentaRef.ptsTotales  = c.puntos;
+    // Añadir línea de descuento al ticket
+    _ptsVentaRef.lineas = (_ptsVentaRef.lineas || []).filter(l => !l._canje);
+    _ptsVentaRef.lineas.push({ nombre: `🎁 Descuento puntos (${ptsGastados} pts)`, cantidad: 1, pUnit: -_ptsEuros, importe: -_ptsEuros, ivaT: 0, _canje: true });
   }
   saveClientes();
   localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
