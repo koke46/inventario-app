@@ -2544,11 +2544,21 @@ function filtrarCli() {
         <span style="display:flex;gap:6px;align-items:center">
           ${c.deuda > 0 ? `<span class="cli-deuda">Debe ${fmtE(c.deuda)}</span>` : ''}
           <span class="cli-pts">⭐ ${c.puntos||0} pts</span>
+          <button onclick="event.stopPropagation();eliminarCli(${c.id})" style="background:#e74c3c;color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-family:var(--font)">🗑</button>
         </span>
       </div>`).join('')
     : '<div class="cli-row" style="cursor:default;color:#aaa">Sin resultados</div>';
 }
 function selCli(id) { cajSelId = id; filtrarCli(); }
+function eliminarCli(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`¿Eliminar cliente "${c.nombre}"?`)) return;
+  clientes = clientes.filter(x => x.id !== id);
+  if (cajSelId === id) cajSelId = null;
+  saveClientes();
+  filtrarCli();
+}
 function toggleCliForm() {
   const f = document.getElementById('cli-form');
   f.classList.toggle('open');
