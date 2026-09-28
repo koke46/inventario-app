@@ -1743,8 +1743,14 @@ function buscar() {
 ══════════════════════ */
 function acEliminar() {
   if (selIdx < 0 || selIdx >= ticket.length) return;
-  ticket.splice(selIdx, 1);
-  selIdx = Math.min(selIdx, ticket.length - 1);
+  const l = ticket[selIdx];
+  if (!l.dev && !l.peso && l.cantidad > 1) {
+    l.cantidad -= 1;
+    l.importe = l.cantidad * l.pUnit * (1 - (l.dto || 0) / 100);
+  } else {
+    ticket.splice(selIdx, 1);
+    selIdx = Math.min(selIdx, ticket.length - 1);
+  }
   renderTicket();
 }
 function acDevolucion() {
