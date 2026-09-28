@@ -3805,15 +3805,15 @@ function bloquearPantalla() {
   _lockActualizarDots();
   document.getElementById('lock-error').textContent = '';
   // Ocultar TODO el contenido del body y mostrar solo el overlay
-  document.body.style.overflow = 'hidden';
-  document.getElementById('ov-lock').style.display = 'flex';
+  document.body.classList.add('app-locked');
+  document.getElementById('ov-lock').classList.add('active');
 }
 
 function _lockDesbloquear() {
   _locked = false;
   _lockBuf = '';
-  document.getElementById('ov-lock').style.display = 'none';
-  document.body.style.overflow = '';
+  document.getElementById('ov-lock').classList.remove('active');
+  document.body.classList.remove('app-locked');
 }
 
 function lockNp(k) {
@@ -4517,9 +4517,9 @@ function hacerLogin(){
 .ldot.on { background:#60a5fa }
 .lk { width:72px;height:72px;border:none;border-radius:14px;background:#1e293b;color:#fff;font-size:26px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .1s }
 .lk:active { background:#3b82f6 }
-/* Cuando el overlay de bloqueo está visible, nada más recibe eventos de ratón */
-#ov-lock[style*="flex"] ~ * { pointer-events: none !important; }
-body:has(#ov-lock[style*="flex"]) > *:not(#ov-lock) { pointer-events: none !important; }
+/* Cuando el overlay de bloqueo está activo, nada más recibe eventos de ratón */
+body.app-locked > *:not(#ov-lock) { pointer-events: none !important; }
+#ov-lock.active { display: flex !important; }
 </style>
 
 <!-- ══ MODAL RECEPCIÓN MERCANCÍA ══ -->
