@@ -1178,8 +1178,9 @@ body {
 <div id="ov-prods">
   <div id="prods-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button style="background:none;border:none;font-size:15px;font-weight:700;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px" onclick="document.getElementById('ov-prods').classList.remove('open')">← Volver</button>
       <b style="font-size:15px">✏️ Gestión de Productos</b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-prods').classList.remove('open')">✕</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)" onclick="document.getElementById('ov-prods').classList.remove('open')">✕</button>
     </div>
     <div class="prods-tabs">
       <button class="prods-tab on" onclick="prodsTab('prods',this)">📦 Productos</button>
