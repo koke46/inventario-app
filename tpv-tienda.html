@@ -3078,18 +3078,26 @@ function cobrarParteDiv(met) {
   renderSplit();
   if (splitPartes.length >= splitN) {
     // Finalizar venta
-    const entradas = splitPartes.filter(p=>p.met==='ef').map(p=>p.imp);
     histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'),
       cliente, cajero: cajero.nombre, pago: 'div', entregado: 0, cambio: 0, nota: notaTicket,
-      lineas: JSON.parse(JSON.stringify(ticket)), split: splitPartes.map(p=>({...p})) });
+      lineas: JSON.parse(JSON.stringify(ticket)), split: splitPartes.map(p=>({...p})), ptsGanados: 0, ptsCanje: 0, ptsTotales: 0 });
     localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+    localStorage.setItem('tpvt_pagosdia', JSON.stringify(pagosDia));
+    const ventaGuardada = histVentas[histVentas.length - 1];
+    const _cliNomDiv = cliente;
     ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
-    notaTicket = '';
-    nTicket++;
-    saveCat(); renderTicket(); updStatus();
+    notaTicket = ''; nTicket++;
+    saveCat(); renderTicket(); renderCat(); updStatus();
     document.getElementById('ov').classList.remove('open');
-    warn(`✅ Pago dividido entre ${splitN} personas`, 2500);
     splitPartes = []; splitN = 2;
+    buildTicketHtml(ventaGuardada);
+    _facCliPending = null;
+    const _cliRef = _cliNomDiv ? clientes.find(c => c.nombre === _cliNomDiv) : null;
+    if (_cliRef) {
+      _aplicarPuntosSinCanje(_cliRef, ventaGuardada, Math.floor(tot));
+      _facCliPending = _cliRef;
+    }
+    document.getElementById('ov-tick').classList.add('open');
   }
 }
 
