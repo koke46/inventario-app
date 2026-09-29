@@ -2363,7 +2363,7 @@ function buscarDevTicket() {
   if (!q) return;
   const nq = parseInt(q);
   const res = histVentas.find(v => v.nTicket === nq || v.cliente.toLowerCase().includes(q));
-  if (!res) { document.getElementById('dev-ticket').innerHTML = '<p style="text-align:center;color:#c00;padding:10px;font-size:12px">⚠ Ticket no encontrado</p>'; return; }
+  if (!res) { document.getElementById('dev-ticket').innerHTML = '<p style="text-align:center;color:#f87171;padding:10px;font-size:12px">⚠ Ticket no encontrado</p>'; return; }
   devTicket = res; devSel = new Set();
   const rows = (res.lineas||[]).map((l,i) => `
     <div class="dev-row${devSel.has(i)?' sel':''}" onclick="toggleDevSel(${i},this)">
