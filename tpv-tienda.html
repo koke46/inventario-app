@@ -548,7 +548,7 @@ body {
 .ptab.on { border-color: #4a6788; background: #4a6788; color: #fff; }
 #ef-panel { display: none; }
 #ef-panel.open { display: block; }
-#ef-in { width: 100%; padding: 8px; font-size: 22px; font-family: 'Courier New', monospace; border: 2px solid #888; border-radius: 6px; margin-bottom: 8px; text-align: right; }
+#ef-in { width: 100%; padding: 8px; font-size: 22px; font-family: 'Courier New', monospace; border: 2px solid #888; border-radius: 6px; margin-bottom: 8px; text-align: right; background: var(--ticket-bg); color: var(--text); }
 .billetes { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
 .bil { padding: 7px 12px; border-radius: 5px; border: 1px solid #3a7a3a; background: linear-gradient(to bottom, #4a9a4a, #2e6e2e); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--font); }
 .cobro-np { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
@@ -960,7 +960,7 @@ body {
       <button class="ptab"    id="t-div"  onclick="setTab('div')">÷ Dividir</button>
     </div>
     <div id="ef-panel" class="open">
-      <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
+      <input id="ef-in" type="text" inputmode="decimal" placeholder="Entregado por el cliente..." oninput="calcCambio()">
       <div class="billetes" id="billetes"></div>
       <div id="cambio" style="color:#1a5c2a">Cambio: 0,00 €</div>
       <div class="cobro-np">
@@ -2072,15 +2072,15 @@ function acAnular() {
 function cobNp(k) {
   const el = document.getElementById('ef-in');
   if (!el) return;
-  if (k === ',' && (el.dataset.buf || '').includes(',')) return;
-  el.dataset.buf = (el.dataset.buf || '') + k;
-  const v = parseFloat(el.dataset.buf.replace(',', '.'));
-  if (!isNaN(v)) { el.value = v; calcCambio(); }
+  if (k === ',' && el.value.includes(',')) return;
+  el.value += k;
+  calcCambio();
 }
 function cobNc() {
   const el = document.getElementById('ef-in');
   if (!el) return;
-  el.dataset.buf = ''; el.value = ''; calcCambio();
+  el.value = '';
+  calcCambio();
 }
 function abrirCobro() {
   if (!ticket.length) return;
@@ -2167,10 +2167,10 @@ function calcMixto() {
   el.textContent = r > 0.005 ? `Falta: ${fmtE(r)}` : r < -0.005 ? `Exceso: ${fmtE(Math.abs(r))}` : '✅ Cuadra';
   el.style.color = Math.abs(r) < 0.005 ? '#1a5c2a' : '#c00';
 }
-function setBil(v) { document.getElementById('ef-in').value = v; calcCambio(); }
+function setBil(v) { document.getElementById('ef-in').value = String(v).replace('.', ','); calcCambio(); }
 function calcCambio() {
   const tot  = calcTotal();
-  const ent  = parseFloat(document.getElementById('ef-in').value) || 0;
+  const ent  = parseFloat((document.getElementById('ef-in').value || '').replace(',', '.')) || 0;
   const cam  = ent - tot;
   const el   = document.getElementById('cambio');
   if (cam < 0) {
@@ -2186,7 +2186,7 @@ function confirmar() {
   let cambioEf = 0;
   // Validar pago
   if (payMode === 'ef') {
-    const ent = parseFloat(document.getElementById('ef-in').value) || 0;
+    const ent = parseFloat((document.getElementById('ef-in').value || '').replace(',', '.')) || 0;
     if (ent < tot) { alert('Importe insuficiente'); return; }
     cambioEf = parseFloat((ent - tot).toFixed(2));
     pagosDia.ef += tot;
@@ -2232,7 +2232,7 @@ function confirmar() {
   const _cliNomPostPago = cliente;
   const _ptsGanadosCalc = Math.floor(tot);
   // Historial del día (sin datos de puntos aún — se completan en el modal)
-  const entregadoEf = payMode === 'ef' ? (parseFloat(document.getElementById('ef-in').value) || 0) : 0;
+  const entregadoEf = payMode === 'ef' ? (parseFloat((document.getElementById('ef-in').value || '').replace(',', '.')) || 0) : 0;
   histVentas.push({ nTicket, total: tot, hora: new Date().toLocaleTimeString('es'), fecha: new Date().toLocaleDateString('es'), cliente, cajero: cajero.nombre, pago: payMode, entregado: entregadoEf, cambio: cambioEf, nota: notaTicket, lineas: JSON.parse(JSON.stringify(ticket)), ptsGanados: 0, ptsCanje: 0, ptsTotales: 0 });
   notaTicket = '';
   const btnNota = [...document.querySelectorAll('#actions .btn')].find(b => b.textContent.includes('Nota'));
