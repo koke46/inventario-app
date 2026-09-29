@@ -1370,6 +1370,7 @@ body {
       <button class="caj-tab" onclick="cajTab('mov')">🔄 Movimiento</button>
       <button class="caj-tab" onclick="cajTab('infx')">📊 Inf. X</button>
       <button class="caj-tab" onclick="cajTab('cierrez')">🔒 Cierre Z</button>
+      <button class="caj-tab" onclick="cajTab('histz')">📋 Historial</button>
     </div>
 
     <!-- Fondo inicial -->
@@ -1395,6 +1396,11 @@ body {
     <!-- Informe X -->
     <div class="caj-panel" id="caj-infx">
       <div id="infx-body"></div>
+    </div>
+
+    <!-- Historial Z -->
+    <div class="caj-panel" id="caj-histz">
+      <div id="histz-body"></div>
     </div>
 
     <!-- Cierre Z -->
@@ -2813,12 +2819,13 @@ function abrirCaja() {
   document.getElementById('ov-caja').classList.add('open');
 }
 function cajTab(t) {
-  ['fondo','mov','infx','cierrez'].forEach(x => {
-    document.querySelector(`.caj-tab:nth-child(${['fondo','mov','infx','cierrez'].indexOf(x)+1})`).classList.toggle('on', x===t);
+  ['fondo','mov','infx','cierrez','histz'].forEach(x => {
+    document.querySelector(`.caj-tab:nth-child(${['fondo','mov','infx','cierrez','histz'].indexOf(x)+1})`).classList.toggle('on', x===t);
     document.getElementById('caj-' + x).classList.toggle('open', x===t);
   });
   if (t === 'infx')    renderInfX();
   if (t === 'cierrez') renderCierreZ();
+  if (t === 'histz')   renderHistZ();
 }
 function guardarFondo() {
   const v = parseFloat(document.getElementById('fondo-in').value) || 0;
@@ -2900,12 +2907,69 @@ function calcDescuadre() {
 }
 function ejecutarCierreZ() {
   if (!confirm('¿Confirmar cierre Z? Se resetearán los contadores del día.')) return;
+  // Guardar snapshot antes de resetear
+  const tot = histVentas.reduce((s,v) => s+v.total, 0);
+  let contado = 0;
+  const DENOMS_Z = [500,200,100,50,20,10,5,2,1,.5,.2,.1,.05,.02,.01];
+  DENOMS_Z.forEach((d,i) => contado += (parseInt(document.getElementById('bd-'+i)?.value)||0)*d);
+  contado = parseFloat(contado.toFixed(2));
+  const diff = parseFloat((contado - fondoCaja).toFixed(2));
+  const entradas = movCaja.filter(m=>m.tipo==='ent').reduce((s,m)=>s+m.importe,0);
+  const salidas  = movCaja.filter(m=>m.tipo==='sal').reduce((s,m)=>s+m.importe,0);
+  const cierre = {
+    fecha:    new Date().toLocaleDateString('es'),
+    hora:     new Date().toLocaleTimeString('es'),
+    cajero:   cajero.nombre,
+    tickets:  histVentas.length,
+    total:    parseFloat(tot.toFixed(2)),
+    ef:       parseFloat((pagosDia.ef||0).toFixed(2)),
+    tj:       parseFloat((pagosDia.tj||0).toFixed(2)),
+    biz:      parseFloat((pagosDia.biz||0).toFixed(2)),
+    esperado: fondoCaja,
+    contado,
+    diff,
+    entradas: parseFloat(entradas.toFixed(2)),
+    salidas:  parseFloat(salidas.toFixed(2))
+  };
+  const cierresGuardados = JSON.parse(localStorage.getItem('tpvt_cierres_z') || '[]');
+  cierresGuardados.unshift(cierre);
+  if (cierresGuardados.length > 60) cierresGuardados.length = 60; // máximo 60 cierres
+  localStorage.setItem('tpvt_cierres_z', JSON.stringify(cierresGuardados));
+
   pagosDia = {ef:0,tj:0,biz:0};
   ventasHoy = 0; cajaHoy = 0; movCaja = []; histVentas = []; nTicket = 1;
   localStorage.removeItem('tpvt_histventas');
   document.getElementById('ov-caja').classList.remove('open');
-  warn('🔒 Cierre Z ejecutado', 2500);
+  warn('🔒 Cierre Z guardado y ejecutado', 2500);
   updStatus();
+}
+
+function renderHistZ() {
+  const cierres = JSON.parse(localStorage.getItem('tpvt_cierres_z') || '[]');
+  const el = document.getElementById('histz-body');
+  if (!cierres.length) {
+    el.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No hay cierres Z guardados</p>';
+    return;
+  }
+  el.innerHTML = cierres.map((c,i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer" onclick="this.querySelector('.histz-det').style.display=this.querySelector('.histz-det').style.display==='none'?'block':'none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:700;font-size:13px">📅 ${c.fecha} ${c.hora}</span>
+        <span style="font-weight:800;font-size:14px;font-family:'Courier New',monospace">${fmtE(c.total)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.cajero} · ${c.tickets} ticket${c.tickets!==1?'s':''}</div>
+      <div class="histz-det" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+        <div class="inf-row"><span>Efectivo</span><span class="inf-val">${fmtE(c.ef)}</span></div>
+        <div class="inf-row"><span>Tarjeta</span><span class="inf-val">${fmtE(c.tj)}</span></div>
+        <div class="inf-row"><span>Bizum</span><span class="inf-val">${fmtE(c.biz)}</span></div>
+        ${c.entradas>0?`<div class="inf-row"><span>Entradas manuales</span><span class="inf-val">+${fmtE(c.entradas)}</span></div>`:''}
+        ${c.salidas>0?`<div class="inf-row"><span>Salidas manuales</span><span class="inf-val">-${fmtE(c.salidas)}</span></div>`:''}
+        <div class="inf-row" style="font-weight:700"><span>Ticket medio</span><span class="inf-val">${c.tickets?fmtE(c.total/c.tickets):'—'}</span></div>
+        <div style="margin-top:6px;padding:6px 8px;border-radius:6px;font-size:12px;font-weight:700;text-align:center;background:${Math.abs(c.diff)<0.01?'rgba(34,197,94,.15)':'rgba(248,113,113,.15)'}">
+          Contado: <b>${fmtE(c.contado)}</b> · Esperado: <b>${fmtE(c.esperado)}</b> · <span style="color:${Math.abs(c.diff)<0.01?'#22c55e':'#f87171'}">${c.diff>=0?'+':''}${fmtE(c.diff)}</span>
+        </div>
+      </div>
+    </div>`).join('');
 }
 
 /* ══════════════════════
