@@ -1688,14 +1688,20 @@ function añadirLibreRapido(prec) {
 /* ══════════════════════
    AÑADIR PRODUCTO
 ══════════════════════ */
+function _restockLinea(l, units) {
+  if (l.dev) return;
+  const p = CAT.find(x => x.codigo === l.codigo);
+  if (p && p.stock >= 0) { p.stock += units; saveCat(); }
+}
+
 function añadir(idx, cantForzada = null) {
   const prod = CAT[idx];
   let cant = cantForzada !== null ? cantForzada : 1;
 
-  // Aviso de stock
-  const enTicket = ticket.filter(l => l.codigo === prod.codigo && !l.dev).reduce((s, l) => s + l.cantidad, 0);
-  if (prod.stock >= 0 && enTicket + cant > prod.stock) {
-    warn(`⚠ Solo ${prod.stock} uds en stock`, 3500);
+  // Bloquear si no hay stock suficiente
+  if (prod.stock >= 0 && cant > prod.stock) {
+    warn(`⚠ Sin stock: solo quedan ${prod.stock} uds`, 3500);
+    return;
   }
 
   // Buscar línea existente (no devolución, sin dto. de línea, no peso)
@@ -1719,9 +1725,12 @@ function añadir(idx, cantForzada = null) {
     });
     selIdx = ticket.length - 1;
   }
+  // Descontar stock en tiempo real
+  if (prod.stock >= 0) { prod.stock = Math.max(0, prod.stock - cant); saveCat(); }
   nbuf = '';
   document.getElementById('v-warn').textContent = '';
   renderTicket();
+  renderCat();
 }
 
 /* ══════════════════════
@@ -1870,19 +1879,24 @@ function acEliminar() {
   if (!l.dev && !l.peso && l.cantidad > 1) {
     l.cantidad -= 1;
     l.importe = l.cantidad * l.pUnit * (1 - (l.dto || 0) / 100);
+    _restockLinea(l, 1);
   } else {
+    _restockLinea(l, Math.abs(l.cantidad));
     ticket.splice(selIdx, 1);
     selIdx = Math.min(selIdx, ticket.length - 1);
   }
   renderTicket();
+  renderCat();
 }
 function acDevolucion() {
   if (selIdx < 0 || selIdx >= ticket.length) return;
   const l = ticket[selIdx];
+  if (!l.dev) _restockLinea(l, Math.abs(l.cantidad));
   l.dev      = true;
   l.cantidad = -Math.abs(l.cantidad);
   l.importe  = l.cantidad * l.pUnit;
   renderTicket();
+  renderCat();
 }
 function acDtoLinea() {
   if (selIdx < 0 || selIdx >= ticket.length) return;
@@ -2071,8 +2085,10 @@ function acRecuperar() {
 function acAnular() {
   if (!ticket.length) return;
   if (!confirm('¿Anular la venta actual?')) return;
+  ticket.forEach(l => _restockLinea(l, Math.abs(l.cantidad)));
   ticket = []; cliente = ''; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
   renderTicket();
+  renderCat();
 }
 
 /* ══════════════════════
@@ -2232,11 +2248,7 @@ function confirmar() {
     saveTarjetas();
     pagosDia.ef += tot;
   }
-  // Actualizar stock
-  ticket.forEach(l => {
-    const p = CAT.find(x => x.codigo === l.codigo);
-    if (p && p.stock >= 0) p.stock = Math.max(0, p.stock + (l.dev ? Math.abs(l.cantidad) : -l.cantidad));
-  });
+  // Stock ya descontado en tiempo real al añadir; dev lines de confirmarDev ya sumaron stock en ese momento
   // Guardar nombre cliente antes de resetear
   const _cliNomPostPago = cliente;
   const _ptsGanadosCalc = Math.floor(tot);
@@ -3060,11 +3072,9 @@ function cobrarParteDiv(met) {
       cliente, cajero: cajero.nombre, pago: 'div', entregado: 0, cambio: 0, nota: notaTicket,
       lineas: JSON.parse(JSON.stringify(ticket)), split: splitPartes.map(p=>({...p})) });
     localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
-    const stockUpdates = [...ticket];
     ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
     notaTicket = '';
     nTicket++;
-    stockUpdates.forEach(l => { const p = CAT.find(x=>x.id===l.id); if (p&&p.stock!=null) p.stock = Math.max(0, p.stock - l.cantidad); });
     saveCat(); renderTicket(); updStatus();
     document.getElementById('ov').classList.remove('open');
     warn(`✅ Pago dividido entre ${splitN} personas`, 2500);
