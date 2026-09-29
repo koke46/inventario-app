@@ -3821,7 +3821,7 @@ function renderProdsList() {
         <div class="prod-row-nom">${p.nombre}</div>
         <div class="prod-row-sub">${famNom} · ${fmtE(p.precio)} · IVA ${p.iva}%${p.peso?' · kg':''}</div>
       </div>
-      ${famNom.toLowerCase().includes('bocadillo') ? '' : `<span class="prod-row-stk ${sc}">Stock: ${stkTxt}${minS>0?` (mín ${minS})`:''}</span>`}
+      ${(famNom.toLowerCase().includes('bocadillo') || (p.ings && p.ings.length) || (p.sals && p.sals.length)) ? '' : `<span class="prod-row-stk ${sc}">Stock: ${stkTxt}${minS>0?` (mín ${minS})`:''}</span>`}
       <div class="prod-row-btns">
         <button style="background:#4a80b0;color:#fff" onclick="abrirFormProd(${p._i})">✏️</button>
         <button style="background:#c0392b;color:#fff" onclick="borrarProd(${p._i})">🗑️</button>
