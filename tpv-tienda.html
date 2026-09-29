@@ -3497,6 +3497,16 @@ document.addEventListener('keydown', e => {
     else document.documentElement.requestFullscreen();
     return;
   }
+  // Teclado físico en modal de cobro
+  if (document.getElementById('ov').classList.contains('open')) {
+    if (/^[0-9]$/.test(e.key) || (e.key >= '0' && e.key <= '9') || (e.code && e.code.startsWith('Numpad') && /^[0-9]$/.test(e.key))) {
+      e.preventDefault(); cobNp(e.key); return;
+    }
+    if (e.key === ',' || e.key === '.') { e.preventDefault(); cobNp(','); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); cobNc(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); confirmar(); return; }
+    return;
+  }
   if (modalOpen && modalOpen.id !== 'ov-tick') return; // no interferir con modales
 
   if (!inInput) {
