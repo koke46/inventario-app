@@ -735,8 +735,8 @@ body {
 .tc-con:active,.tc-sin:active { filter:brightness(.85); }
 #ov-cajon-cfg { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-cajon-cfg.open { display:flex; }
-.cmet-label { display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:9px 12px;border-radius:8px;border:2px solid #bcc;background:#f4f8fb; }
-.cmet-label:hover { background:#e8f0f8; }
+.cmet-label { display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding:9px 12px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text); }
+.cmet-label:hover { background:var(--surface); }
 .cmet-label input { width:18px;height:18px;cursor:pointer;accent-color:#1d4ed8; }
 #tick-sheet { background:var(--ticket-bg);color:var(--text);border-radius:6px;padding:16px;width:300px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-family:'Courier New',monospace;font-size:12px; }
 .tick-center { text-align:center; }
@@ -4194,12 +4194,12 @@ function toggleDarkMode(){
 
 <!-- ══ MODAL CAJÓN PORTAMONEDAS ══ -->
 <div id="ov-cajon-cfg">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:340px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:340px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <b style="font-size:15px">📂 Cajón portamonedas</b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-cajon-cfg')">✕</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="cerrarModal('ov-cajon-cfg')">✕</button>
     </div>
-    <div style="font-size:12px;font-weight:700;color:#556;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Método de conexión</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Método de conexión</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       <label class="cmet-label">
         <input type="radio" name="cajon-met" value="serial">
@@ -4214,11 +4214,11 @@ function toggleDarkMode(){
         🌐 Red / IP (impresora de red)
       </label>
     </div>
-    <div id="cajon-red-panel" style="display:none;background:#f0f4f8;border-radius:8px;padding:10px;margin-bottom:12px">
-      <label style="font-size:12px;color:#556;display:block;margin-bottom:4px">IP de la impresora</label>
-      <input id="cajon-host" type="text" placeholder="192.168.1.100" style="width:100%;padding:7px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:8px;font-family:var(--font)">
-      <label style="font-size:12px;color:#556;display:block;margin-bottom:4px">Puerto TCP</label>
-      <input id="cajon-port" type="number" value="9100" placeholder="9100" style="width:100%;padding:7px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;box-sizing:border-box;font-family:var(--font)">
+    <div id="cajon-red-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">IP de la impresora</label>
+      <input id="cajon-host" type="text" placeholder="192.168.1.100" style="width:100%;padding:7px;border:2px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:8px;font-family:var(--font);background:var(--surface);color:var(--text)">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Puerto TCP</label>
+      <input id="cajon-port" type="number" value="9100" placeholder="9100" style="width:100%;padding:7px;border:2px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;font-family:var(--font);background:var(--surface);color:var(--text)">
     </div>
     <div style="display:flex;gap:8px">
       <button onclick="probarCajon()" style="flex:1;padding:11px;border:none;border-radius:6px;background:#4a6788;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">▶ Probar</button>
