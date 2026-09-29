@@ -1235,6 +1235,9 @@ body {
         <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
           <input id="pf-fav" type="checkbox"> ⭐ Producto favorito (acceso rápido)
         </label>
+        <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
+          <input id="pf-tiene-ings" type="checkbox" onchange="renderIngFormFields()"> 🥪 Tiene ingredientes / salsas
+        </label>
         <div id="pf-ings-wrap" class="pf-full"></div>
         <label class="pf-full">Foto del producto
           <div class="pf-foto-wrap">
@@ -1763,7 +1766,7 @@ function cerrarPeso() {
 function clickPrd(idx) {
   const prod = CAT[idx];
   const famObj = FAMILIAS.find(f => f.id === prod.familia);
-  const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
+  const esBoc = (famObj && famObj.nombre.toLowerCase().includes('bocadillo')) || !!(prod.ings && prod.ings.length) || !!(prod.sals && prod.sals.length);
   if (!esBoc && prod.stock === 0) return;
   if (prod.peso) {
     if (!nbuf) { pedirPeso(idx); return; }
@@ -1826,7 +1829,7 @@ function renderCat() {
       const badge = bajo ? '<span class="prd-min-badge">!</span>' : '';
       const ico   = p.foto ? `<img class="prd-foto" src="${p.foto}" alt="">` : `<span class="prd-ico">${p.emoji}</span>`;
       const famObj = FAMILIAS.find(f => f.id === p.familia);
-      const esBoc = famObj && famObj.nombre.toLowerCase().includes('bocadillo');
+      const esBoc = (famObj && famObj.nombre.toLowerCase().includes('bocadillo')) || !!(p.ings && p.ings.length) || !!(p.sals && p.sals.length);
       if (esBoc) { out = false; }
       return `<button class="prd${out ? ' out' : ''}${esBoc ? ' boc' : ''}" draggable="true" data-pi="${p._i}"
         onclick="${out ? '' : 'clickPrd(' + p._i + ')'}"
@@ -3197,7 +3200,10 @@ let _pfSals = new Set();
 function renderIngFormFields() {
   const famId = document.getElementById('pf-fam').value;
   const fam = FAMILIAS.find(f => f.id === famId);
-  const esBocadillo = fam && fam.nombre.toLowerCase().includes('bocadillo');
+  const famEsBoc = fam && fam.nombre.toLowerCase().includes('bocadillo');
+  const chk = document.getElementById('pf-tiene-ings');
+  if (famEsBoc && chk && !chk.checked) chk.checked = true;
+  const esBocadillo = (chk && chk.checked) || famEsBoc;
   ['pf-codigo-row','pf-stock-row','pf-minstock-row'].forEach(id => {
     document.getElementById(id).style.display = esBocadillo ? 'none' : '';
   });
@@ -3842,6 +3848,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-minstock').value = '5';
     document.getElementById('pf-peso').checked = false;
     document.getElementById('pf-fav').checked  = false;
+    document.getElementById('pf-tiene-ings').checked = false;
     document.getElementById('pf-fam').selectedIndex = 0;
     document.getElementById('pf-desc').value = '';
     prev.src = ''; prev.style.display = 'none';
@@ -3858,6 +3865,7 @@ function abrirFormProd(idx) {
     document.getElementById('pf-minstock').value = p.minStock !== undefined ? p.minStock : STOCK_BAJO;
     document.getElementById('pf-peso').checked = !!p.peso;
     document.getElementById('pf-fav').checked  = !!p.favorito;
+    document.getElementById('pf-tiene-ings').checked = !!(p.ings && p.ings.length) || !!(p.sals && p.sals.length);
     document.getElementById('pf-fam').value = p.familia || FAMILIAS[0].id;
     document.getElementById('pf-desc').value = p.descripcion || '';
     if (p.foto) { prev.src = p.foto; prev.style.display = 'block'; } else { prev.src = ''; prev.style.display = 'none'; }
