@@ -60,8 +60,13 @@
     #confirm-box.show { display: flex; }
     #confirm-box .c-ico { font-size: 72px; margin-bottom: 20px; }
     #confirm-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; color: var(--green); }
-    #confirm-box p { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
+    #confirm-box p { font-size: 15px; color: var(--muted); margin-bottom: 12px; }
     #btn-nuevo { padding: 14px 32px; background: var(--green); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    #puntos-box { background: #fff; border: 2px solid var(--green); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; width: 100%; max-width: 340px; }
+    #puntos-box .pts-ganados { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    #puntos-box .pts-total { font-size: 22px; font-weight: 800; color: var(--green); }
+    #puntos-box .pts-label { font-size: 12px; color: var(--muted); }
+    #pts-canje { margin-top: 12px; padding: 10px 16px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px; font-size: 13px; font-weight: 700; color: #92400e; display: none; }
 
     #blocked-box { display: none; position: fixed; inset: 0; background: #fff; z-index: 200; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
     #blocked-box.show { display: flex; }
@@ -126,6 +131,12 @@
   <div class="c-ico">✅</div>
   <h2>¡Pedido enviado!</h2>
   <p>La tienda lo recibirá en segundos.<br>Pasa a recogerlo cuando esté listo.</p>
+  <div id="puntos-box">
+    <div class="pts-ganados" id="pts-ganados-txt"></div>
+    <div class="pts-total" id="pts-total-txt"></div>
+    <div class="pts-label">puntos acumulados ⭐</div>
+    <div id="pts-canje">🎁 ¡Tienes 100 puntos o más! Puedes canjearlos en caja por un descuento.</div>
+  </div>
   <button id="btn-nuevo" onclick="nuevoPedido()">Nuevo pedido</button>
 </div>
 
@@ -388,6 +399,15 @@ async function enviarPedido() {
     return;
   }
 
+  // Puntos: 1 punto por euro (redondeado hacia abajo)
+  const ptsGanados = Math.floor(total);
+  const ptsAntes   = parseInt(localStorage.getItem('elmiarma_puntos') || '0', 10);
+  const ptsAhora   = ptsAntes + ptsGanados;
+  localStorage.setItem('elmiarma_puntos', String(ptsAhora));
+
+  document.getElementById('pts-ganados-txt').textContent = '+' + ptsGanados + ' puntos en este pedido';
+  document.getElementById('pts-total-txt').textContent   = ptsAhora;
+  document.getElementById('pts-canje').style.display     = ptsAhora >= 100 ? 'block' : 'none';
   document.getElementById('confirm-box').classList.add('show');
 }
 
