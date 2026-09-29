@@ -307,9 +307,10 @@ body {
   flex: 1;
   padding: 8px 10px;
   font-size: 14px;
-  border: 2px solid #6a8faf;
+  border: 2px solid var(--border);
   border-radius: var(--r);
-  background: #fff;
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font);
   outline: none;
 }
@@ -477,7 +478,7 @@ body {
 #ov-prods.open { display:flex; }
 #prods-box { background:var(--surface);color:var(--text);border-radius:10px;padding:18px;width:600px;max-width:96vw;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 .prods-toolbar { display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center; }
-.prods-toolbar select { padding:6px 8px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;font-family:var(--font);background:#fff; }
+.prods-toolbar select { padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text); }
 #prods-panel { flex:1;overflow-y:auto;min-height:0; }
 #cats-panel  { flex:1;display:flex;flex-direction:column;min-height:0; }
 #prods-list  { }
@@ -491,11 +492,11 @@ body {
 .prod-row-stk.cero { color:#e74c3c; }
 .prod-row-btns { display:flex;gap:4px; }
 .prod-row-btns button { padding:4px 8px;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:var(--font); }
-.prod-form { background:#f4f8fb;border-radius:8px;padding:14px;margin-bottom:10px;display:none; }
+.prod-form { background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;display:none; }
 .prod-form.open { display:block; }
 .pf-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px; }
-.pf-grid label { font-size:11px;font-weight:700;color:#445;display:flex;flex-direction:column;gap:3px; }
-.pf-grid input, .pf-grid select { padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font); }
+.pf-grid label { font-size:11px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;gap:3px; }
+.pf-grid input, .pf-grid select { padding:6px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;font-family:var(--font);background:var(--surface);color:var(--text); }
 .pf-full { grid-column:1/-1; }
 
 /* Cajeros */
@@ -1227,7 +1228,7 @@ body {
         </label>
         <label id="pf-stock-row">Stock actual<input id="pf-stock" type="number" min="-1" placeholder="—1 = sin control"></label>
         <label id="pf-minstock-row">Stock mínimo (alerta)<input id="pf-minstock" type="number" min="0" placeholder="5"></label>
-        <label id="pf-desc-row" class="pf-full" style="display:none">Descripción / ingredientes<textarea id="pf-desc" rows="2" placeholder="Ej: Jamón serrano, queso manchego, tomate..." style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font);resize:vertical;width:100%;box-sizing:border-box"></textarea></label>
+        <label id="pf-desc-row" class="pf-full" style="display:none">Descripción / ingredientes<textarea id="pf-desc" rows="2" placeholder="Ej: Jamón serrano, queso manchego, tomate..." style="padding:6px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;font-family:var(--font);resize:vertical;width:100%;box-sizing:border-box;background:var(--surface);color:var(--text)"></textarea></label>
         <label class="pf-full" style="flex-direction:row;align-items:center;gap:8px;font-size:13px">
           <input id="pf-peso" type="checkbox"> Venta por peso (kg)
         </label>
@@ -1253,7 +1254,7 @@ body {
       <select id="prods-fam-fil" onchange="renderProdsList()">
         <option value="">Todas las familias</option>
       </select>
-      <input id="prods-q" placeholder="Buscar..." style="padding:6px 8px;border:2px solid #6a8faf;border-radius:6px;font-size:13px;font-family:var(--font);flex:1" oninput="renderProdsList()">
+      <input id="prods-q" placeholder="Buscar..." style="padding:6px 8px;border:2px solid var(--border);border-radius:6px;font-size:13px;font-family:var(--font);flex:1;background:var(--bg);color:var(--text)" oninput="renderProdsList()">
       <button style="padding:6px 12px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="abrirFormProd(null)">+ Nuevo</button>
     </div>
     <!-- Lista -->
