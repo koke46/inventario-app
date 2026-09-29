@@ -1713,6 +1713,7 @@ function renderCat() {
   if (!famActual) {
     // Pantalla familias
     g.style.gridTemplateColumns = 'repeat(auto-fill, 90px)';
+    g.style.gap = '16px';
     const favs = CAT.filter(p => p.favorito);
     const favBtn = favs.length
       ? `<button class="fam-btn" style="background:linear-gradient(135deg,#7c5c00,#f59e0b)" onclick="abrirFam('__favs__')">
@@ -1737,6 +1738,7 @@ function renderCat() {
     }).join('');
   } else {
     g.style.gridTemplateColumns = 'repeat(auto-fill, 78px)';
+    g.style.gap = '9px';
     const esFavs = famActual === '__favs__';
     const prods = esFavs
       ? CAT.filter(p => p.favorito)
