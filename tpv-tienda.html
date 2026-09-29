@@ -1173,9 +1173,10 @@ body {
     <div id="tick-totales"></div>
     <hr class="tick-hr">
     <div id="tick-footer" class="tick-center" style="font-size:10px;color:var(--muted);margin-top:4px"></div>
-    <div class="mbtns no-print" style="margin-top:12px">
+    <div class="mbtns no-print" style="margin-top:12px;flex-wrap:wrap;gap:6px">
       <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="window.print()">🖨️ Imprimir</button>
-      <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-tick').classList.remove('open')">Cerrar</button>
+      <button style="flex:1;padding:10px;border:none;border-radius:6px;background:linear-gradient(to bottom,#3b82f6,#1d4ed8);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="tickFactura()">📄 Factura</button>
+      <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-tick').classList.remove('open')">✅ Sin ticket</button>
     </div>
   </div>
 </div>
@@ -2294,9 +2295,9 @@ function confirmar() {
       _mostrarAskFactura(_cliRef);
     }
   } else {
-    // Sin cliente — mostrar elección de ticket como antes
-    document.getElementById('ov-ticket-choice').classList.add('open');
-    setTimeout(() => document.getElementById('tc-btn-sin').focus(), 60);
+    // Sin cliente — mostrar ticket directamente
+    _facCliPending = null;
+    document.getElementById('ov-tick').classList.add('open');
   }
 }
 
@@ -2589,6 +2590,10 @@ function sinTicket() {
   document.getElementById('ov-ticket-choice').classList.remove('open');
   warn('✅ Venta completada', 1500);
 }
+function tickFactura() {
+  document.getElementById('ov-tick').classList.remove('open');
+  abrirFactura();
+}
 
 function abrirHistorico() {
   const list = document.getElementById('hist-list');
@@ -2742,8 +2747,7 @@ let _ptsCliId = null, _ptsEuros = 0, _ptsVentaRef = null, _ptsGanadosPost = 0;
 let _facCliPending = null;
 function _mostrarAskFactura(cliRef) {
   _facCliPending = cliRef || null;
-  document.getElementById('fac-ask-sub').textContent = cliRef ? `Cliente: ${cliRef.nombre}` : '';
-  document.getElementById('ov-fac-ask').classList.add('open');
+  document.getElementById('ov-tick').classList.add('open');
 }
 function _facAskSi() {
   document.getElementById('ov-fac-ask').classList.remove('open');
