@@ -632,30 +632,30 @@ body {
 #ov-caja { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-caja.open { display:flex; }
 .caj-tabs { display:flex;gap:4px;margin-bottom:12px; }
-.caj-tab { flex:1;padding:8px 4px;border:2px solid #888;border-radius:var(--r);background:#e8e8e8;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);text-align:center; }
+.caj-tab { flex:1;padding:8px 4px;border:2px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);text-align:center; }
 .caj-tab.on { border-color:#4a6788;background:#4a6788;color:#fff; }
 .caj-panel { display:none; }
 .caj-panel.open { display:block; }
-.caja-inp { width:100%;padding:8px;font-size:22px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:var(--r);text-align:right;margin-bottom:10px; }
+.caja-inp { width:100%;padding:8px;font-size:22px;font-family:'Courier New',monospace;border:2px solid var(--border);border-radius:var(--r);text-align:right;margin-bottom:10px;background:var(--bg);color:var(--text); }
 .tipo-btns { display:flex;gap:6px;margin-bottom:8px; }
-.tipo-btn { flex:1;padding:9px;border:2px solid #888;border-radius:6px;background:#e8e8e8;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font); }
+.tipo-btn { flex:1;padding:9px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font); }
 .tipo-btn.on.ent { border-color:#27ae60;background:#27ae60;color:#fff; }
 .tipo-btn.on.sal { border-color:var(--anular);background:var(--anular);color:#fff; }
 .mov-list { max-height:140px;overflow-y:auto;font-size:11px;margin-bottom:8px;border:1px solid #aab8c8;border-radius:var(--r); }
-.mov-row { display:grid;grid-template-columns:52px 1fr auto;padding:5px 8px;border-bottom:1px solid #dde;gap:6px;align-items:center; }
+.mov-row { display:grid;grid-template-columns:52px 1fr auto;padding:5px 8px;border-bottom:1px solid var(--border);gap:6px;align-items:center;color:var(--text); }
 .mov-row:last-child { border-bottom:none; }
 .mov-ent { color:#1a5c2a; }
 .mov-sal { color:#c00; }
 .inf-section { margin-bottom:12px; }
-.inf-title { font-weight:700;font-size:12px;color:#555;border-bottom:2px solid #b0b8c8;padding-bottom:3px;margin-bottom:5px; }
-.inf-row { display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid #eee; }
+.inf-title { font-weight:700;font-size:12px;color:var(--muted);border-bottom:2px solid var(--border);padding-bottom:3px;margin-bottom:5px; }
+.inf-row { display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--border);color:var(--text); }
 .inf-row:last-child { border:none; }
 .inf-val { font-weight:700;font-family:'Courier New',monospace; }
-.inf-total { display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:700;border-top:2px solid #888;margin-top:4px; }
+.inf-total { display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:700;border-top:2px solid var(--border);margin-top:4px;color:var(--text); }
 .bil-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px; }
 .bil-cnt { display:flex;flex-direction:column;align-items:center;gap:2px; }
-.bil-cnt label { font-size:10px;color:#555; }
-.bil-cnt input { width:100%;padding:4px;text-align:center;border:1px solid #888;border-radius:3px;font-size:13px;font-family:'Courier New',monospace; }
+.bil-cnt label { font-size:10px;color:var(--muted); }
+.bil-cnt input { width:100%;padding:4px;text-align:center;border:1px solid var(--border);border-radius:3px;font-size:13px;font-family:'Courier New',monospace;background:var(--bg);color:var(--text); }
 .descuadre-ok { color:#1a5c2a;font-weight:700; }
 .descuadre-ko { color:#c00;font-weight:700; }
 #z-descuadre { font-size:14px;font-weight:700;text-align:center;padding:8px;border-radius:var(--r);margin-bottom:10px; }
@@ -1363,8 +1363,8 @@ body {
 
 <!-- ══ MODAL CAJA ══ -->
 <div id="ov-caja">
-  <div style="background:var(--surface);border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
-    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">🏦 Gestión de Caja</h2>
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:var(--text)">🏦 Gestión de Caja</h2>
     <div class="caj-tabs">
       <button class="caj-tab on" onclick="cajTab('fondo')">💰 Fondo</button>
       <button class="caj-tab" onclick="cajTab('mov')">🔄 Movimiento</button>
@@ -1374,10 +1374,10 @@ body {
 
     <!-- Fondo inicial -->
     <div class="caj-panel open" id="caj-fondo">
-      <p style="font-size:12px;color:#555;margin-bottom:8px">Introduce el efectivo con el que abres la caja:</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Introduce el efectivo con el que abres la caja:</p>
       <input class="caja-inp" id="fondo-in" type="number" min="0" step="0.01" placeholder="0,00" value="0">
       <div class="mbtns"><button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarFondo()">✅ Confirmar apertura</button></div>
-      <p id="fondo-actual" style="font-size:12px;color:#555;margin-top:8px;text-align:center"></p>
+      <p id="fondo-actual" style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center"></p>
     </div>
 
     <!-- Movimiento -->
@@ -1387,7 +1387,7 @@ body {
         <button class="tipo-btn sal" id="mt-sal" onclick="setMovTipo('sal')">⬇️ Salida</button>
       </div>
       <input class="caja-inp" id="mov-imp" type="number" min="0" step="0.01" placeholder="Importe...">
-      <input type="text" id="mov-mot" placeholder="Motivo (pago proveedor, retirada...)" style="width:100%;padding:8px 10px;font-size:13px;border:2px solid #888;border-radius:var(--r);margin-bottom:10px;font-family:var(--font)">
+      <input type="text" id="mov-mot" placeholder="Motivo (pago proveedor, retirada...)" style="width:100%;padding:8px 10px;font-size:13px;border:2px solid var(--border);border-radius:var(--r);margin-bottom:10px;font-family:var(--font);background:var(--bg);color:var(--text)">
       <div class="mbtns"><button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="confirmarMov()">✅ Registrar</button></div>
       <div class="mov-list" id="mov-list" style="margin-top:10px"></div>
     </div>
@@ -1399,7 +1399,7 @@ body {
 
     <!-- Cierre Z -->
     <div class="caj-panel" id="caj-cierrez">
-      <p style="font-size:12px;color:#555;margin-bottom:8px">Cuenta el efectivo en caja:</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Cuenta el efectivo en caja:</p>
       <div class="bil-grid" id="bil-grid"></div>
       <div id="z-descuadre"></div>
       <div id="cierrez-body"></div>
@@ -1408,7 +1408,7 @@ body {
       </div>
     </div>
 
-    <div class="mbtns" style="margin-top:10px"><button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-caja').classList.remove('open')">Cerrar</button></div>
+    <div class="mbtns" style="margin-top:10px"><button style="flex:1;padding:10px;border:none;border-radius:6px;background:var(--border);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-caja').classList.remove('open')">Cerrar</button></div>
   </div>
 </div>
 
