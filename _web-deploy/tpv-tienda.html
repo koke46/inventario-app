@@ -3208,6 +3208,7 @@ function abrirQR() {
   const menuData = {
     n: config.empresa || '',
     t: (config.tel || '').replace(/\D/g,''),
+    ...(config.logo ? { logo: config.logo } : {}),
     ...(licId ? { lic: licId } : {}),
     f: fams,
     p: CAT.filter(p => p.activo !== false).map((p,i) => {
