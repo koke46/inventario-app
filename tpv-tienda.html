@@ -2724,7 +2724,7 @@ function _ptsUsar() {
     _ptsVentaRef.ptsTotales  = c.puntos;
     // Añadir línea de descuento al ticket
     _ptsVentaRef.lineas = (_ptsVentaRef.lineas || []).filter(l => !l._canje);
-    _ptsVentaRef.lineas.push({ nombre: `🎁 Descuento puntos (${ptsGastados} pts)`, cantidad: 1, pUnit: -_ptsEuros, importe: -_ptsEuros, ivaT: 0, _canje: true });
+    _ptsVentaRef.lineas.push({ nombre: `🎁 Descuento puntos (${ptsGastados} pts)`, cantidad: 1, pUnit: -_ptsEuros, importe: -_ptsEuros, iva: 0, _canje: true });
   }
   saveClientes();
   localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
@@ -2749,7 +2749,7 @@ function _aplicarPuntosSinCanje(c, venta, ganados) {
 function canjearPuntos(c, euros) {
   // Canje pre-pago (ya no se usa — se mantiene por compatibilidad)
   ticket = ticket.filter(l => !l._canje);
-  ticket.push({ nombre: `⭐ Descuento puntos (${euros * 100} pts)`, cantidad: 1, pUnit: -euros, importe: -euros, ivaT: 0, _canje: true });
+  ticket.push({ nombre: `⭐ Descuento puntos (${euros * 100} pts)`, cantidad: 1, pUnit: -euros, importe: -euros, iva: 0, _canje: true });
   ptsCanjeados = euros;
   selIdx = ticket.length - 1;
   renderTicket();
