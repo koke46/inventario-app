@@ -544,7 +544,7 @@ body {
 #mbox h2 { text-align: center; font-size: 14px; margin-bottom: 8px; color: var(--text); }
 #m-total { text-align: center; font-size: 50px; font-weight: 700; color: #22c55e; font-family: 'Courier New', monospace; margin-bottom: 12px; }
 .ptabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.ptab { flex: 1; min-width: 90px; padding: 11px 6px; border: 2px solid #888; border-radius: 6px; background: #e8e8e8; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font); text-align: center; }
+.ptab { flex: 1; min-width: 90px; padding: 11px 6px; border: 2px solid #888; border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font); text-align: center; }
 .ptab.on { border-color: #4a6788; background: #4a6788; color: #fff; }
 #ef-panel { display: none; }
 #ef-panel.open { display: block; }
@@ -1030,8 +1030,8 @@ body {
       <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('ov-tgt').classList.remove('open')">✕</button>
     </div>
     <!-- crear nueva -->
-    <div style="background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:12px">
-      <b style="font-size:13px">Nueva tarjeta</b>
+    <div style="background:var(--surface);border-radius:8px;padding:12px;margin-bottom:12px">
+      <b style="font-size:13px;color:var(--text)">Nueva tarjeta</b>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
         <label style="font-size:12px;color:var(--muted);flex:1;display:flex;flex-direction:column;gap:3px">Saldo (€)<input id="tgt-new-importe" type="number" min="1" step="0.01" placeholder="20,00" style="padding:6px;border:1.5px solid var(--ticket-border);border-radius:5px;font-size:14px;font-family:var(--font);background:var(--ticket-bg);color:var(--text)"></label>
         <label style="font-size:12px;color:var(--muted);flex:1;display:flex;flex-direction:column;gap:3px">Nombre/nota (opcional)<input id="tgt-new-nom" type="text" placeholder="Ej: cumpleaños Ana" style="padding:6px;border:1.5px solid var(--ticket-border);border-radius:5px;font-size:13px;font-family:var(--font);background:var(--ticket-bg);color:var(--text)"></label>
