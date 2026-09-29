@@ -684,7 +684,7 @@ body {
 #ov-inf { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-inf.open { display:flex; }
 .inf-tabs { display:flex;gap:4px;margin-bottom:10px; }
-.inf-tab { flex:1;padding:7px 4px;border:2px solid #888;border-radius:var(--r);background:#e8e8e8;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);text-align:center; }
+.inf-tab { flex:1;padding:7px 4px;border:2px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);text-align:center; }
 .inf-tab.on { border-color:#4a6788;background:#4a6788;color:#fff; }
 .inf-panel { display:none; }
 .inf-panel.open { display:block; }
@@ -758,7 +758,7 @@ body {
 
 /* ══ INFORME FILTRO FECHA ══ */
 .inf-fecha-bar { display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap; }
-.inf-fecha-btn { padding:5px 12px;border:2px solid #6a8faf;background:#fff;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:#4a6788;font-family:var(--font); }
+.inf-fecha-btn { padding:5px 12px;border:2px solid var(--border);background:var(--bg);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);font-family:var(--font); }
 .inf-fecha-btn.on { background:var(--btn-to);border-color:var(--btn-to);color:#fff; }
 
 /* ══ PANTALLA CLIENTE ══ */
@@ -1096,8 +1096,8 @@ body {
 
 <!-- ══ MODAL INFORMES ══ -->
 <div id="ov-inf">
-  <div style="background:var(--surface);border-radius:10px;padding:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
-    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">📊 Informes de Ventas</h2>
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:var(--text)">📊 Informes de Ventas</h2>
     <div class="inf-fecha-bar">
       <button class="inf-fecha-btn on" onclick="setInfFecha('hoy',this)">Hoy</button>
       <button class="inf-fecha-btn" onclick="setInfFecha('semana',this)">Esta semana</button>
@@ -1114,7 +1114,7 @@ body {
     <div class="inf-panel" id="inf-fam"></div>
     <div class="inf-panel" id="inf-prd"></div>
     <div class="inf-panel" id="inf-caj"></div>
-    <div class="mbtns" style="margin-top:10px"><button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-inf').classList.remove('open')">Cerrar</button></div>
+    <div class="mbtns" style="margin-top:10px"><button style="flex:1;padding:10px;border:none;border-radius:6px;background:var(--border);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-inf').classList.remove('open')">Cerrar</button></div>
   </div>
 </div>
 
