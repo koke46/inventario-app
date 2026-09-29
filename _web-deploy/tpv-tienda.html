@@ -3303,6 +3303,18 @@ function abrirConfig() {
   document.getElementById('cfg-url-menu').value = config.urlMenu || '';
   document.getElementById('ov-cfg').classList.add('open');
 }
+function borrarDatosEjemplo() {
+  if (!confirm('⚠️ ¿Borrar TODOS los productos, ventas, clientes y datos de ejemplo?\n\nEsta acción no se puede deshacer.')) return;
+  if (!confirm('Confirma de nuevo: se borrarán todos los datos y la app se reiniciará limpia.')) return;
+  const keysToKeep = ['tpvt_config'];
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('tpvt_') && !keysToKeep.includes(k)) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
 function guardarConfig() {
   config.empresa   = document.getElementById('cfg-empresa').value.trim() || config.empresa;
   config.nif       = document.getElementById('cfg-nif').value.trim();
@@ -4405,6 +4417,9 @@ function toggleDarkMode(){
       <input id="cfg-url-menu" type="text" placeholder="https://tudominio.com" style="padding:8px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px">
     </div>
     <button style="margin-top:14px;width:100%;padding:10px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarConfig()">💾 Guardar</button>
+    <hr style="margin:18px 0;border:none;border-top:1px solid var(--border)">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">⚠️ Solo para puesta en marcha — borra todos los productos, ventas y datos de ejemplo.</div>
+    <button style="width:100%;padding:10px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="borrarDatosEjemplo()">🗑️ Borrar datos de ejemplo y empezar desde cero</button>
   </div>
 </div>
 
