@@ -784,9 +784,9 @@ body {
 #mix-panel { display:none; }
 #mix-panel.open { display:block; }
 .mix-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
-.mix-lbl { font-size:13px;font-weight:700;min-width:72px; }
-.mix-in { flex:1;padding:8px;font-size:16px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:var(--r);text-align:right; }
-#mix-resto { font-size:14px;font-weight:700;text-align:center;padding:6px;background:#fff;border-radius:var(--r);margin-bottom:10px; }
+.mix-lbl { font-size:13px;font-weight:700;min-width:72px;color:var(--text); }
+.mix-in { flex:1;padding:8px;font-size:16px;font-family:'Courier New',monospace;border:2px solid var(--border);border-radius:var(--r);text-align:right;background:var(--bg);color:var(--text); }
+#mix-resto { font-size:14px;font-weight:700;text-align:center;padding:6px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px; }
 #biz-panel { display:none;padding:20px;text-align:center;color:#555;font-size:15px; }
 #biz-panel.open { display:block; }
 #fiad-panel { display:none;padding:12px 0; }
@@ -964,18 +964,18 @@ body {
       <input id="ef-in" type="text" inputmode="decimal" placeholder="Entregado por el cliente..." oninput="calcCambio()">
       <div class="billetes" id="billetes"></div>
       <div id="cambio" style="color:#1a5c2a">Cambio: 0,00 €</div>
-      <div class="cobro-np">
-        <button type="button" onclick="cobNp('7')">7</button><button type="button" onclick="cobNp('8')">8</button><button type="button" onclick="cobNp('9')">9</button>
-        <button type="button" onclick="cobNp('4')">4</button><button type="button" onclick="cobNp('5')">5</button><button type="button" onclick="cobNp('6')">6</button>
-        <button type="button" onclick="cobNp('1')">1</button><button type="button" onclick="cobNp('2')">2</button><button type="button" onclick="cobNp('3')">3</button>
-        <button type="button" class="cnp-c" onclick="cobNc()">C</button><button type="button" onclick="cobNp('0')">0</button><button type="button" onclick="cobNp(',')">&#44;</button>
-      </div>
     </div>
     <div id="biz-panel">📱 Bizum seleccionado — confirma cuando el cliente envíe el pago</div>
     <div id="mix-panel">
-      <div class="mix-row"><span class="mix-lbl">💵 Efectivo</span><input class="mix-in" id="mix-ef" type="number" min="0" step="0.01" placeholder="0,00" oninput="calcMixto()"></div>
-      <div class="mix-row"><span class="mix-lbl">💳 Tarjeta</span><input class="mix-in" id="mix-tj" type="number" min="0" step="0.01" placeholder="0,00" oninput="calcMixto()"></div>
+      <div class="mix-row"><span class="mix-lbl">💵 Efectivo</span><input class="mix-in" id="mix-ef" type="text" inputmode="decimal" placeholder="0,00" oninput="calcMixto()" onclick="this.select()"></div>
+      <div class="mix-row"><span class="mix-lbl">💳 Tarjeta</span><input class="mix-in" id="mix-tj" type="text" inputmode="decimal" placeholder="0,00" oninput="calcMixto()" onclick="this.select()"></div>
       <div id="mix-resto">Resto: — €</div>
+    </div>
+    <div id="cobro-np-wrap" class="cobro-np">
+      <button type="button" onclick="cobNp('7')">7</button><button type="button" onclick="cobNp('8')">8</button><button type="button" onclick="cobNp('9')">9</button>
+      <button type="button" onclick="cobNp('4')">4</button><button type="button" onclick="cobNp('5')">5</button><button type="button" onclick="cobNp('6')">6</button>
+      <button type="button" onclick="cobNp('1')">1</button><button type="button" onclick="cobNp('2')">2</button><button type="button" onclick="cobNp('3')">3</button>
+      <button type="button" class="cnp-c" onclick="cobNc()">C</button><button type="button" onclick="cobNp('0')">0</button><button type="button" onclick="cobNp(',')">&#44;</button>
     </div>
     <div id="vale-panel">
       <input class="vale-inp" id="vale-code" type="text" placeholder="VALE-XXXXXX" oninput="this.value=this.value.toUpperCase()">
@@ -2100,17 +2100,17 @@ function acAnular() {
    COBRO
 ══════════════════════ */
 function cobNp(k) {
-  const el = document.getElementById('ef-in');
+  const el = _cobroTarget();
   if (!el) return;
-  if (k === ',' && el.value.includes(',')) return;
+  if (k === ',' && (el.value.includes(',') || el.value.includes('.'))) return;
   el.value += k;
-  calcCambio();
+  if (payMode === 'mix') calcMixto(); else calcCambio();
 }
 function cobNc() {
-  const el = document.getElementById('ef-in');
+  const el = _cobroTarget();
   if (!el) return;
   el.value = '';
-  calcCambio();
+  if (payMode === 'mix') calcMixto(); else calcCambio();
 }
 function abrirCobro() {
   if (!ticket.length) return;
@@ -2182,6 +2182,9 @@ function setTab(t) {
   document.getElementById('fiad-panel').classList.toggle('open',  t === 'fiad');
   document.getElementById('tgt-panel').classList.toggle('open',   t === 'tgt');
   document.getElementById('div-panel').classList.toggle('open',   t === 'div');
+  const npWrap = document.getElementById('cobro-np-wrap');
+  if (npWrap) npWrap.style.display = (t === 'ef' || t === 'mix') ? '' : 'none';
+  if (t === 'mix') setTimeout(() => document.getElementById('mix-ef')?.focus(), 50);
   if (t === 'fiad') { actualizarFiadInfo(); if (!cliente) abrirCli(); }
   if (t === 'tgt')  { document.getElementById('tgt-cobro-info').textContent = ''; }
   if (t === 'div')  { splitPartes = []; renderSplit(); }
@@ -2190,12 +2193,12 @@ function setTab(t) {
 }
 function calcMixto() {
   const tot = calcTotal();
-  const ef  = parseFloat(document.getElementById('mix-ef').value) || 0;
-  const tj  = parseFloat(document.getElementById('mix-tj').value) || 0;
+  const ef  = parseFloat((document.getElementById('mix-ef').value || '').replace(',', '.')) || 0;
+  const tj  = parseFloat((document.getElementById('mix-tj').value || '').replace(',', '.')) || 0;
   const r   = tot - ef - tj;
   const el  = document.getElementById('mix-resto');
   el.textContent = r > 0.005 ? `Falta: ${fmtE(r)}` : r < -0.005 ? `Exceso: ${fmtE(Math.abs(r))}` : '✅ Cuadra';
-  el.style.color = Math.abs(r) < 0.005 ? '#1a5c2a' : '#c00';
+  el.style.color = Math.abs(r) < 0.005 ? 'var(--success, #22c55e)' : 'var(--danger, #f87171)';
 }
 function setBil(v) { document.getElementById('ef-in').value = String(v).replace('.', ','); calcCambio(); }
 function calcCambio() {
@@ -2225,8 +2228,8 @@ function confirmar() {
   } else if (payMode === 'biz') {
     pagosDia.biz += tot;
   } else if (payMode === 'mix') {
-    const ef = parseFloat(document.getElementById('mix-ef').value) || 0;
-    const tj = parseFloat(document.getElementById('mix-tj').value) || 0;
+    const ef = parseFloat((document.getElementById('mix-ef').value || '').replace(',', '.')) || 0;
+    const tj = parseFloat((document.getElementById('mix-tj').value || '').replace(',', '.')) || 0;
     if (Math.abs(ef + tj - tot) > 0.02) { alert('Los importes no suman el total'); return; }
     pagosDia.ef += ef; pagosDia.tj += tj;
   } else if (payMode === 'val') {
