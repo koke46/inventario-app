@@ -1491,7 +1491,23 @@ function updIVA() {
 /* ══════════════════════
    NUMPAD
 ══════════════════════ */
+let _cobroBuf = '';
+function _cobroTarget() {
+  if (payMode === 'ef') return document.getElementById('ef-in');
+  if (payMode === 'mix') return document.activeElement?.classList.contains('mix-in') ? document.activeElement : document.getElementById('mix-ef');
+  return null;
+}
 function np(k) {
+  if (document.getElementById('ov').classList.contains('open')) {
+    const t = _cobroTarget();
+    if (t) {
+      if (k === ',' && _cobroBuf.includes(',')) return;
+      _cobroBuf += k;
+      const v = parseFloat(_cobroBuf.replace(',', '.'));
+      if (!isNaN(v)) { t.value = v; t.dispatchEvent(new Event('input')); }
+    }
+    return;
+  }
   if (k === ',' && nbuf.includes(',')) return;
   nbuf += k;
   const v = getN();
@@ -1502,11 +1518,18 @@ function np(k) {
   }
 }
 function nc() {
+  if (document.getElementById('ov').classList.contains('open')) {
+    _cobroBuf = '';
+    const t = _cobroTarget();
+    if (t) { t.value = ''; t.dispatchEvent(new Event('input')); }
+    return;
+  }
   nbuf = '';
   document.getElementById('v-total').style.color = '';
   updVisor();
 }
 function npEnter() {
+  if (document.getElementById('ov').classList.contains('open')) { confirmar(); return; }
   const n = getN();
   if (n !== null) {
     añadirLibreRapido(n);
@@ -1817,6 +1840,7 @@ function abrirCobro() {
   if (!ticket.length) return;
   const tot = calcTotal();
   document.getElementById('m-total').textContent = fmtE(tot);
+  _cobroBuf = '';
   document.getElementById('ef-in').value = '';
   document.getElementById('cambio').textContent = 'Cambio: 0,00 €';
   document.getElementById('cambio').style.color = '#1a5c2a';
@@ -1834,7 +1858,7 @@ function abrirCobro() {
 }
 function cerrarModal(id) { document.getElementById(id || 'ov').classList.remove('open'); }
 function setTab(t) {
-  payMode = t;
+  payMode = t; _cobroBuf = '';
   ['ef','tj','biz','mix','val','fiad','tgt','div'].forEach(x => {
     document.getElementById('t-' + x)?.classList.toggle('on', t === x);
   });
