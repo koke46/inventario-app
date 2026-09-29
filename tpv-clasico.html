@@ -498,6 +498,10 @@ body {
 #ef-in { width: 100%; padding: 8px; font-size: 22px; font-family: 'Courier New', monospace; border: 2px solid #888; border-radius: 6px; margin-bottom: 8px; text-align: right; }
 .billetes { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
 .bil { padding: 7px 12px; border-radius: 5px; border: 1px solid #3a7a3a; background: linear-gradient(to bottom, #4a9a4a, #2e6e2e); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--font); }
+.cobro-np { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
+.cobro-np button { padding:14px 0; font-size:20px; font-weight:700; border:none; border-radius:8px; cursor:pointer; background:var(--numpad-from); color:#fff; font-family:var(--font); }
+.cobro-np button:active { filter:brightness(.8); }
+.cobro-np .cnp-c { background:#c0392b; }
 .bil:active { filter: brightness(.85); }
 #cambio { font-size: 22px; font-weight: 700; text-align: center; padding: 8px; background: #fff; border-radius: 6px; margin-bottom: 12px; font-family: 'Courier New', monospace; }
 .mbtns { display: flex; gap: 8px; }
@@ -879,6 +883,12 @@ body {
       <input id="ef-in" type="number" min="0" step="0.01" placeholder="Entregado por el cliente..." oninput="calcCambio()">
       <div class="billetes" id="billetes"></div>
       <div id="cambio" style="color:#1a5c2a">Cambio: 0,00 €</div>
+      <div class="cobro-np">
+        <button onclick="np('7')">7</button><button onclick="np('8')">8</button><button onclick="np('9')">9</button>
+        <button onclick="np('4')">4</button><button onclick="np('5')">5</button><button onclick="np('6')">6</button>
+        <button onclick="np('1')">1</button><button onclick="np('2')">2</button><button onclick="np('3')">3</button>
+        <button class="cnp-c" onclick="nc()">C</button><button onclick="np('0')">0</button><button onclick="np(',')">&#44;</button>
+      </div>
     </div>
     <div id="biz-panel">📱 Bizum seleccionado — confirma cuando el cliente envíe el pago</div>
     <div id="mix-panel">
