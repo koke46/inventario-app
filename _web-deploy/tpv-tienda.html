@@ -589,20 +589,20 @@ body {
 #ov-ings { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-ings.open { display:flex; }
 #ings-box { background:var(--surface);border-radius:10px;padding:20px;width:460px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
-.ing-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
+.ing-row { display:flex;align-items:center;gap:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
 .ing-cat-badge { font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap; }
-.ing-cat-badge.ing { background:#dcfce7;color:#166534; }
-.ing-cat-badge.sal { background:#fce7f3;color:#be185d; }
+.ing-cat-badge.ing { background:rgba(34,197,94,.18);color:#22c55e; }
+.ing-cat-badge.sal { background:rgba(236,72,153,.18);color:#ec4899; }
 #ov-ingsel { position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:250; }
 #ov-ingsel.open { display:flex; }
 #ingsel-box { background:var(--surface);border-radius:10px;padding:20px;width:420px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 .ing-sel-sec { margin-bottom:14px; }
-.ing-sel-sec h4 { font-size:11px;font-weight:700;color:#446;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
+.ing-sel-sec h4 { font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
 .ing-toggle-grid { display:flex;flex-wrap:wrap;gap:5px; }
 .ing-tog { padding:6px 12px;border-radius:20px;border:2px solid;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .12s; }
 .ing-tog.on        { background:#166534;border-color:#166534;color:#fff; }
 .ing-tog.off       { background:#fee2e2;border-color:#ef4444;color:#991b1b;text-decoration:line-through; }
-.ing-tog.extra-off { background:#f1f5f9;border-color:#94a3b8;color:#475569; }
+.ing-tog.extra-off { background:var(--bg);border-color:var(--border);color:var(--text); }
 .ing-tog.extra-on  { background:#1d4ed8;border-color:#1d4ed8;color:#fff; }
 
 /* ══ MODAL CLIENTES ══ */
@@ -4308,18 +4308,18 @@ function toggleDarkMode(){
   <div id="ings-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-shrink:0">
       <b style="font-size:15px">🥗 Ingredientes y Salsas</b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-ings')">✕</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="cerrarModal('ov-ings')">✕</button>
     </div>
     <div id="ings-list" style="flex:1;overflow-y:auto;min-height:0;margin-bottom:12px"></div>
-    <div style="background:#f4f8fb;border-radius:8px;padding:12px;flex-shrink:0">
-      <div style="font-size:12px;font-weight:700;color:#334;margin-bottom:8px">Añadir nuevo</div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;flex-shrink:0">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">Añadir nuevo</div>
       <div style="display:flex;gap:6px;margin-bottom:8px">
         <button id="ings-btn-ing" class="ptab on" style="flex:1" onclick="setIngCat('ing')">🥬 Ingrediente</button>
         <button id="ings-btn-sal" class="ptab"    style="flex:1" onclick="setIngCat('sal')">🧴 Salsa</button>
       </div>
       <div style="display:flex;gap:6px">
-        <input id="ings-nom" type="text" placeholder="Nombre (ej: Tomate, Ketchup…)" style="flex:1;padding:8px;font-size:13px;border:2px solid #8aaccc;border-radius:6px;font-family:var(--font)">
-        <input id="ings-precio" type="number" min="0" step="0.01" placeholder="Extra €" style="width:80px;padding:8px;font-size:13px;border:2px solid #8aaccc;border-radius:6px;font-family:var(--font)">
+        <input id="ings-nom" type="text" placeholder="Nombre (ej: Tomate, Ketchup…)" style="flex:1;padding:8px;font-size:13px;border:2px solid var(--border);border-radius:6px;font-family:var(--font);background:var(--surface);color:var(--text)">
+        <input id="ings-precio" type="number" min="0" step="0.01" placeholder="Extra €" style="width:80px;padding:8px;font-size:13px;border:2px solid var(--border);border-radius:6px;font-family:var(--font);background:var(--surface);color:var(--text)">
         <button style="padding:8px 14px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarIng()">➕</button>
       </div>
     </div>
@@ -4330,8 +4330,8 @@ function toggleDarkMode(){
 <div id="ov-ingsel">
   <div id="ingsel-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <b id="ingsel-title" style="font-size:15px"></b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-ingsel')">✕</button>
+      <b id="ingsel-title" style="font-size:15px;color:var(--text)"></b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="cerrarModal('ov-ingsel')">✕</button>
     </div>
     <div class="ing-sel-sec" id="ingsel-sec-ing">
       <h4>🥬 Ingredientes</h4>
@@ -4341,7 +4341,7 @@ function toggleDarkMode(){
       <h4>🧴 Salsas</h4>
       <div class="ing-toggle-grid" id="ingsel-grid-sal"></div>
     </div>
-    <div style="text-align:center;font-size:13px;color:#557;margin-bottom:12px">Total: <b id="ingsel-total">0,00 €</b></div>
+    <div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:12px">Total: <b id="ingsel-total">0,00 €</b></div>
     <div style="display:flex;gap:8px">
       <button style="flex:1;padding:11px;background:#aaa;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="cerrarModal('ov-ingsel')">❌ Cancelar</button>
       <button id="ingsel-btn-add" style="flex:2;padding:11px;background:linear-gradient(to bottom,var(--btn-from),var(--btn-to));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--font)" onclick="confirmarIngSel()">✅ Añadir</button>
