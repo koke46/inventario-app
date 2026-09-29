@@ -675,9 +675,9 @@ body {
 /* ══ MODAL DEVOLUCIONES ══ */
 #ov-dev { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-dev.open { display:flex; }
-.dev-row { display:grid;grid-template-columns:22px 32px 1fr 54px;padding:5px 8px;border-bottom:1px solid #eef;cursor:pointer;align-items:center;gap:4px;font-size:12px; }
-.dev-row:hover { background:#e8f0f8; }
-.dev-row.sel { background:#fff3cd; }
+.dev-row { display:grid;grid-template-columns:22px 32px 1fr 54px;padding:5px 8px;border-bottom:1px solid var(--border);cursor:pointer;align-items:center;gap:4px;font-size:12px;color:var(--text); }
+.dev-row:hover { background:var(--surface); }
+.dev-row.sel { background:rgba(245,158,11,.18); }
 .dev-row input[type=checkbox] { width:16px;height:16px;cursor:pointer; }
 
 /* ══ MODAL INFORMES ══ */
@@ -2353,7 +2353,7 @@ function buscarDevTicket() {
       <span>${l.nombre}${l.dto?` <span style="color:#e74c3c;font-size:9px">-${l.dto}%</span>`:''}</span>
       <span style="text-align:right;font-family:'Courier New',monospace">${fmtE(Math.abs(l.importe))}</span>
     </div>`).join('');
-  document.getElementById('dev-ticket').innerHTML = `<div style="padding:6px 8px;background:#f0f4f8;border-bottom:1px solid #ccc;font-size:11px;font-weight:700">Ticket ${String(res.nTicket).padStart(4,'0')} · ${res.hora} · ${res.cajero}${res.cliente?' · '+res.cliente:''}</div>${rows}`;
+  document.getElementById('dev-ticket').innerHTML = `<div style="padding:6px 8px;background:var(--surface);color:var(--text);border-bottom:1px solid var(--border);font-size:11px;font-weight:700">Ticket ${String(res.nTicket).padStart(4,'0')} · ${res.hora} · ${res.cajero}${res.cliente?' · '+res.cliente:''}</div>${rows}`;
 }
 function toggleDevSel(i, row) {
   if (devSel.has(i)) devSel.delete(i); else devSel.add(i);
