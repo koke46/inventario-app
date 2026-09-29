@@ -1515,7 +1515,7 @@ let famActual = null;      // null = mostrar familias
 let payMode   = 'ef';
 let pendPeso  = null;      // producto esperando kg
 // ── Nuevos ──
-let pagosDia   = { ef:0, tj:0, biz:0 };
+let pagosDia   = JSON.parse(localStorage.getItem('tpvt_pagosdia') || '{"ef":0,"tj":0,"biz":0}');
 let movCaja    = [];
 let fondoCaja  = 0;
 let histVentas = JSON.parse(localStorage.getItem('tpvt_histventas') || '[]');
@@ -2247,6 +2247,7 @@ function confirmar() {
   const btnNota = [...document.querySelectorAll('#actions .btn')].find(b => b.textContent.includes('Nota'));
   if (btnNota) { btnNota.style.outline = ''; btnNota.style.outlineOffset = ''; }
   localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+  localStorage.setItem('tpvt_pagosdia', JSON.stringify(pagosDia));
   ventasHoy++;
   cajaHoy += tot;
   nTicket++;
@@ -2939,6 +2940,7 @@ function ejecutarCierreZ() {
   pagosDia = {ef:0,tj:0,biz:0};
   ventasHoy = 0; cajaHoy = 0; movCaja = []; histVentas = []; nTicket = 1;
   localStorage.removeItem('tpvt_histventas');
+  localStorage.removeItem('tpvt_pagosdia');
   document.getElementById('ov-caja').classList.remove('open');
   warn('🔒 Cierre Z guardado y ejecutado', 2500);
   updStatus();
