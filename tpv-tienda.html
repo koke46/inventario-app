@@ -451,7 +451,7 @@ body {
 #ov-nota.open { display:flex; }
 .nota-badge { position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#f59e0b; }
 #ov-cajeros.open { display:flex; }
-#cajeros-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+#cajeros-box { background:var(--surface);border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 .caj-row { display:flex;align-items:center;gap:8px;background:var(--ticket-bg);color:var(--text);border-radius:6px;padding:8px 10px;margin-bottom:5px; }
 .caj-dot { width:22px;height:22px;border-radius:50%;flex-shrink:0; }
 .caj-nom { flex:1;font-weight:600;font-size:13px; }
@@ -463,7 +463,7 @@ body {
 /* mini-modal editar categoría */
 #ov-famedit { position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:300; }
 #ov-famedit.open { display:flex; }
-#famedit-box { background:#dde8f0;border-radius:10px;padding:20px;width:380px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+#famedit-box { background:var(--surface);border-radius:10px;padding:20px;width:380px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 #famedit-box h3 { font-size:14px;margin-bottom:12px;text-align:center; }
 .famedit-row { display:flex;gap:8px;margin-bottom:8px; }
 .famedit-row label { flex:1;font-size:11px;font-weight:700;color:#445;display:flex;flex-direction:column;gap:3px; }
@@ -588,14 +588,14 @@ body {
 /* ══ INGREDIENTES ══ */
 #ov-ings { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-ings.open { display:flex; }
-#ings-box { background:#dde8f0;border-radius:10px;padding:20px;width:460px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+#ings-box { background:var(--surface);border-radius:10px;padding:20px;width:460px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 .ing-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:4px;font-size:13px; }
 .ing-cat-badge { font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap; }
 .ing-cat-badge.ing { background:#dcfce7;color:#166534; }
 .ing-cat-badge.sal { background:#fce7f3;color:#be185d; }
 #ov-ingsel { position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:250; }
 #ov-ingsel.open { display:flex; }
-#ingsel-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+#ingsel-box { background:var(--surface);border-radius:10px;padding:20px;width:420px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
 .ing-sel-sec { margin-bottom:14px; }
 .ing-sel-sec h4 { font-size:11px;font-weight:700;color:#446;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px; }
 .ing-toggle-grid { display:flex;flex-wrap:wrap;gap:5px; }
@@ -690,7 +690,7 @@ body {
 .inf-panel.open { display:block; }
 .bar-row { display:flex;align-items:center;gap:6px;margin-bottom:6px; }
 .bar-lbl { font-size:11px;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.bar-track { flex:1;height:14px;background:#dde8f0;border-radius:3px;overflow:hidden; }
+.bar-track { flex:1;height:14px;background:var(--surface);border-radius:3px;overflow:hidden; }
 .bar-fill { height:100%;background:linear-gradient(to right,var(--btn-from),var(--btn-to));border-radius:3px; }
 .bar-val { font-size:11px;font-family:'Courier New',monospace;min-width:54px;text-align:right; }
 
@@ -706,7 +706,7 @@ body {
 .fac-parties { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:8px;background:#f8f8f8;border-radius:4px;font-size:11px; }
 .fac-parties b { font-size:12px; }
 .fac-lines { width:100%;border-collapse:collapse;margin-bottom:10px;font-size:11px; }
-.fac-lines th { background:#dde8f0;padding:4px 6px;text-align:left;font-size:10px; }
+.fac-lines th { background:var(--surface);padding:4px 6px;text-align:left;font-size:10px; }
 .fac-lines td { padding:4px 6px;border-bottom:1px solid #eee; }
 .fac-lines td:last-child { text-align:right; }
 .fac-totales { text-align:right;font-size:12px; }
@@ -1058,7 +1058,7 @@ body {
 
 <!-- ══ MODAL PIN ══ -->
 <div id="ov-pin">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:260px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.7)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:260px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.7)">
     <h2 style="font-size:14px;margin-bottom:4px;color:#333">🔐 Identificación</h2>
     <p id="pin-quien" style="font-size:13px;color:#555;margin-bottom:6px"></p>
     <div id="pin-dots">
@@ -1077,7 +1077,7 @@ body {
 
 <!-- ══ MODAL DEVOLUCIONES ══ -->
 <div id="ov-dev">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <h2 style="text-align:center;font-size:14px;margin-bottom:12px;color:#333">🔄 Devoluciones</h2>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <input id="dev-q" type="text" placeholder="Nº ticket (ej: 0004) o nombre cliente..." style="flex:1;padding:8px;font-size:13px;border:2px solid #6a8faf;border-radius:var(--r);font-family:var(--font)">
@@ -1096,7 +1096,7 @@ body {
 
 <!-- ══ MODAL INFORMES ══ -->
 <div id="ov-inf">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">📊 Informes de Ventas</h2>
     <div class="inf-fecha-bar">
       <button class="inf-fecha-btn on" onclick="setInfFecha('hoy',this)">Hoy</button>
@@ -1341,7 +1341,7 @@ body {
 
 <!-- ══ MODAL ARTÍCULO LIBRE ══ -->
 <div id="ov-libre">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <h2 style="text-align:center;font-size:14px;margin-bottom:12px;color:#333">🆓 Artículo libre</h2>
     <label style="font-size:11px;color:#555;display:block;margin-bottom:2px">Descripción *</label>
     <input id="lib-nom" type="text" placeholder="Descripción del artículo..." style="width:100%;padding:8px;font-size:14px;border:2px solid #888;border-radius:5px;margin-bottom:8px;font-family:var(--font)">
@@ -1363,7 +1363,7 @@ body {
 
 <!-- ══ MODAL CAJA ══ -->
 <div id="ov-caja">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <h2 style="text-align:center;font-size:14px;margin-bottom:10px;color:#333">🏦 Gestión de Caja</h2>
     <div class="caj-tabs">
       <button class="caj-tab on" onclick="cajTab('fondo')">💰 Fondo</button>
@@ -4296,7 +4296,7 @@ function toggleDarkMode(){
 
 <!-- ══ MODAL CONFIGURACIÓN NEGOCIO ══ -->
 <div id="ov-cfg">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <b style="font-size:15px">⚙️ Configuración del negocio</b>
       <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-cfg')">✕</button>
@@ -4321,12 +4321,12 @@ function toggleDarkMode(){
 
 <!-- ══ MODAL NOTA EN TICKET ══ -->
 <div id="ov-nota">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:380px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:380px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <b style="font-size:15px">📋 Nota en el ticket</b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-nota')">✕</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="cerrarModal('ov-nota')">✕</button>
     </div>
-    <textarea id="nota-in" rows="4" placeholder="Ej: sin sal, para llevar, alérgico a frutos secos..." style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #aab;border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical"></textarea>
+    <textarea id="nota-in" rows="4" placeholder="Ej: sin sal, para llevar, alérgico a frutos secos..." style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button style="flex:1;padding:9px;background:#aaa;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="borrarNota()">🗑 Borrar nota</button>
       <button style="flex:2;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarNota()">✅ Añadir al ticket</button>
@@ -4336,18 +4336,18 @@ function toggleDarkMode(){
 
 <!-- ══ MODAL DESCUENTO GLOBAL ══ -->
 <div id="ov-dto">
-  <div style="background:#dde8f0;border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <b style="font-size:15px">🏷️ Descuento total</b>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer" onclick="cerrarModal('ov-dto')">✕</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="cerrarModal('ov-dto')">✕</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <button id="dto-t-pct" class="ptab on" style="flex:1" onclick="setDtoTipo('%')">% Porcentaje</button>
       <button id="dto-t-eur" class="ptab"    style="flex:1" onclick="setDtoTipo('€')">€ Importe</button>
     </div>
     <input id="dto-val" type="number" min="0" step="0.01" placeholder="0" oninput="calcDtoPreview()"
-      style="width:100%;padding:10px;font-size:18px;font-weight:700;border:2px solid #6a8faf;border-radius:6px;font-family:var(--font);text-align:center;margin-bottom:8px">
-    <div id="dto-preview" style="font-size:12px;color:#1a5c2a;font-weight:600;text-align:center;min-height:18px;margin-bottom:12px"></div>
+      style="width:100%;padding:10px;font-size:18px;font-weight:700;border:2px solid var(--border);border-radius:6px;font-family:var(--font);text-align:center;margin-bottom:8px;background:var(--bg);color:var(--text)">
+    <div id="dto-preview" style="font-size:12px;color:#22c55e;font-weight:600;text-align:center;min-height:18px;margin-bottom:12px"></div>
     <button style="width:100%;padding:11px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--font)" onclick="aplicarDtoTotal()">✅ Aplicar descuento</button>
   </div>
 </div>
