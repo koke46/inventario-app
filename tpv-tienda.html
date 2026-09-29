@@ -3313,6 +3313,9 @@ function borrarDatosEjemplo() {
     if (k && k.startsWith('tpvt_') && !keysToKeep.includes(k)) toRemove.push(k);
   }
   toRemove.forEach(k => localStorage.removeItem(k));
+  // Guardar arrays vacíos para que no recarguen los datos de ejemplo hardcodeados
+  localStorage.setItem('tpvt_cat', '[]');
+  localStorage.setItem('tpvt_familias', '[]');
   location.reload();
 }
 function guardarConfig() {
