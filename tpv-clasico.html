@@ -639,7 +639,9 @@ body {
 /* ══ MODAL FACTURA ══ */
 #ov-fac { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-fac.open { display:flex; }
-#fac-sheet { background:#fff;border-radius:6px;padding:24px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-size:12px; }
+#ov-fac-ask { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:310; }
+#ov-fac-ask.open { display:flex; }
+#fac-sheet { background:#fff;color:#222;border-radius:6px;padding:24px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55);font-size:12px; }
 .fac-head { text-align:center;margin-bottom:12px; }
 .fac-head h3 { font-size:18px;font-weight:700; }
 .fac-head p { color:#555;font-size:11px;margin:1px 0; }
@@ -737,10 +739,10 @@ body {
 /* tarjetas */
 #ov-tgt { position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200; }
 #ov-tgt.open { display:flex; }
-#tgt-box { background:#dde8f0;border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
-.tgt-row { display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;padding:8px 10px;margin-bottom:5px;font-size:13px; }
-.tgt-cod { font-family:'Courier New',monospace;font-weight:700;font-size:13px;min-width:110px; }
-.tgt-sal { font-weight:700;margin-left:auto;color:#1a5c2a; }
+#tgt-box { background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55); }
+.tgt-row { display:flex;align-items:center;gap:8px;background:var(--ticket-bg);color:var(--text);border-radius:6px;padding:8px 10px;margin-bottom:5px;font-size:13px; }
+.tgt-cod { font-family:'Courier New',monospace;font-weight:700;font-size:13px;min-width:110px;color:var(--text); }
+.tgt-sal { font-weight:700;margin-left:auto;color:#22c55e; }
 
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
@@ -941,8 +943,8 @@ body {
     <div style="background:#f4f8fb;border-radius:8px;padding:12px;margin-bottom:12px">
       <b style="font-size:13px">Nueva tarjeta</b>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-        <label style="font-size:12px;color:#445;flex:1;display:flex;flex-direction:column;gap:3px">Saldo (€)<input id="tgt-new-importe" type="number" min="1" step="0.01" placeholder="20,00" style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:14px;font-family:var(--font)"></label>
-        <label style="font-size:12px;color:#445;flex:1;display:flex;flex-direction:column;gap:3px">Nombre/nota (opcional)<input id="tgt-new-nom" type="text" placeholder="Ej: cumpleaños Ana" style="padding:6px;border:1.5px solid #8aaccc;border-radius:5px;font-size:13px;font-family:var(--font)"></label>
+        <label style="font-size:12px;color:var(--muted);flex:1;display:flex;flex-direction:column;gap:3px">Saldo (€)<input id="tgt-new-importe" type="number" min="1" step="0.01" placeholder="20,00" style="padding:6px;border:1.5px solid var(--ticket-border);border-radius:5px;font-size:14px;font-family:var(--font);background:var(--ticket-bg);color:var(--text)"></label>
+        <label style="font-size:12px;color:var(--muted);flex:1;display:flex;flex-direction:column;gap:3px">Nombre/nota (opcional)<input id="tgt-new-nom" type="text" placeholder="Ej: cumpleaños Ana" style="padding:6px;border:1.5px solid var(--ticket-border);border-radius:5px;font-size:13px;font-family:var(--font);background:var(--ticket-bg);color:var(--text)"></label>
       </div>
       <button style="margin-top:8px;width:100%;padding:9px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="crearTgt()">🎁 Crear y vender tarjeta</button>
     </div>
@@ -1050,6 +1052,19 @@ body {
     <div class="mbtns no-print" style="margin-top:12px">
       <button class="m-ok" style="padding:10px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="window.print()">🖨️ Imprimir</button>
       <button style="flex:1;padding:10px;border:none;border-radius:6px;background:#ccc;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="document.getElementById('ov-fac').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ¿IMPRIMIR FACTURA? ══ -->
+<div id="ov-fac-ask" onclick="if(event.target===this)_facAskNo()">
+  <div style="background:var(--surface);color:var(--text);border-radius:12px;padding:24px;width:300px;max-width:92vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+    <div style="font-size:40px;margin-bottom:10px">🧾</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">¿Imprimir factura?</div>
+    <div id="fac-ask-sub" style="font-size:13px;color:var(--muted);margin-bottom:20px"></div>
+    <div style="display:flex;gap:12px">
+      <button onclick="_facAskSi()" style="flex:1;padding:12px;background:linear-gradient(to bottom,#3b82f6,#1d4ed8);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">🧾 Sí</button>
+      <button onclick="_facAskNo()" style="flex:1;padding:12px;background:linear-gradient(to bottom,#22c55e,#15803d);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">✅ No</button>
     </div>
   </div>
 </div>
@@ -1932,8 +1947,12 @@ function confirmar() {
   renderCat();
   updStatus();
   buildTicketHtml(ventaGuardada);
-  document.getElementById('ov-tick').classList.add('open');
   if (cambioEf > 0.005) mostrarCambioFinal(cambioEf);
+  if (cliObj) {
+    _mostrarAskFactura(cliObj);
+  } else {
+    document.getElementById('ov-tick').classList.add('open');
+  }
 }
 
 /* ══════════════════════
@@ -2242,11 +2261,25 @@ function verTicketHist(nq) {
 /* ══════════════════════
    FACTURA
 ══════════════════════ */
+let _facCliPending = null;
+function _mostrarAskFactura(cliRef) {
+  _facCliPending = cliRef || null;
+  document.getElementById('fac-ask-sub').textContent = cliRef ? `Cliente: ${cliRef.nombre}` : '';
+  document.getElementById('ov-fac-ask').classList.add('open');
+}
+function _facAskSi() {
+  document.getElementById('ov-fac-ask').classList.remove('open');
+  abrirFactura();
+}
+function _facAskNo() {
+  document.getElementById('ov-fac-ask').classList.remove('open');
+  document.getElementById('ov-tick').classList.add('open');
+}
 function abrirFactura() {
   const lineas = ticket.length ? ticket : (histVentas.length ? histVentas[histVentas.length-1].lineas : []);
   if (!lineas || !lineas.length) { warn('⚠ No hay ticket para facturar', 2000); return; }
   const numStr = 'F-' + String(nFactura).padStart(4,'0');
-  const cliObj = clientes.find(c => c.nombre === cliente) || null;
+  const cliObj = clientes.find(c => c.nombre === cliente) || _facCliPending || null;
   // Cabecera
   document.getElementById('fac-empresa').textContent = config.empresa;
   document.getElementById('fac-nif-em').textContent  = 'NIF: ' + config.nif;
@@ -2882,7 +2915,7 @@ function renderTgtList() {
     const agotada = t.saldo <= 0;
     return `<div class="tgt-row" style="${agotada?'opacity:.5':''}">
       <span class="tgt-cod">${t.codigo}</span>
-      <span style="flex:1;font-size:11px;color:#666">${t.nombre||''}<br>${t.fecha}</span>
+      <span style="flex:1;font-size:11px;color:var(--muted)">${t.nombre||''}<br>${t.fecha}</span>
       <span class="tgt-sal">${fmtE(t.saldo)} / ${fmtE(t.saldoInicial)}</span>
       <div style="display:flex;gap:4px">
         <button style="padding:3px 7px;border:none;border-radius:4px;background:#2980b9;color:#fff;font-size:11px;cursor:pointer" onclick="recargarTgt('${t.codigo}')">+</button>
