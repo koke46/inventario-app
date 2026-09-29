@@ -1344,6 +1344,30 @@ body {
   </div>
 </div>
 
+<!-- ══ MODAL COBRAR DEUDA ══ -->
+<div id="ov-cobrar-deuda" style="position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:310">
+  <div style="background:var(--surface);color:var(--text);border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <b style="font-size:15px">💰 Cobrar deuda</b>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:inherit" onclick="document.getElementById('ov-cobrar-deuda').style.display='none'">✕</button>
+    </div>
+    <div id="cob-deuda-info" style="font-size:13px;color:var(--muted);margin-bottom:12px"></div>
+    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Importe que paga ahora</label>
+    <input id="cob-deuda-imp" type="text" inputmode="decimal" placeholder="0,00"
+      style="width:100%;padding:10px;font-size:20px;font-family:'Courier New',monospace;border:2px solid var(--border);border-radius:6px;text-align:right;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:8px">
+    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Forma de pago</label>
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="cob-met-btn on" id="cob-met-ef"  onclick="setCobMet('ef')" style="flex:1;padding:8px;border:2px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--btn-to);color:#fff">💵 Efectivo</button>
+      <button class="cob-met-btn"    id="cob-met-tj"  onclick="setCobMet('tj')" style="flex:1;padding:8px;border:2px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--bg);color:var(--text)">💳 Tarjeta</button>
+      <button class="cob-met-btn"    id="cob-met-biz" onclick="setCobMet('biz')" style="flex:1;padding:8px;border:2px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--bg);color:var(--text)">📱 Bizum</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saldarTodoDeuda()" style="flex:1;padding:10px;background:#e67e22;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">✅ Saldar todo</button>
+      <button onclick="confirmarCobrarDeuda()" style="flex:1;padding:10px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">💾 Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL ARTÍCULO LIBRE ══ -->
 <div id="ov-libre">
   <div style="background:var(--surface);border-radius:10px;padding:20px;width:320px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.55)">
@@ -2704,7 +2728,7 @@ function filtrarCli() {
     ? res.map(c => `<div class="cli-row${cajSelId===c.id?' sel':''}" onclick="selCli(${c.id})">
         <span><b>${c.nombre}</b>${c.nif ? ' · ' + c.nif : ''}</span>
         <span style="display:flex;gap:6px;align-items:center">
-          ${c.deuda > 0 ? `<span class="cli-deuda">Debe ${fmtE(c.deuda)}</span>` : ''}
+          ${c.deuda > 0 ? `<span class="cli-deuda">Debe ${fmtE(c.deuda)}</span><button onclick="event.stopPropagation();abrirCobrarDeuda(${c.id})" style="background:#e67e22;color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-family:var(--font)">💰 Cobrar</button>` : ''}
           <span class="cli-pts">⭐ ${c.puntos||0} pts</span>
           <button onclick="event.stopPropagation();eliminarCli(${c.id})" style="background:#e74c3c;color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-family:var(--font)">🗑</button>
         </span>
@@ -2720,6 +2744,54 @@ function eliminarCli(id) {
   if (cajSelId === id) cajSelId = null;
   saveClientes();
   filtrarCli();
+}
+let _cobDeudaCliId = null;
+let _cobDeudaMet = 'ef';
+function abrirCobrarDeuda(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c || c.deuda <= 0) return;
+  _cobDeudaCliId = id;
+  _cobDeudaMet = 'ef';
+  document.getElementById('cob-deuda-info').textContent = `${c.nombre} — Deuda total: ${fmtE(c.deuda)}`;
+  document.getElementById('cob-deuda-imp').value = '';
+  setCobMet('ef');
+  document.getElementById('ov-cobrar-deuda').style.display = 'flex';
+  setTimeout(() => document.getElementById('cob-deuda-imp').focus(), 80);
+}
+function setCobMet(m) {
+  _cobDeudaMet = m;
+  ['ef','tj','biz'].forEach(x => {
+    const b = document.getElementById('cob-met-' + x);
+    if (!b) return;
+    b.style.background = x === m ? 'var(--btn-to)' : 'var(--bg)';
+    b.style.color = x === m ? '#fff' : 'var(--text)';
+  });
+}
+function _aplicarPagoDeuda(imp) {
+  const c = clientes.find(x => x.id === _cobDeudaCliId);
+  if (!c) return;
+  const pagado = Math.min(imp, c.deuda);
+  c.deuda = parseFloat(Math.max(0, c.deuda - pagado).toFixed(2));
+  c.historial = c.historial || [];
+  c.historial.unshift({ tipo: 'pago_deuda', met: _cobDeudaMet, fecha: new Date().toLocaleString('es'), importe: pagado });
+  if (_cobDeudaMet === 'ef') pagosDia.ef += pagado;
+  if (_cobDeudaMet === 'tj') pagosDia.tj += pagado;
+  if (_cobDeudaMet === 'biz') pagosDia.biz += pagado;
+  cajaHoy += pagado;
+  localStorage.setItem('tpvt_pagosdia', JSON.stringify(pagosDia));
+  saveClientes(); updStatus(); filtrarCli();
+  document.getElementById('ov-cobrar-deuda').style.display = 'none';
+  warn(`✅ ${fmtE(pagado)} cobrado${c.deuda > 0 ? ` · Queda: ${fmtE(c.deuda)}` : ' · Deuda saldada ✔'}`, 3000);
+}
+function confirmarCobrarDeuda() {
+  const imp = parseFloat((document.getElementById('cob-deuda-imp').value || '').replace(',', '.'));
+  if (!imp || imp <= 0) { alert('Introduce un importe válido'); return; }
+  _aplicarPagoDeuda(imp);
+}
+function saldarTodoDeuda() {
+  const c = clientes.find(x => x.id === _cobDeudaCliId);
+  if (!c) return;
+  _aplicarPagoDeuda(c.deuda);
 }
 function toggleCliForm() {
   const f = document.getElementById('cli-form');
