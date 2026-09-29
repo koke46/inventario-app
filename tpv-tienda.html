@@ -3474,6 +3474,7 @@ function prdDrop(e, pi) {
 /* ══════════════════════
    ATAJOS DE TECLADO
 ══════════════════════ */
+let _locked = false;
 document.addEventListener('keydown', e => {
   if (_locked) { e.preventDefault(); e.stopPropagation(); return; }
   const tag = document.activeElement?.tagName;
