@@ -1239,7 +1239,7 @@ body {
     <label style="font-size:11px;color:#555;display:block;margin-bottom:2px">Descripción *</label>
     <input id="lib-nom" type="text" placeholder="Descripción del artículo..." style="width:100%;padding:8px;font-size:14px;border:2px solid #888;border-radius:5px;margin-bottom:8px;font-family:var(--font)">
     <label style="font-size:11px;color:#555;display:block;margin-bottom:2px">Precio (con IVA)</label>
-    <input id="lib-prec" type="number" min="0" step="0.01" placeholder="0,00" style="width:100%;padding:8px;font-size:20px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:5px;margin-bottom:8px;text-align:right">
+    <input id="lib-prec" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;padding:8px;font-size:20px;font-family:'Courier New',monospace;border:2px solid #888;border-radius:5px;margin-bottom:8px;text-align:right">
     <label style="font-size:11px;color:#555;display:block;margin-bottom:4px">Tipo IVA</label>
     <div class="libre-iva" id="lib-iva">
       <button class="on" onclick="setLibIva(this,21)">21%</button>
@@ -3106,7 +3106,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); confirmar(); return; }
     return;
   }
-  if (modalOpen && modalOpen.id !== 'ov-tick') return; // no interferir con modales
+  if (modalOpen && modalOpen.id !== 'ov-tick' && modalOpen.id !== 'ov-libre') return; // no interferir con modales
 
   if (!inInput) {
     if (e.key === 'F1') { e.preventDefault(); abrirCobro(); }
@@ -3140,8 +3140,17 @@ document.addEventListener('keydown', e => {
         np(e.key === '.' ? ',' : e.key);
       }
     }
-    if (e.key === 'Backspace')  { e.preventDefault(); nc(); }
-    if (e.key === 'Enter')      { e.preventDefault(); npEnter(); }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      if (document.getElementById('ov-libre').classList.contains('open')) {
+        const f = document.getElementById('lib-prec'); f.value = f.value.slice(0, -1);
+      } else { nc(); }
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (document.getElementById('ov-libre').classList.contains('open')) { confirmarLibre(); }
+      else { npEnter(); }
+    }
   }
 });
 
