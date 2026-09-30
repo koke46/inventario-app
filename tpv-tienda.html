@@ -4897,7 +4897,9 @@ setInterval(pollPedidos, 4000);
             badge.style.display='';
           }
         } else {
-          // Licencia eliminada de Supabase — bloquear acceso
+          // Licencia eliminada de Supabase — limpiar credenciales y bloquear permanentemente
+          localStorage.removeItem('_miarma_auth');
+          sessionStorage.removeItem('_miarma_ok');
           document.getElementById('ov-bloqueado').style.display='flex';
           return;
         }
