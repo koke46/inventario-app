@@ -2845,6 +2845,7 @@ function asignarCli() {
   cliente = c.nombre;
   updVisor();
   cerrarCli();
+  if (document.getElementById('ov').classList.contains('open') && payMode === 'fiad') actualizarFiadInfo();
   if (c.puntos >= 100) warn(`⭐ ${c.nombre} tiene ${c.puntos} pts acumulados`, 2000);
 }
 let _ptsCliId = null, _ptsEuros = 0, _ptsVentaRef = null, _ptsGanadosPost = 0;
@@ -3756,8 +3757,9 @@ document.addEventListener('keydown', e => {
     else document.documentElement.requestFullscreen();
     return;
   }
-  // Teclado físico en modal de cobro
-  if (document.getElementById('ov').classList.contains('open')) {
+  // Teclado físico en modal de cobro (solo si no hay otro modal encima)
+  const cliOpen = document.getElementById('ov-cli').classList.contains('open');
+  if (document.getElementById('ov').classList.contains('open') && !cliOpen) {
     if (/^[0-9]$/.test(e.key) || (e.key >= '0' && e.key <= '9') || (e.code && e.code.startsWith('Numpad') && /^[0-9]$/.test(e.key))) {
       e.preventDefault(); cobNp(e.key); return;
     }
