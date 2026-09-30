@@ -3263,12 +3263,13 @@ function abrirQR() {
   };
   window._qrMenuData = menuData;
   const urlBase2 = urlBase.replace(/\/$/, '');
-  // Embeber menú en hash para que funcione sin menu.json en el servidor
-  // Quitar imágenes para mantener la URL compacta
+  // Embeber menú en hash — excluir logo e imágenes para no reventar el QR
   const menuCompact = {
-    ...menuData,
-    f: menuData.f.map(f => ({ n: f.n, e: f.e })),
-    p: menuData.p.map(({ img, ...rest }) => rest)
+    n: menuData.n,
+    t: menuData.t,
+    ...(menuData.lic ? { lic: menuData.lic } : {}),
+    f: (menuData.f || []).map(f => ({ n: f.n, e: f.e })),
+    p: (menuData.p || []).map(({ img, ...rest }) => rest)
   };
   const hash = btoa(unescape(encodeURIComponent(JSON.stringify(menuCompact))));
   const url = urlBase2 + '/pedido.html#' + hash;
