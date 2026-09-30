@@ -1523,10 +1523,10 @@ const CAT = [
 // Cargar catálogo y familias guardados desde localStorage
 (function() {
   const savedCat = JSON.parse(localStorage.getItem('tpvt_cat') || 'null');
-  if (savedCat && savedCat.length) { CAT.length = 0; savedCat.forEach(p => CAT.push(p)); }
+  if (savedCat !== null) { CAT.length = 0; savedCat.forEach(p => CAT.push(p)); }
   CAT.forEach((p, i) => { p._i = i; });
   const savedFam = JSON.parse(localStorage.getItem('tpvt_familias') || 'null');
-  if (savedFam && savedFam.length) { FAMILIAS.length = 0; savedFam.forEach(f => FAMILIAS.push(f)); }
+  if (savedFam !== null) { FAMILIAS.length = 0; savedFam.forEach(f => FAMILIAS.push(f)); }
 })();
 
 /* ══════════════════════
