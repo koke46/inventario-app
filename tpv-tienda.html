@@ -818,6 +818,17 @@ body {
 .tgt-cod { font-family:'Courier New',monospace;font-weight:700;font-size:13px;min-width:110px;color:var(--text); }
 .tgt-sal { font-weight:700;margin-left:auto;color:#22c55e; }
 
+/* ══ CUENTAS TABS ══ */
+#cuentas-tabs{display:flex;gap:3px;padding:4px 4px 0;flex-wrap:wrap;align-items:flex-end;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctab{display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:6px 6px 0 0;border:1px solid var(--border);border-bottom:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);white-space:nowrap;user-select:none;}
+.ctab.on{background:var(--btn-to);color:#fff;border-color:var(--btn-to);}
+.ctab-badge{background:rgba(0,0,0,.15);border-radius:4px;padding:0 4px;font-size:10px;margin-left:2px;}
+.ctab.on .ctab-badge{background:rgba(255,255,255,.3);}
+.ctab-close{background:none;border:none;cursor:pointer;color:inherit;font-size:12px;padding:0;line-height:1;opacity:.6;margin-left:3px;}
+.ctab-close:hover{opacity:1;}
+#btn-nueva-cuenta{padding:5px 10px;border-radius:6px 6px 0 0;border:1.5px dashed var(--border);border-bottom:none;background:none;color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);}
+#btn-nueva-cuenta:hover{border-color:var(--btn-to);color:var(--btn-to);}
+
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
   body { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto auto; height: auto; overflow: auto; }
@@ -840,8 +851,7 @@ body {
 <div id="actions">
   <button class="btn" onclick="acCajon()"><span class="ico">📂</span><span class="lbl">Abrir cajón</span></button>
   <button class="btn" onclick="irInicio()"><span class="ico">🏠</span><span class="lbl">Inicio</span></button>
-  <button class="btn" onclick="acAparcar()"><span class="ico">⏸️</span><span class="lbl">Aparcar</span></button>
-  <button class="btn" onclick="acRecuperar()"><span class="ico">▶️</span><span class="lbl">Recuperar</span></button>
+  <button class="btn" onclick="nuevaCuenta()"><span class="ico">➕</span><span class="lbl">+ Cuenta</span></button>
   <div class="sep"></div>
   <button class="btn" onclick="abrirDev()"><span class="ico">🔄</span><span class="lbl">Devolución</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
@@ -866,6 +876,8 @@ body {
 
 <!-- ══ COLUMNA DERECHA — TICKET ══ -->
 <div id="right-col">
+
+  <div id="cuentas-tabs"></div>
 
   <!-- Visor -->
   <div id="visor">
@@ -939,7 +951,7 @@ body {
 <div id="statusbar">
   <span>Cajero: <span class="sv" id="s-caj">—</span></span>
   <span>🛒 <span class="sv">Tienda</span></span>
-  <span>⏸️ Aparcadas: <span class="sv" id="s-ap">0</span></span>
+  <span>🗂️ Cuentas: <span class="sv" id="s-ap">1</span></span>
   <span>🧾 Ventas: <span class="sv" id="s-vtas">0</span></span>
   <span>💶 Caja: <span class="sv" id="s-caja">0,00 €</span></span>
 </div>
@@ -1487,6 +1499,9 @@ let nbuf      = '';        // buffer numpad
 let cliente   = '';
 let cajero    = CAJEROS[0] || { id:0, nombre:'Principal', color:'#3b82f6', pin:'' };
 let aparcadas = [];
+let cuentas = [{ id:1, label:'Cuenta 1', ticket:[], cliente:'', selIdx:-1, ptsCanjeados:0, cajSelId:null, nbuf:'' }];
+let cuentaActiva = 0;
+let _cuentaIdSeq = 1;
 let ventasHoy = 0;
 let cajaHoy   = 0;
 let famActual = null;      // null = mostrar familias
@@ -2060,6 +2075,63 @@ function acRecuperar() {
   selIdx  = ticket.length - 1;
   renderTicket(); updStatus();
 }
+
+/* ══════════════════════
+   CUENTAS MÚLTIPLES
+══════════════════════ */
+function renderCuentasTabs() {
+  const el = document.getElementById('cuentas-tabs');
+  if (!el) return;
+  el.innerHTML = cuentas.map((c, i) => {
+    const n = c.ticket.reduce((s, l) => s + Math.abs(l.cantidad || 0), 0);
+    return `<div class="ctab${i === cuentaActiva ? ' on' : ''}" onclick="irCuenta(${i})">`
+      + c.label
+      + (n > 0 ? `<span class="ctab-badge">${n}</span>` : '')
+      + `<button class="ctab-close" onclick="event.stopPropagation();cerrarCuenta(${i})">✕</button>`
+      + `</div>`;
+  }).join('') + `<button id="btn-nueva-cuenta" onclick="nuevaCuenta()">+ Cuenta</button>`;
+}
+function _guardarCuentaActual() {
+  if (!cuentas[cuentaActiva]) return;
+  const c = cuentas[cuentaActiva];
+  c.ticket = JSON.parse(JSON.stringify(ticket));
+  c.cliente = cliente; c.selIdx = selIdx; c.ptsCanjeados = ptsCanjeados;
+  c.cajSelId = cajSelId; c.nbuf = nbuf;
+}
+function _cargarCuentaActual() {
+  const c = cuentas[cuentaActiva];
+  ticket = JSON.parse(JSON.stringify(c.ticket));
+  cliente = c.cliente; selIdx = c.selIdx; ptsCanjeados = c.ptsCanjeados || 0;
+  cajSelId = c.cajSelId || null; nbuf = c.nbuf || '';
+}
+function nuevaCuenta() {
+  _guardarCuentaActual();
+  _cuentaIdSeq++;
+  cuentas.push({ id: _cuentaIdSeq, label: 'Cuenta ' + _cuentaIdSeq, ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
+  cuentaActiva = cuentas.length - 1;
+  _cargarCuentaActual();
+  renderTicket();
+}
+function irCuenta(idx) {
+  if (idx === cuentaActiva) return;
+  _guardarCuentaActual();
+  cuentaActiva = idx;
+  _cargarCuentaActual();
+  renderTicket();
+}
+function cerrarCuenta(idx) {
+  if (cuentas[idx].ticket.length && !confirm('¿Cerrar esta cuenta? Se perderá el pedido.')) return;
+  if (cuentas.length === 1) {
+    ticket = []; cliente = ''; selIdx = -1; ptsCanjeados = 0; cajSelId = null; nbuf = '';
+    Object.assign(cuentas[0], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
+    renderTicket(); return;
+  }
+  cuentas.splice(idx, 1);
+  if (cuentaActiva >= cuentas.length) cuentaActiva = cuentas.length - 1;
+  else if (idx < cuentaActiva) cuentaActiva--;
+  _cargarCuentaActual();
+  renderTicket();
+}
 function acAnular() {
   if (!ticket.length) return;
   if (!confirm('¿Anular la venta actual?')) return;
@@ -2246,6 +2318,7 @@ function confirmar() {
   nTicket++;
   const ventaGuardada = histVentas[histVentas.length-1];
   ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
+  if (cuentas[cuentaActiva]) Object.assign(cuentas[cuentaActiva], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
   cerrarModal();
   renderTicket();
   renderCat();
@@ -2304,9 +2377,15 @@ function setCaj(id) {
 ══════════════════════ */
 function updStatus() {
   document.getElementById('s-caj').textContent  = cajero.nombre;
-  document.getElementById('s-ap').textContent   = aparcadas.length;
+  document.getElementById('s-ap').textContent   = cuentas.length;
   document.getElementById('s-vtas').textContent = ventasHoy;
   document.getElementById('s-caja').textContent = fmtE(cajaHoy);
+  if (cuentas[cuentaActiva]) {
+    const c = cuentas[cuentaActiva];
+    c.ticket = ticket; c.cliente = cliente; c.selIdx = selIdx;
+    c.ptsCanjeados = ptsCanjeados; c.cajSelId = cajSelId; c.nbuf = nbuf;
+  }
+  renderCuentasTabs();
 }
 
 /* ══════════════════════
@@ -3108,6 +3187,7 @@ function cobrarParteDiv(met) {
     const ventaGuardada = histVentas[histVentas.length - 1];
     const _cliNomDiv = cliente;
     ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
+    if (cuentas[cuentaActiva]) Object.assign(cuentas[cuentaActiva], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
     notaTicket = ''; nTicket++;
     saveCat(); renderTicket(); renderCat(); updStatus();
     document.getElementById('ov').classList.remove('open');
@@ -3691,8 +3771,7 @@ document.addEventListener('keydown', e => {
   if (!inInput) {
     if (e.key === 'F1') { e.preventDefault(); abrirCobro(); }
     if (e.key === 'F2') { e.preventDefault(); acAnular(); }
-    if (e.key === 'F3') { e.preventDefault(); acAparcar(); }
-    if (e.key === 'F4') { e.preventDefault(); acRecuperar(); }
+    if (e.key === 'F3') { e.preventDefault(); nuevaCuenta(); }
     if (e.key === '+' || e.key === 'Add') {
       e.preventDefault();
       if (selIdx >= 0 && selIdx < ticket.length) {
