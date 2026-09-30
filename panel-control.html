@@ -934,7 +934,7 @@ async function enviarEmail(licenciaId){
   const p=btoa(encodeURIComponent(r.contrasena||''));
   const url=`elmiarma://open?file=${archivo}&lic=${encodeURIComponent(licenciaId)}&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`;
   const asunto=encodeURIComponent('Tu acceso a Vintex TPV');
-  const cuerpo=encodeURIComponent(`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a Vintex TPV.\n\n— PASO 1 — Descarga e instala la app:\nhttps://drive.google.com/file/d/1IQzYqgZOE0_cNaDac2KF6GsHjKRYSss3/view?usp=drive_link\n\n— PASO 2 — Abre tu acceso (haz clic tras instalar):\n${url}\n\nUsuario: ${r.usuario||'—'}\nContraseña: ${r.contrasena||'—'}\n\nLa primera vez que abras el enlace del Paso 2 te pedirá el usuario y la contraseña.\n\nTienes 2 meses de prueba gratuita. Cualquier duda escríbeme.\n\nUn saludo`);
+  const cuerpo=encodeURIComponent(`Hola ${r.cliente||''},\n\nAquí tienes tu acceso a Vintex TPV.\n\n— PASO 1 — Descarga e instala la app:\nhttps://drive.google.com/file/d/1IQzYqgZOE0_cNaDac2KF6GsHjKRYSss3/view?usp=drive_link\n\n— PASO 2 — Abre tu acceso (haz clic tras instalar):\n${url}\n\nUsuario: ${r.usuario||'—'}\nContraseña: ${r.contrasena||'—'}\n\nLa primera vez que abras el enlace del Paso 2 te pedirá el usuario y la contraseña.\n\n— MANUAL DE USO —\nDescarga el manual completo aquí:\nhttps://drive.google.com/file/d/1H4PnDvG2eyO8_2aaKkpYchG3sZT7a6FK/view?usp=drive_link\n\nTienes 2 meses de prueba gratuita. Cualquier duda escríbeme.\n\nUn saludo`);
   window.open(`mailto:${toEmail}?subject=${asunto}&body=${cuerpo}`);
 }
 
