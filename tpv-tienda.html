@@ -850,6 +850,7 @@ body {
 <!-- ══ ACCIONES ══ -->
 <div id="actions">
   <button class="btn" onclick="acCajon()"><span class="ico">📂</span><span class="lbl">Abrir cajón</span></button>
+  <div id="trial-badge" style="display:none;padding:4px 10px;background:linear-gradient(to bottom,#f59e0b,#d97706);color:#fff;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--font);white-space:nowrap;align-self:center;pointer-events:none;user-select:none"></div>
   <button class="btn" onclick="irInicio()"><span class="ico">🏠</span><span class="lbl">Inicio</span></button>
   <button class="btn" onclick="nuevaCuenta()"><span class="ico">➕</span><span class="lbl">+ Cuenta</span></button>
   <div class="sep"></div>
@@ -4822,6 +4823,15 @@ setInterval(pollPedidos, 4000);
   </div>
 </div>
 
+<!-- PRUEBA CADUCADA -->
+<div id="ov-trial-caducado" style="position:fixed;inset:0;background:#0f172a;z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:360px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;text-align:center;">
+    <div style="font-size:52px;line-height:1">⏰</div>
+    <div style="color:#f1f5f9;font-size:22px;font-weight:700;font-family:Inter,sans-serif;">Período de prueba finalizado</div>
+    <div style="color:#94a3b8;font-size:15px;font-family:Inter,sans-serif;line-height:1.6;">Tu versión de prueba gratuita ha caducado.<br>Para seguir usando Vintex TPV ponte<br>en contacto con tu proveedor.</div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="ov-login" style="position:fixed;inset:0;background:#0f172a;z-index:9999;display:none;align-items:center;justify-content:center;">
   <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;">
@@ -4873,9 +4883,19 @@ setInterval(pollPedidos, 4000);
             _actualizarBrandNombre();
           }
           const expirada=lic.fecha_expiracion && new Date(lic.fecha_expiracion)<new Date();
-          if(lic.activa===false||expirada){
+          if(lic.activa===false){
             document.getElementById('ov-bloqueado').style.display='flex';
             return;
+          }
+          if(expirada){
+            document.getElementById('ov-trial-caducado').style.display='flex';
+            return;
+          }
+          if(lic.fecha_expiracion){
+            const dias=Math.ceil((new Date(lic.fecha_expiracion)-new Date())/86400000);
+            const badge=document.getElementById('trial-badge');
+            badge.textContent=`⏳ Versión de prueba — ${dias} día${dias===1?'':'s'}`;
+            badge.style.display='';
           }
         }
       }
