@@ -1467,54 +1467,9 @@ const STOCK_BAJO = 5;
 const CAJEROS_DEFAULT = [];
 const CAJEROS = JSON.parse(localStorage.getItem('tpvt_cajeros') || 'null') || [];
 
-const FAMILIAS = [
-  { id:'alimentacion', nombre:'Alimentación',   emoji:'🛒', color:'#d35400' },
-  { id:'fruta',        nombre:'Fruta y verdura', emoji:'🥦', color:'#1e8449' },
-  { id:'bebidas',      nombre:'Bebidas',         emoji:'🥤', color:'#1a5276' },
-  { id:'panaderia',    nombre:'Panadería',       emoji:'🍞', color:'#b7950b' },
-  { id:'drogueria',    nombre:'Droguería',       emoji:'🧹', color:'#7d3c98' },
-  { id:'snacks',       nombre:'Snacks',          emoji:'🍿', color:'#922b21' },
-];
+const FAMILIAS = [];
 
-const CAT = [
-  /* ── Alimentación ── */
-  { codigo:'8410076470060', nombre:'Leche Entera',       precio:1.25, iva:4,  emoji:'🥛', familia:'alimentacion', stock:30 },
-  { codigo:'8410350570118', nombre:'Aceite Girasol 1L',  precio:1.89, iva:10, emoji:'🫙', familia:'alimentacion', stock:15 },
-  { codigo:'8432904001518', nombre:'Atún en aceite',     precio:1.10, iva:10, emoji:'🐟', familia:'alimentacion', stock:40 },
-  { codigo:'8421691000022', nombre:'Arroz largo 1kg',    precio:1.30, iva:4,  emoji:'🍚', familia:'alimentacion', stock:25 },
-  { codigo:'8412600007148', nombre:'Tomate frito brik',  precio:0.99, iva:10, emoji:'🍅', familia:'alimentacion', stock:20 },
-  /* ── Fruta y verdura ── */
-  { codigo:'2000001', nombre:'Manzana',   precio:2.50, iva:4, emoji:'🍎', familia:'fruta', stock:50, peso:true },
-  { codigo:'2000002', nombre:'Plátano',   precio:1.80, iva:4, emoji:'🍌', familia:'fruta', stock:40, peso:true },
-  { codigo:'2000003', nombre:'Tomate',    precio:1.60, iva:4, emoji:'🍅', familia:'fruta', stock:30, peso:true },
-  { codigo:'2000004', nombre:'Lechuga',   precio:0.90, iva:4, emoji:'🥬', familia:'fruta', stock:15 },
-  { codigo:'2000005', nombre:'Naranja',   precio:1.40, iva:4, emoji:'🍊', familia:'fruta', stock:60, peso:true },
-  { codigo:'2000006', nombre:'Zanahoria', precio:1.20, iva:4, emoji:'🥕', familia:'fruta', stock:3,  peso:true },
-  /* ── Bebidas ── */
-  { codigo:'5449000000996', nombre:'Coca-Cola 33cl',  precio:1.35, iva:21, emoji:'🥤', familia:'bebidas', stock:48 },
-  { codigo:'8410910012048', nombre:'Agua 1.5L',       precio:0.50, iva:21, emoji:'💧', familia:'bebidas', stock:36 },
-  { codigo:'8480000176264', nombre:'Cerveza lata',    precio:0.85, iva:21, emoji:'🍺', familia:'bebidas', stock:24 },
-  { codigo:'8414490010062', nombre:'Zumo naranja 1L', precio:1.65, iva:10, emoji:'🍊', familia:'bebidas', stock:12 },
-  { codigo:'4006381349420', nombre:'Red Bull',        precio:1.95, iva:21, emoji:'⚡', familia:'bebidas', stock:8 },
-  /* ── Panadería ── */
-  { codigo:'8410013003001', nombre:'Pan de molde',  precio:1.45, iva:4,  emoji:'🍞', familia:'panaderia', stock:10 },
-  { codigo:'8410013003002', nombre:'Baguette',      precio:0.80, iva:4,  emoji:'🥖', familia:'panaderia', stock:6 },
-  { codigo:'8410013003003', nombre:'Croissant',     precio:0.70, iva:10, emoji:'🥐', familia:'panaderia', stock:4 },
-  { codigo:'8410013003004', nombre:'Magdalenas x6', precio:1.20, iva:10, emoji:'🧁', familia:'panaderia', stock:15 },
-  { codigo:'8410013003005', nombre:'Pan integral',  precio:1.65, iva:4,  emoji:'🍞', familia:'panaderia', stock:3 },
-  /* ── Droguería ── */
-  { codigo:'8410438012009', nombre:'Lejía 1.5L',         precio:1.20, iva:21, emoji:'🧴', familia:'drogueria', stock:20 },
-  { codigo:'8410438012010', nombre:'Limpiahogar',        precio:1.85, iva:21, emoji:'🧹', familia:'drogueria', stock:12 },
-  { codigo:'8710908000012', nombre:'Papel higiénico 4u', precio:2.50, iva:21, emoji:'🧻', familia:'drogueria', stock:18 },
-  { codigo:'8710908000013', nombre:'Jabón de manos',     precio:1.90, iva:21, emoji:'🧼', familia:'drogueria', stock:7 },
-  { codigo:'8710908000014', nombre:'Friegaplatos',       precio:1.50, iva:21, emoji:'🫧', familia:'drogueria', stock:2 },
-  /* ── Snacks ── */
-  { codigo:'8410235001001', nombre:'Patatas Lays',  precio:1.50, iva:21, emoji:'🥔', familia:'snacks', stock:30 },
-  { codigo:'8410235001002', nombre:'Doritos',       precio:1.75, iva:21, emoji:'🌽', familia:'snacks', stock:20 },
-  { codigo:'8410235001003', nombre:'Gominolas',     precio:1.25, iva:21, emoji:'🍬', familia:'snacks', stock:25 },
-  { codigo:'8410235001004', nombre:'Chocolate',     precio:1.80, iva:21, emoji:'🍫', familia:'snacks', stock:15 },
-  { codigo:'8410235001005', nombre:'Pipas',         precio:0.90, iva:21, emoji:'🌻', familia:'snacks', stock:0 },
-];
+const CAT = [];
 // Cargar catálogo y familias guardados desde localStorage
 (function() {
   const savedCat = JSON.parse(localStorage.getItem('tpvt_cat') || 'null');
