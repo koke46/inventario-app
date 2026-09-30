@@ -3518,7 +3518,7 @@ function abrirCajForm(id) {
   const f = id !== null ? CAJEROS.find(c => c.id === id) : null;
   document.getElementById('cajf-title').textContent = f ? 'Editar cajero' : 'Nuevo cajero';
   document.getElementById('cajf-nom').value   = f ? f.nombre : '';
-  document.getElementById('cajf-color').value = f ? f.color  : '#c0392b';
+  document.getElementById('cajf-color').value = f ? f.color  : '#6b7280';
   document.getElementById('cajf-pin').value   = f ? f.pin    : '';
   document.getElementById('cajf').style.display = 'block';
 }
@@ -4579,8 +4579,8 @@ function toggleDarkMode(){
     <div id="cajf" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;display:none">
       <b style="font-size:13px;color:var(--text)" id="cajf-title">Nuevo cajero</b>
       <div class="cajf-grid">
-        <label>Nombre<input id="cajf-nom" placeholder="María"></label>
-        <label>Color<input id="cajf-color" type="color" value="#c0392b"></label>
+        <label>Nombre<input id="cajf-nom" placeholder="Nombre del cajero"></label>
+        <label>Color<input id="cajf-color" type="color" value="#6b7280"></label>
         <label>PIN (4 dígitos)<input id="cajf-pin" type="password" maxlength="4" placeholder="0000" inputmode="numeric"></label>
         <label style="justify-content:flex-end;align-items:flex-end">
           <button style="padding:8px 14px;background:var(--btn-to);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="guardarCajero()">💾 Guardar</button>
