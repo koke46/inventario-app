@@ -2663,10 +2663,18 @@ function abrirHistorico() {
         <span style="font-size:11px;color:var(--muted)">${v.cajero}${v.cliente?' · '+v.cliente:''}</span>
         <span class="hist-tot">${fmtE(v.total)}</span>
         <button style="padding:4px 8px;border:none;border-radius:4px;background:var(--btn-to);color:#fff;font-size:11px;cursor:pointer" onclick="event.stopPropagation();imprimirTicket(histVentas.find(x=>x.nTicket===${v.nTicket}))">🖨️</button>
+        <button style="padding:4px 7px;border:none;border-radius:4px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;cursor:pointer;line-height:1" onclick="event.stopPropagation();borrarTicketHist(${v.nTicket})" title="Eliminar ticket">✕</button>
       </div>`;
     }).join('');
   }
   document.getElementById('ov-hist').classList.add('open');
+}
+
+function borrarTicketHist(nTicket) {
+  if (!confirm(`¿Eliminar el ticket #${String(nTicket).padStart(4,'0')} del historial?`)) return;
+  histVentas = histVentas.filter(x => x.nTicket !== nTicket);
+  localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+  abrirHistorico();
 }
 
 function verTicketHist(nq) {
