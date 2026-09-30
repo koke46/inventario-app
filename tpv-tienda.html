@@ -4896,6 +4896,10 @@ setInterval(pollPedidos, 4000);
             badge.textContent=`⏳ Versión de prueba — ${dias} día${dias===1?'':'s'}`;
             badge.style.display='';
           }
+        } else {
+          // Licencia eliminada de Supabase — bloquear acceso
+          document.getElementById('ov-bloqueado').style.display='flex';
+          return;
         }
       }
     }catch(e){}
