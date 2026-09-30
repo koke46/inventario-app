@@ -3233,7 +3233,7 @@ function abrirQR() {
   const urlBase = config.urlMenu || '';
   if (!urlBase) {
     warn.style.display = '';
-    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección donde está alojado pedido.html.';
+    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección base de tu web (p.ej. https://el-miarma.koke-bar-tienda.workers.dev).';
     document.getElementById('qr-canvas').innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:30px">Configura primero la URL del menú</div>';
     document.getElementById('qr-url-txt').value = '';
     return;
@@ -3263,12 +3263,20 @@ function abrirQR() {
   };
   window._qrMenuData = menuData;
   const urlBase2 = urlBase.replace(/\/$/, '');
-  const url = licId ? urlBase2 + (urlBase2.includes('?') ? '&' : '?') + 'lic=' + encodeURIComponent(licId) : urlBase2;
+  // Embeber menú en hash para que funcione sin menu.json en el servidor
+  // Quitar imágenes para mantener la URL compacta
+  const menuCompact = {
+    ...menuData,
+    f: menuData.f.map(f => ({ n: f.n, e: f.e })),
+    p: menuData.p.map(({ img, ...rest }) => rest)
+  };
+  const hash = btoa(unescape(encodeURIComponent(JSON.stringify(menuCompact))));
+  const url = urlBase2 + '/pedido.html#' + hash;
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
   try {
-    new QRCode(canvas, { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(canvas, { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
   } catch(e) {
     warn.style.display = '';
     warn.textContent = '⚠️ Error al generar QR: ' + e.message;
@@ -3281,7 +3289,7 @@ function descargarMenuJson() {
   a.href = URL.createObjectURL(blob);
   a.download = 'menu.json';
   a.click();
-  warn('✅ menu.json descargado — añádelo a netlify-deploy y sube la carpeta a Netlify', 4000);
+  warn('✅ menu.json descargado', 3000);
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;

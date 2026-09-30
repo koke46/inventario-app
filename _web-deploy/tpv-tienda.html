@@ -818,6 +818,17 @@ body {
 .tgt-cod { font-family:'Courier New',monospace;font-weight:700;font-size:13px;min-width:110px;color:var(--text); }
 .tgt-sal { font-weight:700;margin-left:auto;color:#22c55e; }
 
+/* ══ CUENTAS TABS ══ */
+#cuentas-tabs{display:flex;gap:3px;padding:4px 4px 0;flex-wrap:wrap;align-items:flex-end;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctab{display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:6px 6px 0 0;border:1px solid var(--border);border-bottom:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);white-space:nowrap;user-select:none;}
+.ctab.on{background:var(--btn-to);color:#fff;border-color:var(--btn-to);}
+.ctab-badge{background:rgba(0,0,0,.15);border-radius:4px;padding:0 4px;font-size:10px;margin-left:2px;}
+.ctab.on .ctab-badge{background:rgba(255,255,255,.3);}
+.ctab-close{background:none;border:none;cursor:pointer;color:inherit;font-size:12px;padding:0;line-height:1;opacity:.6;margin-left:3px;}
+.ctab-close:hover{opacity:1;}
+#btn-nueva-cuenta{padding:5px 10px;border-radius:6px 6px 0 0;border:1.5px dashed var(--border);border-bottom:none;background:none;color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);}
+#btn-nueva-cuenta:hover{border-color:var(--btn-to);color:var(--btn-to);}
+
 /* ══ RESPONSIVE MÓVIL ══ */
 @media (max-width: 759px) {
   body { grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto auto; height: auto; overflow: auto; }
@@ -838,10 +849,9 @@ body {
 
 <!-- ══ ACCIONES ══ -->
 <div id="actions">
+  <div id="trial-badge" style="display:none;padding:4px 10px;background:linear-gradient(to bottom,#f59e0b,#d97706);color:#fff;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--font);white-space:nowrap;align-self:center;pointer-events:none;user-select:none"></div>
   <button class="btn" onclick="acCajon()"><span class="ico">📂</span><span class="lbl">Abrir cajón</span></button>
   <button class="btn" onclick="irInicio()"><span class="ico">🏠</span><span class="lbl">Inicio</span></button>
-  <button class="btn" onclick="acAparcar()"><span class="ico">⏸️</span><span class="lbl">Aparcar</span></button>
-  <button class="btn" onclick="acRecuperar()"><span class="ico">▶️</span><span class="lbl">Recuperar</span></button>
   <div class="sep"></div>
   <button class="btn" onclick="abrirDev()"><span class="ico">🔄</span><span class="lbl">Devolución</span></button>
   <button class="btn" onclick="abrirLibre()"><span class="ico">🆓</span><span class="lbl">Libre</span></button>
@@ -866,6 +876,8 @@ body {
 
 <!-- ══ COLUMNA DERECHA — TICKET ══ -->
 <div id="right-col">
+
+  <div id="cuentas-tabs"></div>
 
   <!-- Visor -->
   <div id="visor">
@@ -939,7 +951,7 @@ body {
 <div id="statusbar">
   <span>Cajero: <span class="sv" id="s-caj">—</span></span>
   <span>🛒 <span class="sv">Tienda</span></span>
-  <span>⏸️ Aparcadas: <span class="sv" id="s-ap">0</span></span>
+  <span>🗂️ Cuentas: <span class="sv" id="s-ap">1</span></span>
   <span>🧾 Ventas: <span class="sv" id="s-vtas">0</span></span>
   <span>💶 Caja: <span class="sv" id="s-caja">0,00 €</span></span>
 </div>
@@ -1487,6 +1499,9 @@ let nbuf      = '';        // buffer numpad
 let cliente   = '';
 let cajero    = CAJEROS[0] || { id:0, nombre:'Principal', color:'#3b82f6', pin:'' };
 let aparcadas = [];
+let cuentas = [{ id:1, label:'Cuenta 1', ticket:[], cliente:'', selIdx:-1, ptsCanjeados:0, cajSelId:null, nbuf:'' }];
+let cuentaActiva = 0;
+let _cuentaIdSeq = 1;
 let ventasHoy = 0;
 let cajaHoy   = 0;
 let famActual = null;      // null = mostrar familias
@@ -2060,6 +2075,63 @@ function acRecuperar() {
   selIdx  = ticket.length - 1;
   renderTicket(); updStatus();
 }
+
+/* ══════════════════════
+   CUENTAS MÚLTIPLES
+══════════════════════ */
+function renderCuentasTabs() {
+  const el = document.getElementById('cuentas-tabs');
+  if (!el) return;
+  el.innerHTML = cuentas.map((c, i) => {
+    const n = c.ticket.reduce((s, l) => s + Math.abs(l.cantidad || 0), 0);
+    return `<div class="ctab${i === cuentaActiva ? ' on' : ''}" onclick="irCuenta(${i})">`
+      + c.label
+      + (n > 0 ? `<span class="ctab-badge">${n}</span>` : '')
+      + `<button class="ctab-close" onclick="event.stopPropagation();cerrarCuenta(${i})">✕</button>`
+      + `</div>`;
+  }).join('') + `<button id="btn-nueva-cuenta" onclick="nuevaCuenta()">+ Cuenta</button>`;
+}
+function _guardarCuentaActual() {
+  if (!cuentas[cuentaActiva]) return;
+  const c = cuentas[cuentaActiva];
+  c.ticket = JSON.parse(JSON.stringify(ticket));
+  c.cliente = cliente; c.selIdx = selIdx; c.ptsCanjeados = ptsCanjeados;
+  c.cajSelId = cajSelId; c.nbuf = nbuf;
+}
+function _cargarCuentaActual() {
+  const c = cuentas[cuentaActiva];
+  ticket = JSON.parse(JSON.stringify(c.ticket));
+  cliente = c.cliente; selIdx = c.selIdx; ptsCanjeados = c.ptsCanjeados || 0;
+  cajSelId = c.cajSelId || null; nbuf = c.nbuf || '';
+}
+function nuevaCuenta() {
+  _guardarCuentaActual();
+  _cuentaIdSeq++;
+  cuentas.push({ id: _cuentaIdSeq, label: 'Cuenta ' + _cuentaIdSeq, ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
+  cuentaActiva = cuentas.length - 1;
+  _cargarCuentaActual();
+  renderTicket();
+}
+function irCuenta(idx) {
+  if (idx === cuentaActiva) return;
+  _guardarCuentaActual();
+  cuentaActiva = idx;
+  _cargarCuentaActual();
+  renderTicket();
+}
+function cerrarCuenta(idx) {
+  if (cuentas[idx].ticket.length && !confirm('¿Cerrar esta cuenta? Se perderá el pedido.')) return;
+  if (cuentas.length === 1) {
+    ticket = []; cliente = ''; selIdx = -1; ptsCanjeados = 0; cajSelId = null; nbuf = '';
+    Object.assign(cuentas[0], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
+    renderTicket(); return;
+  }
+  cuentas.splice(idx, 1);
+  if (cuentaActiva >= cuentas.length) cuentaActiva = cuentas.length - 1;
+  else if (idx < cuentaActiva) cuentaActiva--;
+  _cargarCuentaActual();
+  renderTicket();
+}
 function acAnular() {
   if (!ticket.length) return;
   if (!confirm('¿Anular la venta actual?')) return;
@@ -2246,6 +2318,7 @@ function confirmar() {
   nTicket++;
   const ventaGuardada = histVentas[histVentas.length-1];
   ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
+  if (cuentas[cuentaActiva]) Object.assign(cuentas[cuentaActiva], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
   cerrarModal();
   renderTicket();
   renderCat();
@@ -2304,9 +2377,15 @@ function setCaj(id) {
 ══════════════════════ */
 function updStatus() {
   document.getElementById('s-caj').textContent  = cajero.nombre;
-  document.getElementById('s-ap').textContent   = aparcadas.length;
+  document.getElementById('s-ap').textContent   = cuentas.length;
   document.getElementById('s-vtas').textContent = ventasHoy;
   document.getElementById('s-caja').textContent = fmtE(cajaHoy);
+  if (cuentas[cuentaActiva]) {
+    const c = cuentas[cuentaActiva];
+    c.ticket = ticket; c.cliente = cliente; c.selIdx = selIdx;
+    c.ptsCanjeados = ptsCanjeados; c.cajSelId = cajSelId; c.nbuf = nbuf;
+  }
+  renderCuentasTabs();
 }
 
 /* ══════════════════════
@@ -2584,10 +2663,18 @@ function abrirHistorico() {
         <span style="font-size:11px;color:var(--muted)">${v.cajero}${v.cliente?' · '+v.cliente:''}</span>
         <span class="hist-tot">${fmtE(v.total)}</span>
         <button style="padding:4px 8px;border:none;border-radius:4px;background:var(--btn-to);color:#fff;font-size:11px;cursor:pointer" onclick="event.stopPropagation();imprimirTicket(histVentas.find(x=>x.nTicket===${v.nTicket}))">🖨️</button>
+        <button style="padding:4px 7px;border:none;border-radius:4px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;cursor:pointer;line-height:1" onclick="event.stopPropagation();borrarTicketHist(${v.nTicket})" title="Eliminar ticket">✕</button>
       </div>`;
     }).join('');
   }
   document.getElementById('ov-hist').classList.add('open');
+}
+
+function borrarTicketHist(nTicket) {
+  if (!confirm(`¿Eliminar el ticket #${String(nTicket).padStart(4,'0')} del historial?`)) return;
+  histVentas = histVentas.filter(x => x.nTicket !== nTicket);
+  localStorage.setItem('tpvt_histventas', JSON.stringify(histVentas));
+  abrirHistorico();
 }
 
 function verTicketHist(nq) {
@@ -2766,6 +2853,7 @@ function asignarCli() {
   cliente = c.nombre;
   updVisor();
   cerrarCli();
+  if (document.getElementById('ov').classList.contains('open') && payMode === 'fiad') actualizarFiadInfo();
   if (c.puntos >= 100) warn(`⭐ ${c.nombre} tiene ${c.puntos} pts acumulados`, 2000);
 }
 let _ptsCliId = null, _ptsEuros = 0, _ptsVentaRef = null, _ptsGanadosPost = 0;
@@ -3108,6 +3196,7 @@ function cobrarParteDiv(met) {
     const ventaGuardada = histVentas[histVentas.length - 1];
     const _cliNomDiv = cliente;
     ticket = []; cliente = ''; cajSelId = null; selIdx = -1; nbuf = ''; ptsCanjeados = 0;
+    if (cuentas[cuentaActiva]) Object.assign(cuentas[cuentaActiva], { ticket: [], cliente: '', selIdx: -1, ptsCanjeados: 0, cajSelId: null, nbuf: '' });
     notaTicket = ''; nTicket++;
     saveCat(); renderTicket(); renderCat(); updStatus();
     document.getElementById('ov').classList.remove('open');
@@ -3144,7 +3233,7 @@ function abrirQR() {
   const urlBase = config.urlMenu || '';
   if (!urlBase) {
     warn.style.display = '';
-    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección donde está alojado pedido.html.';
+    warn.textContent = '⚠️ No has configurado la URL del menú. Ve a Configuración → URL pública del menú e introduce la dirección base de tu web (p.ej. https://el-miarma.koke-bar-tienda.workers.dev).';
     document.getElementById('qr-canvas').innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:30px">Configura primero la URL del menú</div>';
     document.getElementById('qr-url-txt').value = '';
     return;
@@ -3174,12 +3263,20 @@ function abrirQR() {
   };
   window._qrMenuData = menuData;
   const urlBase2 = urlBase.replace(/\/$/, '');
-  const url = licId ? urlBase2 + (urlBase2.includes('?') ? '&' : '?') + 'lic=' + encodeURIComponent(licId) : urlBase2;
+  // Embeber menú en hash para que funcione sin menu.json en el servidor
+  // Quitar imágenes para mantener la URL compacta
+  const menuCompact = {
+    ...menuData,
+    f: menuData.f.map(f => ({ n: f.n, e: f.e })),
+    p: menuData.p.map(({ img, ...rest }) => rest)
+  };
+  const hash = btoa(unescape(encodeURIComponent(JSON.stringify(menuCompact))));
+  const url = urlBase2 + '/pedido.html#' + hash;
   document.getElementById('qr-url-txt').value = url;
   const canvas = document.getElementById('qr-canvas');
   canvas.innerHTML = '';
   try {
-    new QRCode(canvas, { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(canvas, { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
   } catch(e) {
     warn.style.display = '';
     warn.textContent = '⚠️ Error al generar QR: ' + e.message;
@@ -3192,7 +3289,7 @@ function descargarMenuJson() {
   a.href = URL.createObjectURL(blob);
   a.download = 'menu.json';
   a.click();
-  warn('✅ menu.json descargado — añádelo a netlify-deploy y sube la carpeta a Netlify', 4000);
+  warn('✅ menu.json descargado', 3000);
 }
 function copyQrUrl() {
   const v = document.getElementById('qr-url-txt').value;
@@ -3676,8 +3773,9 @@ document.addEventListener('keydown', e => {
     else document.documentElement.requestFullscreen();
     return;
   }
-  // Teclado físico en modal de cobro
-  if (document.getElementById('ov').classList.contains('open')) {
+  // Teclado físico en modal de cobro (solo si no hay otro modal encima)
+  const cliOpen = document.getElementById('ov-cli').classList.contains('open');
+  if (document.getElementById('ov').classList.contains('open') && !cliOpen) {
     if (/^[0-9]$/.test(e.key) || (e.key >= '0' && e.key <= '9') || (e.code && e.code.startsWith('Numpad') && /^[0-9]$/.test(e.key))) {
       e.preventDefault(); cobNp(e.key); return;
     }
@@ -3691,8 +3789,7 @@ document.addEventListener('keydown', e => {
   if (!inInput) {
     if (e.key === 'F1') { e.preventDefault(); abrirCobro(); }
     if (e.key === 'F2') { e.preventDefault(); acAnular(); }
-    if (e.key === 'F3') { e.preventDefault(); acAparcar(); }
-    if (e.key === 'F4') { e.preventDefault(); acRecuperar(); }
+    if (e.key === 'F3') { e.preventDefault(); nuevaCuenta(); }
     if (e.key === '+' || e.key === 'Add') {
       e.preventDefault();
       if (selIdx >= 0 && selIdx < ticket.length) {
@@ -4741,6 +4838,15 @@ setInterval(pollPedidos, 4000);
   </div>
 </div>
 
+<!-- PRUEBA CADUCADA -->
+<div id="ov-trial-caducado" style="position:fixed;inset:0;background:#0f172a;z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:360px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;text-align:center;">
+    <div style="font-size:52px;line-height:1">⏰</div>
+    <div style="color:#f1f5f9;font-size:22px;font-weight:700;font-family:Inter,sans-serif;">Período de prueba finalizado</div>
+    <div style="color:#94a3b8;font-size:15px;font-family:Inter,sans-serif;line-height:1.6;">Tu versión de prueba gratuita ha caducado.<br>Para seguir usando Vintex TPV ponte<br>en contacto con tu proveedor.</div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="ov-login" style="position:fixed;inset:0;background:#0f172a;z-index:9999;display:none;align-items:center;justify-content:center;">
   <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 60px #0008;">
@@ -4792,10 +4898,26 @@ setInterval(pollPedidos, 4000);
             _actualizarBrandNombre();
           }
           const expirada=lic.fecha_expiracion && new Date(lic.fecha_expiracion)<new Date();
-          if(lic.activa===false||expirada){
+          if(lic.activa===false){
             document.getElementById('ov-bloqueado').style.display='flex';
             return;
           }
+          if(expirada){
+            document.getElementById('ov-trial-caducado').style.display='flex';
+            return;
+          }
+          if(lic.fecha_expiracion){
+            const dias=Math.ceil((new Date(lic.fecha_expiracion)-new Date())/86400000);
+            const badge=document.getElementById('trial-badge');
+            badge.textContent=`⏳ Versión de prueba — ${dias} día${dias===1?'':'s'}`;
+            badge.style.display='';
+          }
+        } else {
+          // Licencia eliminada de Supabase — limpiar credenciales y bloquear permanentemente
+          localStorage.removeItem('_miarma_auth');
+          sessionStorage.removeItem('_miarma_ok');
+          document.getElementById('ov-bloqueado').style.display='flex';
+          return;
         }
       }
     }catch(e){}
