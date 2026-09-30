@@ -4816,6 +4816,7 @@ setInterval(pollPedidos, 4000);
       const dU=decodeURIComponent(atob(u));
       const dP=decodeURIComponent(atob(p));
       localStorage.setItem('_miarma_auth',JSON.stringify({u:dU,p:dP}));
+      sessionStorage.setItem('_miarma_ok','1');
     }catch(e){}
     const lic=params.get('lic');
     history.replaceState(null,'',location.pathname+(lic?'?lic='+lic:''));
@@ -4849,7 +4850,7 @@ setInterval(pollPedidos, 4000);
     }catch(e){}
   }
   const auth=JSON.parse(localStorage.getItem('_miarma_auth')||'null');
-  if(auth){
+  if(auth && !sessionStorage.getItem('_miarma_ok')){
     const ov=document.getElementById('ov-login');
     ov.style.display='flex';
     setTimeout(()=>document.getElementById('login-user').focus(),120);
@@ -4862,6 +4863,7 @@ function hacerLogin(){
   const u=document.getElementById('login-user').value;
   const p=document.getElementById('login-pass').value;
   if(!auth||(u===auth.u&&p===auth.p)){
+    sessionStorage.setItem('_miarma_ok','1');
     document.getElementById('ov-login').style.display='none';
     document.getElementById('login-err').style.display='none';
     return;
